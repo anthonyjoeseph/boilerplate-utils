@@ -5,7 +5,7 @@ import {
   handleLiteralInlineArray,
   handleLiteralInlineObject,
   handleSmartInline,
-  VscodeApi,
+  VscodeApi
 } from "./commandHandlers";
 
 function isSupportedLanguage(languageId: string): boolean {
@@ -16,7 +16,7 @@ function runWithEditor(
   vscodeApi: VscodeApi,
   commandName: string,
   unsupportedMessage: string,
-  handler: (vscodeApi: VscodeApi, editor: vscode.TextEditor) => Promise<void>,
+  handler: (vscodeApi: VscodeApi, editor: vscode.TextEditor) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const editor = vscodeApi.window.activeTextEditor;
@@ -40,8 +40,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode,
         "Smart Inline Function",
         "Smart Inline Function only supports TypeScript/TSX files.",
-        handleSmartInline,
-      ),
+        handleSmartInline
+      )
     ),
     vscode.commands.registerCommand(
       "smartInlineFunction.literal-inline",
@@ -49,8 +49,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode,
         "Smart Literal Inline",
         "Smart Literal Inline only supports TypeScript/TSX files.",
-        handleLiteralInline,
-      ),
+        handleLiteralInline
+      )
     ),
     vscode.commands.registerCommand(
       "smartInlineFunction.literal-inline-array",
@@ -58,8 +58,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode,
         "Literal Inline Array",
         "Literal Inline Array only supports TypeScript/TSX files.",
-        handleLiteralInlineArray,
-      ),
+        handleLiteralInlineArray
+      )
     ),
     vscode.commands.registerCommand(
       "smartInlineFunction.literal-inline-object",
@@ -67,9 +67,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode,
         "Literal Inline Object",
         "Literal Inline Object only supports TypeScript/TSX files.",
-        handleLiteralInlineObject,
-      ),
-    ),
+        handleLiteralInlineObject
+      )
+    )
   );
 }
 

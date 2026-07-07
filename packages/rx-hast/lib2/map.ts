@@ -6,41 +6,41 @@ export const mapComponent = <
   Attributes extends Record<string, unknown> = {},
   Events extends Record<string, unknown> = {},
   NewAttributes extends Record<string, unknown> = {},
-  NewEvents extends Record<string, unknown> = {},
+  NewEvents extends Record<string, unknown> = {}
 >(
   component: NewComponent<Attributes, Events>,
   fn: (
     getEvent: <A>(selector: (events: Events) => Observable<A>) => Observable<A>,
-    newAttrs: NewAttributes,
-  ) => { attrs: Attributes; newEvents: NewEvents },
+    newAttrs: NewAttributes
+  ) => { attrs: Attributes; newEvents: NewEvents }
 ): NewComponent<NewAttributes, NewEvents> => {
   return {
     node: component.node,
     hydrate: (self, domEmissions, newAttrs) => {
       const { attrs, newEvents } = fn(
         (selector) => defer(() => selector(events)),
-        newAttrs,
+        newAttrs
       );
       const { events, domActions } = component.hydrate(
         self,
         domEmissions,
-        attrs,
+        attrs
       );
       return { events: newEvents, domActions };
-    },
+    }
   };
 };
 
 export type DeferGetter<Component extends NewComponent<any, any>> = <A>(
-  selector: (events: GetEvents<Component>) => Observable<A>,
+  selector: (events: GetEvents<Component>) => Observable<A>
 ) => Observable<A>;
 
 export type CycleComponent<Component extends NewComponent<any, any>> = (
-  getEvent: DeferGetter<Component>,
+  getEvent: DeferGetter<Component>
 ) => GetAttributes<Component>;
 
 declare const inferFnGenerics: <Fn extends (a: any) => unknown>(
-  genFn: Fn,
+  genFn: Fn
 ) => Parameters<Fn>[0];
 
 declare const genFn: <X extends { three: number }>(x: X) => void;
@@ -53,32 +53,32 @@ export const mapParentComponent =
     NewAttributes extends Record<string, unknown> = {},
     NewEvents extends Record<string, unknown> = {},
     NewChildAttributes extends Record<string, unknown> = {},
-    NewChildEvents extends Record<string, unknown> = {},
+    NewChildEvents extends Record<string, unknown> = {}
   >(
     parent: ParentFn,
     fn: (
       getEvent: <A>(
         selector: (
-          events: Omit<GetEvents<ReturnType<ParentFn>>, "child">,
-        ) => Observable<A>,
+          events: Omit<GetEvents<ReturnType<ParentFn>>, "child">
+        ) => Observable<A>
       ) => Observable<A>,
       newAttrs: NewAttributes,
       getChildEvent: <A>(
-        selector: (events: GetEvents<Parameters<ParentFn>[0]>) => Observable<A>,
+        selector: (events: GetEvents<Parameters<ParentFn>[0]>) => Observable<A>
       ) => Observable<A>,
-      newChildAttrs: NewChildAttributes,
+      newChildAttrs: NewChildAttributes
     ) => {
       attrs: Omit<GetAttributes<ReturnType<ParentFn>>, "child">;
       childAttrs: GetAttributes<Parameters<ParentFn>[0]>;
       newEvents: NewEvents;
       newChildEvents: NewChildEvents;
-    },
+    }
   ) =>
   <
     CA extends GetAttributes<Parameters<ParentFn>[0]>,
-    CE extends GetEvents<Parameters<ParentFn>[0]>,
+    CE extends GetEvents<Parameters<ParentFn>[0]>
   >(
-    child: NewComponent<CA, CE>,
+    child: NewComponent<CA, CE>
   ): NewComponent<
     { child: CA; parent: NewAttributes },
     { child: CE; parent: NewEvents }
@@ -93,17 +93,17 @@ export const mapParentComponent =
           (selector) => defer(() => selector(events)),
           newAttrs,
           newAttrs,
-          childEvents,
+          childEvents
         );
         const { events, domActions } = parent(child).hydrate(
           self,
           domEmissions,
-          { ...attrs, ...newAttrs },
+          { ...attrs, ...newAttrs }
         );
         return {
           events: { ...newEvents, ...childEvents },
-          domActions: merge(domActions, childDomActions),
+          domActions: merge(domActions, childDomActions)
         };
-      },
+      }
     };
   };

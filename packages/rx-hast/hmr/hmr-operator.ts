@@ -1,7 +1,9 @@
 import * as r from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
-export const hmr = <A>(parentModule: NodeModule): r.MonoTypeOperatorFunction<A> => {
+export const hmr = <A>(
+  parentModule: NodeModule
+): r.MonoTypeOperatorFunction<A> => {
   const uniqueId = uuidv4();
   let currentObs = new r.Subject<r.Observable<A>>();
   let isReloaded = false;

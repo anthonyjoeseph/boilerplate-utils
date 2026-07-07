@@ -12,7 +12,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "lib2", "index.ts"],
+  "files": [
+    "dist",
+    "lib2",
+    "index.ts"
+  ],
   "publishConfig": {
     "access": "public"
   },

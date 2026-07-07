@@ -25,13 +25,23 @@ type IsUnion<A> = [A] extends infer B
   : never;
 
 // this results in &, which is slow
-export type UnionToIntersection<T> = (T extends any ? (x: T) => any : never) extends (x: infer R) => any ? R : never;
+export type UnionToIntersection<T> = (
+  T extends any ? (x: T) => any : never
+) extends (x: infer R) => any
+  ? R
+  : never;
 
 // DisjunctsWithKey<{ a: string } | { b: number }, 'a'> = { a: string }
-type DisjunctsWithKey<A, K> = A extends any ? (K extends keyof A ? A : never) : never;
+type DisjunctsWithKey<A, K> = A extends any
+  ? K extends keyof A
+    ? A
+    : never
+  : never;
 
 export type ShallowUnionToIntersection<A extends Record<string, unknown>> = {
-  [K in A extends any ? keyof A : never]: IsUnion<DisjunctsWithKey<A, K>> extends true
+  [K in A extends any ? keyof A : never]: IsUnion<
+    DisjunctsWithKey<A, K>
+  > extends true
     ? `ERROR: Multiple Children with key '${Extract<K, string>}'`
     : DisjunctsWithKey<A, K>[K];
 };

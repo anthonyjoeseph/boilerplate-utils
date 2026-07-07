@@ -9,7 +9,9 @@ const newHtml = `
 </html>
 `;
 const existingHtml = await fs
-  .readFile("./src/examples/react/static-render/index.html", { encoding: "utf-8" })
+  .readFile("./src/examples/react/static-render/index.html", {
+    encoding: "utf-8"
+  })
   .catch(() => "");
 if (existingHtml !== newHtml) {
   console.log("writing file");

@@ -4,13 +4,28 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "lint": "eslint . --cache --cache-location .cache/.eslintcache-web",
+    "format": "prettier --check . --ignore-path .gitignore --cache --cache-location .cache/.prettiercache",
+    "format:fix": "prettier --check . --ignore-path .gitignore --write --cache --cache-location .cache/.prettiercache",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.4.0",
+    "@eslint/js": "^9.38.0",
+    "eslint": "^9.38.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-turbo": "^2.5.8",
+    "prettier": "^3.6.2",
     "typescript": "catalog:",
+    "typescript-eslint": "^8.46.2",
     "vitest": "catalog:",
     "@types/node": "catalog:"
+  },
+  "prettier": {
+    "trailingComma": "none"
   },
   "engines": {
     "node": ">=20",

@@ -16,7 +16,11 @@
       "default": "./dist/static-render/index.js"
     }
   },
-  "files": ["dist", "server-side", "static-render"],
+  "files": [
+    "dist",
+    "server-side",
+    "static-render"
+  ],
   "publishConfig": {
     "access": "public"
   },

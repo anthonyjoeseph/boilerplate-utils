@@ -17255,17 +17255,13 @@
         {
           "tableName": "agreement_acceptance",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17278,17 +17274,13 @@
         {
           "tableName": "agreement_acceptance",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17301,17 +17293,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "audit_log_id"
-          ],
+          "fieldNames": ["audit_log_id"],
           "relation": "*"
         },
         {
           "tableName": "archive_team_member_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17324,17 +17312,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "field_meta_id"
-          ],
+          "fieldNames": ["field_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17347,17 +17331,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_id"
-          ],
+          "fieldNames": ["grant_id"],
           "relation": "*"
         },
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17370,17 +17350,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_meta_allowed_modifier_link_id"
-          ],
+          "fieldNames": ["grant_meta_allowed_modifier_link_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_meta_allowed_modifier_link",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17393,17 +17369,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_meta_id"
-          ],
+          "fieldNames": ["grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17416,17 +17388,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_modifier_id"
-          ],
+          "fieldNames": ["grant_modifier_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_modifier",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17439,17 +17407,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_modifier_meta_id"
-          ],
+          "fieldNames": ["grant_modifier_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_modifier_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17462,17 +17426,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_field_id"
-          ],
+          "fieldNames": ["license_grant_meta_field_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta_field",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17485,17 +17445,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_grant_meta_link_id"
-          ],
+          "fieldNames": ["license_grant_meta_grant_meta_link_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta_grant_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17508,17 +17464,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_id"
-          ],
+          "fieldNames": ["license_grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17531,17 +17483,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_modifier_meta_link_id"
-          ],
+          "fieldNames": ["license_grant_meta_modifier_meta_link_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta_modifier_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17554,17 +17502,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "license_id"
-          ],
+          "fieldNames": ["license_id"],
           "relation": "*"
         },
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17577,17 +17521,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "license_template_field_meta_id"
-          ],
+          "fieldNames": ["license_template_field_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_template_field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17600,17 +17540,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "license_template_meta_id"
-          ],
+          "fieldNames": ["license_template_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_template_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17623,17 +17559,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "license_template_meta_license_grant_meta_link_id"
-          ],
+          "fieldNames": ["license_template_meta_license_grant_meta_link_id"],
           "relation": "*"
         },
         {
           "tableName": "license_template_meta_grant_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17646,17 +17578,13 @@
         {
           "tableName": "archive_team_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "user_id"
-          ],
+          "fieldNames": ["user_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17669,17 +17597,13 @@
         {
           "tableName": "archive_team_member_audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "user_id"
-          ],
+          "fieldNames": ["user_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17692,17 +17616,13 @@
         {
           "tableName": "archived_conversations",
           "schemaName": "public",
-          "fieldNames": [
-            "conversation_id"
-          ],
+          "fieldNames": ["conversation_id"],
           "relation": "*"
         },
         {
           "tableName": "conversations",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17715,17 +17635,13 @@
         {
           "tableName": "archived_conversations",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17738,17 +17654,13 @@
         {
           "tableName": "archived_messages",
           "schemaName": "public",
-          "fieldNames": [
-            "message_id"
-          ],
+          "fieldNames": ["message_id"],
           "relation": "*"
         },
         {
           "tableName": "messages",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17761,17 +17673,13 @@
         {
           "tableName": "archived_messages",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17784,17 +17692,13 @@
         {
           "tableName": "artist_application",
           "schemaName": "public",
-          "fieldNames": [
-            "reviewed_by"
-          ],
+          "fieldNames": ["reviewed_by"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17807,17 +17711,13 @@
         {
           "tableName": "audio_fingerprint",
           "schemaName": "public",
-          "fieldNames": [
-            "file_upload_id"
-          ],
+          "fieldNames": ["file_upload_id"],
           "relation": "*"
         },
         {
           "tableName": "file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17830,17 +17730,13 @@
         {
           "tableName": "audio_fingerprint",
           "schemaName": "public",
-          "fieldNames": [
-            "track_file_id"
-          ],
+          "fieldNames": ["track_file_id"],
           "relation": "*"
         },
         {
           "tableName": "track_file",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17853,17 +17749,13 @@
         {
           "tableName": "audio_metadata",
           "schemaName": "public",
-          "fieldNames": [
-            "embedded_cover_photo_id"
-          ],
+          "fieldNames": ["embedded_cover_photo_id"],
           "relation": "*"
         },
         {
           "tableName": "file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17876,17 +17768,13 @@
         {
           "tableName": "audio_metadata",
           "schemaName": "public",
-          "fieldNames": [
-            "track_id"
-          ],
+          "fieldNames": ["track_id"],
           "relation": "*"
         },
         {
           "tableName": "track",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17899,17 +17787,13 @@
         {
           "tableName": "audit_log",
           "schemaName": "public",
-          "fieldNames": [
-            "actor_id"
-          ],
+          "fieldNames": ["actor_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17922,17 +17806,13 @@
         {
           "tableName": "catalog_listing",
           "schemaName": "public",
-          "fieldNames": [
-            "cover_photo_id"
-          ],
+          "fieldNames": ["cover_photo_id"],
           "relation": "*"
         },
         {
           "tableName": "file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17945,17 +17825,13 @@
         {
           "tableName": "catalog_listing",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17968,17 +17844,13 @@
         {
           "tableName": "catalog_product",
           "schemaName": "public",
-          "fieldNames": [
-            "catalog_listing_id"
-          ],
+          "fieldNames": ["catalog_listing_id"],
           "relation": "*"
         },
         {
           "tableName": "catalog_listing",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -17991,17 +17863,13 @@
         {
           "tableName": "catalog_product",
           "schemaName": "public",
-          "fieldNames": [
-            "license_template_id"
-          ],
+          "fieldNames": ["license_template_id"],
           "relation": "*"
         },
         {
           "tableName": "license_template_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18014,17 +17882,13 @@
         {
           "tableName": "catalog_product_creative_work_link",
           "schemaName": "public",
-          "fieldNames": [
-            "catalog_product_id"
-          ],
+          "fieldNames": ["catalog_product_id"],
           "relation": "*"
         },
         {
           "tableName": "catalog_product",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18037,17 +17901,13 @@
         {
           "tableName": "catalog_product_creative_work_link",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18060,17 +17920,13 @@
         {
           "tableName": "conversation_participants",
           "schemaName": "public",
-          "fieldNames": [
-            "conversation_id"
-          ],
+          "fieldNames": ["conversation_id"],
           "relation": "*"
         },
         {
           "tableName": "conversations",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18083,17 +17939,13 @@
         {
           "tableName": "conversation_participants",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18106,17 +17958,13 @@
         {
           "tableName": "conversations",
           "schemaName": "public",
-          "fieldNames": [
-            "created_by"
-          ],
+          "fieldNames": ["created_by"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18129,17 +17977,13 @@
         {
           "tableName": "conversations",
           "schemaName": "public",
-          "fieldNames": [
-            "requested_by"
-          ],
+          "fieldNames": ["requested_by"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18152,17 +17996,13 @@
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "cover_photo_id"
-          ],
+          "fieldNames": ["cover_photo_id"],
           "relation": "*"
         },
         {
           "tableName": "file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18175,17 +18015,13 @@
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18198,17 +18034,13 @@
         {
           "tableName": "creative_work_contributor",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18221,17 +18053,13 @@
         {
           "tableName": "creative_work_contributor",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18244,17 +18072,13 @@
         {
           "tableName": "creative_work_metadata",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18267,17 +18091,13 @@
         {
           "tableName": "creative_work_metadata",
           "schemaName": "public",
-          "fieldNames": [
-            "parent_creative_work_id"
-          ],
+          "fieldNames": ["parent_creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18290,17 +18110,13 @@
         {
           "tableName": "creative_work_metadata",
           "schemaName": "public",
-          "fieldNames": [
-            "platform_release_id"
-          ],
+          "fieldNames": ["platform_release_id"],
           "relation": "*"
         },
         {
           "tableName": "platform_release",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18313,17 +18129,13 @@
         {
           "tableName": "creative_work_metadata",
           "schemaName": "public",
-          "fieldNames": [
-            "root_creative_work_id"
-          ],
+          "fieldNames": ["root_creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18336,17 +18148,13 @@
         {
           "tableName": "creative_work_tracks",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18359,17 +18167,13 @@
         {
           "tableName": "creative_work_tracks",
           "schemaName": "public",
-          "fieldNames": [
-            "track_id"
-          ],
+          "fieldNames": ["track_id"],
           "relation": "*"
         },
         {
           "tableName": "track",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18382,17 +18186,13 @@
         {
           "tableName": "crm_activity",
           "schemaName": "public",
-          "fieldNames": [
-            "catalog_deal_id"
-          ],
+          "fieldNames": ["catalog_deal_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_catalog_deal",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18405,17 +18205,13 @@
         {
           "tableName": "crm_activity",
           "schemaName": "public",
-          "fieldNames": [
-            "contact_id"
-          ],
+          "fieldNames": ["contact_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_contact",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18428,17 +18224,13 @@
         {
           "tableName": "crm_catalog_deal",
           "schemaName": "public",
-          "fieldNames": [
-            "contact_id"
-          ],
+          "fieldNames": ["contact_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_contact",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18451,17 +18243,13 @@
         {
           "tableName": "crm_catalog_deal",
           "schemaName": "public",
-          "fieldNames": [
-            "stage_id"
-          ],
+          "fieldNames": ["stage_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_catalog_deal_stage",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18474,17 +18262,13 @@
         {
           "tableName": "crm_contact",
           "schemaName": "public",
-          "fieldNames": [
-            "organization_id"
-          ],
+          "fieldNames": ["organization_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_organization",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18497,17 +18281,13 @@
         {
           "tableName": "crm_contact",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18520,17 +18300,13 @@
         {
           "tableName": "crm_contact",
           "schemaName": "public",
-          "fieldNames": [
-            "status_id"
-          ],
+          "fieldNames": ["status_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_status",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18543,17 +18319,13 @@
         {
           "tableName": "crm_contact_tag",
           "schemaName": "public",
-          "fieldNames": [
-            "contact_id"
-          ],
+          "fieldNames": ["contact_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_contact",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18566,17 +18338,13 @@
         {
           "tableName": "crm_contact_tag",
           "schemaName": "public",
-          "fieldNames": [
-            "tag_id"
-          ],
+          "fieldNames": ["tag_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_tag",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18589,17 +18357,13 @@
         {
           "tableName": "crm_custom_field",
           "schemaName": "public",
-          "fieldNames": [
-            "sheet_id"
-          ],
+          "fieldNames": ["sheet_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_sheet",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18612,17 +18376,13 @@
         {
           "tableName": "crm_custom_field_value",
           "schemaName": "public",
-          "fieldNames": [
-            "contact_id"
-          ],
+          "fieldNames": ["contact_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_contact",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18635,17 +18395,13 @@
         {
           "tableName": "crm_custom_field_value",
           "schemaName": "public",
-          "fieldNames": [
-            "field_id"
-          ],
+          "fieldNames": ["field_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_custom_field",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18658,17 +18414,13 @@
         {
           "tableName": "crm_custom_field_value",
           "schemaName": "public",
-          "fieldNames": [
-            "row_id"
-          ],
+          "fieldNames": ["row_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_row",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18681,17 +18433,13 @@
         {
           "tableName": "crm_note",
           "schemaName": "public",
-          "fieldNames": [
-            "contact_id"
-          ],
+          "fieldNames": ["contact_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_contact",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18704,17 +18452,13 @@
         {
           "tableName": "crm_row",
           "schemaName": "public",
-          "fieldNames": [
-            "sheet_id"
-          ],
+          "fieldNames": ["sheet_id"],
           "relation": "*"
         },
         {
           "tableName": "crm_sheet",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18727,17 +18471,13 @@
         {
           "tableName": "custom_theme",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18750,17 +18490,13 @@
         {
           "tableName": "direct_transfer_event",
           "schemaName": "public",
-          "fieldNames": [
-            "from_profile_id"
-          ],
+          "fieldNames": ["from_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18773,17 +18509,13 @@
         {
           "tableName": "direct_transfer_event",
           "schemaName": "public",
-          "fieldNames": [
-            "to_profile_id"
-          ],
+          "fieldNames": ["to_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18796,17 +18528,13 @@
         {
           "tableName": "distribution_job",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18819,17 +18547,13 @@
         {
           "tableName": "distribution_job",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18842,17 +18566,13 @@
         {
           "tableName": "external_links",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18865,17 +18585,13 @@
         {
           "tableName": "field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_meta_id"
-          ],
+          "fieldNames": ["grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18888,17 +18604,13 @@
         {
           "tableName": "field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_modifier_meta_id"
-          ],
+          "fieldNames": ["grant_modifier_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_modifier_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18911,17 +18623,13 @@
         {
           "tableName": "genre",
           "schemaName": "public",
-          "fieldNames": [
-            "genre_category_id"
-          ],
+          "fieldNames": ["genre_category_id"],
           "relation": "*"
         },
         {
           "tableName": "genre_category",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18934,17 +18642,13 @@
         {
           "tableName": "genre",
           "schemaName": "public",
-          "fieldNames": [
-            "sub_genre_category_id"
-          ],
+          "fieldNames": ["sub_genre_category_id"],
           "relation": "*"
         },
         {
           "tableName": "sub_genre_category",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18957,17 +18661,13 @@
         {
           "tableName": "genre",
           "schemaName": "public",
-          "fieldNames": [
-            "track_id"
-          ],
+          "fieldNames": ["track_id"],
           "relation": "*"
         },
         {
           "tableName": "track",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -18980,17 +18680,13 @@
         {
           "tableName": "genre_sub_genre_link",
           "schemaName": "public",
-          "fieldNames": [
-            "genre_category_id"
-          ],
+          "fieldNames": ["genre_category_id"],
           "relation": "*"
         },
         {
           "tableName": "genre_category",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19003,17 +18699,13 @@
         {
           "tableName": "genre_sub_genre_link",
           "schemaName": "public",
-          "fieldNames": [
-            "sub_genre_category_id"
-          ],
+          "fieldNames": ["sub_genre_category_id"],
           "relation": "*"
         },
         {
           "tableName": "sub_genre_category",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19026,17 +18718,13 @@
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_meta_id"
-          ],
+          "fieldNames": ["grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19049,17 +18737,13 @@
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "grantee_profile_id"
-          ],
+          "fieldNames": ["grantee_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19072,17 +18756,13 @@
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "grantor_profile_id"
-          ],
+          "fieldNames": ["grantor_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19095,17 +18775,13 @@
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_id"
-          ],
+          "fieldNames": ["license_grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19118,17 +18794,13 @@
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19141,17 +18813,13 @@
         {
           "tableName": "grant_meta_allowed_modifier_link",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_meta_id"
-          ],
+          "fieldNames": ["grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19164,17 +18832,13 @@
         {
           "tableName": "grant_meta_allowed_modifier_link",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_modifier_meta_id"
-          ],
+          "fieldNames": ["grant_modifier_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_modifier_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19187,17 +18851,13 @@
         {
           "tableName": "grant_modifier",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_meta_id"
-          ],
+          "fieldNames": ["grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19210,17 +18870,13 @@
         {
           "tableName": "grant_modifier",
           "schemaName": "public",
-          "fieldNames": [
-            "modifier_meta_id"
-          ],
+          "fieldNames": ["modifier_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_modifier_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19233,17 +18889,13 @@
         {
           "tableName": "grant_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_id"
-          ],
+          "fieldNames": ["grant_id"],
           "relation": "*"
         },
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19256,17 +18908,13 @@
         {
           "tableName": "grant_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "license_id"
-          ],
+          "fieldNames": ["license_id"],
           "relation": "*"
         },
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19279,17 +18927,13 @@
         {
           "tableName": "grant_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19302,17 +18946,13 @@
         {
           "tableName": "grant_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "receiver"
-          ],
+          "fieldNames": ["receiver"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19325,17 +18965,13 @@
         {
           "tableName": "grant_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "sender"
-          ],
+          "fieldNames": ["sender"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19348,17 +18984,13 @@
         {
           "tableName": "landing_page_email_sign_up",
           "schemaName": "public",
-          "fieldNames": [
-            "user_id"
-          ],
+          "fieldNames": ["user_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19371,17 +19003,13 @@
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "license_template_meta_id"
-          ],
+          "fieldNames": ["license_template_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_template_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19394,17 +19022,13 @@
         {
           "tableName": "license_field",
           "schemaName": "public",
-          "fieldNames": [
-            "input_by"
-          ],
+          "fieldNames": ["input_by"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19417,17 +19041,13 @@
         {
           "tableName": "license_field",
           "schemaName": "public",
-          "fieldNames": [
-            "license_id"
-          ],
+          "fieldNames": ["license_id"],
           "relation": "*"
         },
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19440,17 +19060,13 @@
         {
           "tableName": "license_field",
           "schemaName": "public",
-          "fieldNames": [
-            "license_template_field_meta_id"
-          ],
+          "fieldNames": ["license_template_field_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_template_field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19463,17 +19079,13 @@
         {
           "tableName": "license_grant_meta_field",
           "schemaName": "public",
-          "fieldNames": [
-            "field_meta_id"
-          ],
+          "fieldNames": ["field_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19486,17 +19098,13 @@
         {
           "tableName": "license_grant_meta_field",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_meta_id"
-          ],
+          "fieldNames": ["grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19509,17 +19117,13 @@
         {
           "tableName": "license_grant_meta_field",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_modifier_meta_id"
-          ],
+          "fieldNames": ["grant_modifier_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_modifier_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19532,17 +19136,13 @@
         {
           "tableName": "license_grant_meta_field",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_id"
-          ],
+          "fieldNames": ["license_grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19555,17 +19155,13 @@
         {
           "tableName": "license_grant_meta_grant_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_meta_id"
-          ],
+          "fieldNames": ["grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19578,17 +19174,13 @@
         {
           "tableName": "license_grant_meta_grant_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_id"
-          ],
+          "fieldNames": ["license_grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19601,17 +19193,13 @@
         {
           "tableName": "license_grant_meta_modifier_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_modifier_meta_id"
-          ],
+          "fieldNames": ["grant_modifier_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "grant_modifier_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19624,17 +19212,13 @@
         {
           "tableName": "license_grant_meta_modifier_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_id"
-          ],
+          "fieldNames": ["license_grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19647,17 +19231,13 @@
         {
           "tableName": "license_link",
           "schemaName": "public",
-          "fieldNames": [
-            "from_license_id"
-          ],
+          "fieldNames": ["from_license_id"],
           "relation": "*"
         },
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19670,17 +19250,13 @@
         {
           "tableName": "license_link",
           "schemaName": "public",
-          "fieldNames": [
-            "to_license_id"
-          ],
+          "fieldNames": ["to_license_id"],
           "relation": "*"
         },
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19693,17 +19269,13 @@
         {
           "tableName": "license_payout_manifest_item",
           "schemaName": "public",
-          "fieldNames": [
-            "grant_id"
-          ],
+          "fieldNames": ["grant_id"],
           "relation": "*"
         },
         {
           "tableName": "grant",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19716,17 +19288,13 @@
         {
           "tableName": "license_payout_manifest_item",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19739,17 +19307,13 @@
         {
           "tableName": "license_template_field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "field_meta_id"
-          ],
+          "fieldNames": ["field_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19762,17 +19326,13 @@
         {
           "tableName": "license_template_field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "for_field_meta_id"
-          ],
+          "fieldNames": ["for_field_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19785,17 +19345,13 @@
         {
           "tableName": "license_template_field_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "license_template_id"
-          ],
+          "fieldNames": ["license_template_id"],
           "relation": "*"
         },
         {
           "tableName": "license_template_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19808,17 +19364,13 @@
         {
           "tableName": "license_template_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "thumbnail"
-          ],
+          "fieldNames": ["thumbnail"],
           "relation": "*"
         },
         {
           "tableName": "file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19831,17 +19383,13 @@
         {
           "tableName": "license_template_meta_grant_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "license_grant_meta_id"
-          ],
+          "fieldNames": ["license_grant_meta_id"],
           "relation": "*"
         },
         {
           "tableName": "license_grant_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19854,17 +19402,13 @@
         {
           "tableName": "license_template_meta_grant_meta_link",
           "schemaName": "public",
-          "fieldNames": [
-            "license_template_id"
-          ],
+          "fieldNames": ["license_template_id"],
           "relation": "*"
         },
         {
           "tableName": "license_template_meta",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19877,17 +19421,13 @@
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "catalog_product_id"
-          ],
+          "fieldNames": ["catalog_product_id"],
           "relation": "*"
         },
         {
           "tableName": "catalog_product",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19900,17 +19440,13 @@
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "license_id"
-          ],
+          "fieldNames": ["license_id"],
           "relation": "*"
         },
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19923,17 +19459,13 @@
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "sender_id"
-          ],
+          "fieldNames": ["sender_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19946,17 +19478,13 @@
         {
           "tableName": "license_transaction_derivative_payout_manifest",
           "schemaName": "public",
-          "fieldNames": [
-            "executor_profile_id"
-          ],
+          "fieldNames": ["executor_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19969,17 +19497,13 @@
         {
           "tableName": "license_transaction_payer",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -19992,17 +19516,13 @@
         {
           "tableName": "license_transaction_payer",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20015,17 +19535,13 @@
         {
           "tableName": "license_transaction_receiver",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20038,17 +19554,13 @@
         {
           "tableName": "license_transaction_receiver",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20061,17 +19573,13 @@
         {
           "tableName": "license_transaction_rejection",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20084,17 +19592,13 @@
         {
           "tableName": "license_transaction_rejection",
           "schemaName": "public",
-          "fieldNames": [
-            "rejected_by_profile_id"
-          ],
+          "fieldNames": ["rejected_by_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20107,17 +19611,13 @@
         {
           "tableName": "licensee_link",
           "schemaName": "public",
-          "fieldNames": [
-            "license_id"
-          ],
+          "fieldNames": ["license_id"],
           "relation": "*"
         },
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20130,17 +19630,13 @@
         {
           "tableName": "licensee_link",
           "schemaName": "public",
-          "fieldNames": [
-            "licensee_id"
-          ],
+          "fieldNames": ["licensee_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20153,17 +19649,13 @@
         {
           "tableName": "licensor_link",
           "schemaName": "public",
-          "fieldNames": [
-            "license_id"
-          ],
+          "fieldNames": ["license_id"],
           "relation": "*"
         },
         {
           "tableName": "license",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20176,17 +19668,13 @@
         {
           "tableName": "licensor_link",
           "schemaName": "public",
-          "fieldNames": [
-            "licensor_id"
-          ],
+          "fieldNames": ["licensor_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20199,17 +19687,13 @@
         {
           "tableName": "likes",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20222,17 +19706,13 @@
         {
           "tableName": "manifest_link",
           "schemaName": "public",
-          "fieldNames": [
-            "from_manifest_id"
-          ],
+          "fieldNames": ["from_manifest_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction_derivative_payout_manifest",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20245,17 +19725,13 @@
         {
           "tableName": "manifest_link",
           "schemaName": "public",
-          "fieldNames": [
-            "to_manifest_id"
-          ],
+          "fieldNames": ["to_manifest_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction_derivative_payout_manifest",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20268,17 +19744,13 @@
         {
           "tableName": "manifest_party",
           "schemaName": "public",
-          "fieldNames": [
-            "openplay_artist_id"
-          ],
+          "fieldNames": ["openplay_artist_id"],
           "relation": "*"
         },
         {
           "tableName": "openplay_artist",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20291,17 +19763,13 @@
         {
           "tableName": "manifest_party",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20314,17 +19782,13 @@
         {
           "tableName": "manifest_party",
           "schemaName": "public",
-          "fieldNames": [
-            "split_manifest_id"
-          ],
+          "fieldNames": ["split_manifest_id"],
           "relation": "*"
         },
         {
           "tableName": "split_manifest",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20337,17 +19801,13 @@
         {
           "tableName": "message_embeds",
           "schemaName": "public",
-          "fieldNames": [
-            "message_id"
-          ],
+          "fieldNames": ["message_id"],
           "relation": "*"
         },
         {
           "tableName": "messages",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20360,17 +19820,13 @@
         {
           "tableName": "message_reactions",
           "schemaName": "public",
-          "fieldNames": [
-            "message_id"
-          ],
+          "fieldNames": ["message_id"],
           "relation": "*"
         },
         {
           "tableName": "messages",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20383,17 +19839,13 @@
         {
           "tableName": "message_reactions",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20406,17 +19858,13 @@
         {
           "tableName": "message_status",
           "schemaName": "public",
-          "fieldNames": [
-            "message_id"
-          ],
+          "fieldNames": ["message_id"],
           "relation": "*"
         },
         {
           "tableName": "messages",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20429,17 +19877,13 @@
         {
           "tableName": "message_status",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20452,17 +19896,13 @@
         {
           "tableName": "messages",
           "schemaName": "public",
-          "fieldNames": [
-            "conversation_id"
-          ],
+          "fieldNames": ["conversation_id"],
           "relation": "*"
         },
         {
           "tableName": "conversations",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20475,17 +19915,13 @@
         {
           "tableName": "messages",
           "schemaName": "public",
-          "fieldNames": [
-            "sender_profile_id"
-          ],
+          "fieldNames": ["sender_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20498,17 +19934,13 @@
         {
           "tableName": "notification_preferences",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20521,17 +19953,13 @@
         {
           "tableName": "notifications",
           "schemaName": "public",
-          "fieldNames": [
-            "actor_profile_id"
-          ],
+          "fieldNames": ["actor_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20544,17 +19972,13 @@
         {
           "tableName": "notifications",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20567,17 +19991,13 @@
         {
           "tableName": "onboarding_response",
           "schemaName": "public",
-          "fieldNames": [
-            "user_id"
-          ],
+          "fieldNames": ["user_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20590,17 +20010,13 @@
         {
           "tableName": "openplay_artist",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20613,17 +20029,13 @@
         {
           "tableName": "openplay_cover_art",
           "schemaName": "public",
-          "fieldNames": [
-            "file_upload_id"
-          ],
+          "fieldNames": ["file_upload_id"],
           "relation": "*"
         },
         {
           "tableName": "file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20636,17 +20048,13 @@
         {
           "tableName": "openplay_label",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20659,17 +20067,13 @@
         {
           "tableName": "openplay_project",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20682,17 +20086,13 @@
         {
           "tableName": "openplay_project",
           "schemaName": "public",
-          "fieldNames": [
-            "master_project_id"
-          ],
+          "fieldNames": ["master_project_id"],
           "relation": "*"
         },
         {
           "tableName": "openplay_project",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20705,17 +20105,13 @@
         {
           "tableName": "openplay_publisher",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20728,17 +20124,13 @@
         {
           "tableName": "openplay_release",
           "schemaName": "public",
-          "fieldNames": [
-            "catalog_listing_id"
-          ],
+          "fieldNames": ["catalog_listing_id"],
           "relation": "*"
         },
         {
           "tableName": "catalog_listing",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20751,17 +20143,13 @@
         {
           "tableName": "openplay_release",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20774,17 +20162,13 @@
         {
           "tableName": "openplay_release",
           "schemaName": "public",
-          "fieldNames": [
-            "openplay_project_id"
-          ],
+          "fieldNames": ["openplay_project_id"],
           "relation": "*"
         },
         {
           "tableName": "openplay_project",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20797,17 +20181,13 @@
         {
           "tableName": "openplay_sync_log",
           "schemaName": "public",
-          "fieldNames": [
-            "triggered_by"
-          ],
+          "fieldNames": ["triggered_by"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20820,17 +20200,13 @@
         {
           "tableName": "openplay_track",
           "schemaName": "public",
-          "fieldNames": [
-            "openplay_work_id"
-          ],
+          "fieldNames": ["openplay_work_id"],
           "relation": "*"
         },
         {
           "tableName": "openplay_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20843,17 +20219,13 @@
         {
           "tableName": "openplay_track",
           "schemaName": "public",
-          "fieldNames": [
-            "track_file_id"
-          ],
+          "fieldNames": ["track_file_id"],
           "relation": "*"
         },
         {
           "tableName": "track_file",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20866,17 +20238,13 @@
         {
           "tableName": "openplay_work",
           "schemaName": "public",
-          "fieldNames": [
-            "root_work_id"
-          ],
+          "fieldNames": ["root_work_id"],
           "relation": "*"
         },
         {
           "tableName": "openplay_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20889,17 +20257,13 @@
         {
           "tableName": "openplay_work",
           "schemaName": "public",
-          "fieldNames": [
-            "track_id"
-          ],
+          "fieldNames": ["track_id"],
           "relation": "*"
         },
         {
           "tableName": "track",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20912,17 +20276,13 @@
         {
           "tableName": "party_credit",
           "schemaName": "public",
-          "fieldNames": [
-            "manifest_party_id"
-          ],
+          "fieldNames": ["manifest_party_id"],
           "relation": "*"
         },
         {
           "tableName": "manifest_party",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20935,17 +20295,13 @@
         {
           "tableName": "party_rights_holder",
           "schemaName": "public",
-          "fieldNames": [
-            "manifest_party_id"
-          ],
+          "fieldNames": ["manifest_party_id"],
           "relation": "*"
         },
         {
           "tableName": "manifest_party",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20958,17 +20314,13 @@
         {
           "tableName": "party_royalty",
           "schemaName": "public",
-          "fieldNames": [
-            "manifest_party_id"
-          ],
+          "fieldNames": ["manifest_party_id"],
           "relation": "*"
         },
         {
           "tableName": "manifest_party",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -20981,17 +20333,13 @@
         {
           "tableName": "payment_catalog_item",
           "schemaName": "public",
-          "fieldNames": [
-            "catalog_listing_id"
-          ],
+          "fieldNames": ["catalog_listing_id"],
           "relation": "*"
         },
         {
           "tableName": "catalog_listing",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21004,17 +20352,13 @@
         {
           "tableName": "payment_catalog_item",
           "schemaName": "public",
-          "fieldNames": [
-            "catalog_product_id"
-          ],
+          "fieldNames": ["catalog_product_id"],
           "relation": "*"
         },
         {
           "tableName": "catalog_product",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21027,17 +20371,13 @@
         {
           "tableName": "payment_catalog_item",
           "schemaName": "public",
-          "fieldNames": [
-            "stripe_connect_payment_id"
-          ],
+          "fieldNames": ["stripe_connect_payment_id"],
           "relation": "*"
         },
         {
           "tableName": "stripe_connect_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21050,17 +20390,13 @@
         {
           "tableName": "platform_capability",
           "schemaName": "public",
-          "fieldNames": [
-            "platform_id"
-          ],
+          "fieldNames": ["platform_id"],
           "relation": "*"
         },
         {
           "tableName": "platform",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21073,17 +20409,13 @@
         {
           "tableName": "platform_release",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21096,17 +20428,13 @@
         {
           "tableName": "platform_release",
           "schemaName": "public",
-          "fieldNames": [
-            "platform_id"
-          ],
+          "fieldNames": ["platform_id"],
           "relation": "*"
         },
         {
           "tableName": "platform",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21119,17 +20447,13 @@
         {
           "tableName": "platform_revenue_fee",
           "schemaName": "public",
-          "fieldNames": [
-            "platform_id"
-          ],
+          "fieldNames": ["platform_id"],
           "relation": "*"
         },
         {
           "tableName": "platform",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21142,17 +20466,13 @@
         {
           "tableName": "platform_revenue_terms",
           "schemaName": "public",
-          "fieldNames": [
-            "platform_id"
-          ],
+          "fieldNames": ["platform_id"],
           "relation": "*"
         },
         {
           "tableName": "platform",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21165,17 +20485,13 @@
         {
           "tableName": "platform_territory",
           "schemaName": "public",
-          "fieldNames": [
-            "platform_id"
-          ],
+          "fieldNames": ["platform_id"],
           "relation": "*"
         },
         {
           "tableName": "platform",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21188,17 +20504,13 @@
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "active_exception_id"
-          ],
+          "fieldNames": ["active_exception_id"],
           "relation": "*"
         },
         {
           "tableName": "tier_exception",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21211,17 +20523,13 @@
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "address_id"
-          ],
+          "fieldNames": ["address_id"],
           "relation": "*"
         },
         {
           "tableName": "address",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21234,17 +20542,13 @@
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "avatar_id"
-          ],
+          "fieldNames": ["avatar_id"],
           "relation": "*"
         },
         {
           "tableName": "file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21257,17 +20561,13 @@
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "tier_id"
-          ],
+          "fieldNames": ["tier_id"],
           "relation": "*"
         },
         {
           "tableName": "profile_tier",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21280,17 +20580,13 @@
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "user_id"
-          ],
+          "fieldNames": ["user_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21303,17 +20599,13 @@
         {
           "tableName": "profile_artist_info",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21326,17 +20618,13 @@
         {
           "tableName": "profile_contributor",
           "schemaName": "public",
-          "fieldNames": [
-            "linked_profile_id"
-          ],
+          "fieldNames": ["linked_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21349,17 +20637,13 @@
         {
           "tableName": "profile_contributor",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21372,17 +20656,13 @@
         {
           "tableName": "profile_genre",
           "schemaName": "public",
-          "fieldNames": [
-            "genre_category_id"
-          ],
+          "fieldNames": ["genre_category_id"],
           "relation": "*"
         },
         {
           "tableName": "genre_category",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21395,17 +20675,13 @@
         {
           "tableName": "profile_genre",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21418,17 +20694,13 @@
         {
           "tableName": "profile_tier",
           "schemaName": "public",
-          "fieldNames": [
-            "tier_roster_id"
-          ],
+          "fieldNames": ["tier_roster_id"],
           "relation": "*"
         },
         {
           "tableName": "tier_roster",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21441,17 +20713,13 @@
         {
           "tableName": "profile_tier_assignment",
           "schemaName": "public",
-          "fieldNames": [
-            "created_by_id"
-          ],
+          "fieldNames": ["created_by_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21464,17 +20732,13 @@
         {
           "tableName": "profile_tier_assignment",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21487,17 +20751,13 @@
         {
           "tableName": "profile_tier_assignment",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_tier_id"
-          ],
+          "fieldNames": ["profile_tier_id"],
           "relation": "*"
         },
         {
           "tableName": "profile_tier",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21510,17 +20770,13 @@
         {
           "tableName": "royalty_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21533,17 +20789,13 @@
         {
           "tableName": "royalty_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "recipient_profile_id"
-          ],
+          "fieldNames": ["recipient_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21556,17 +20808,13 @@
         {
           "tableName": "royalty_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "user_payment_id"
-          ],
+          "fieldNames": ["user_payment_id"],
           "relation": "*"
         },
         {
           "tableName": "user_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21579,17 +20827,13 @@
         {
           "tableName": "scale",
           "schemaName": "public",
-          "fieldNames": [
-            "scale_category_id"
-          ],
+          "fieldNames": ["scale_category_id"],
           "relation": "*"
         },
         {
           "tableName": "scale_category",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21602,17 +20846,13 @@
         {
           "tableName": "scale",
           "schemaName": "public",
-          "fieldNames": [
-            "track_id"
-          ],
+          "fieldNames": ["track_id"],
           "relation": "*"
         },
         {
           "tableName": "track",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21625,17 +20865,13 @@
         {
           "tableName": "split_manifest",
           "schemaName": "public",
-          "fieldNames": [
-            "created_by_profile_id"
-          ],
+          "fieldNames": ["created_by_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21648,17 +20884,13 @@
         {
           "tableName": "split_manifest",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21671,17 +20903,13 @@
         {
           "tableName": "split_manifest",
           "schemaName": "public",
-          "fieldNames": [
-            "source_composition_manifest_id"
-          ],
+          "fieldNames": ["source_composition_manifest_id"],
           "relation": "*"
         },
         {
           "tableName": "split_manifest",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21694,17 +20922,13 @@
         {
           "tableName": "stripe_connect_account",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21717,17 +20941,13 @@
         {
           "tableName": "stripe_connect_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "payer_profile_id"
-          ],
+          "fieldNames": ["payer_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21740,17 +20960,13 @@
         {
           "tableName": "stripe_payout",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21763,17 +20979,13 @@
         {
           "tableName": "stripe_platform_fee_collection",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_id"
-          ],
+          "fieldNames": ["profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21786,17 +20998,13 @@
         {
           "tableName": "stripe_platform_fee_collection",
           "schemaName": "public",
-          "fieldNames": [
-            "stripe_connect_payment_id"
-          ],
+          "fieldNames": ["stripe_connect_payment_id"],
           "relation": "*"
         },
         {
           "tableName": "stripe_connect_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21809,17 +21017,13 @@
         {
           "tableName": "stripe_platform_fee_collection",
           "schemaName": "public",
-          "fieldNames": [
-            "stripe_payout_id"
-          ],
+          "fieldNames": ["stripe_payout_id"],
           "relation": "*"
         },
         {
           "tableName": "stripe_payout",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21832,17 +21036,13 @@
         {
           "tableName": "tier_exception",
           "schemaName": "public",
-          "fieldNames": [
-            "profile_tier_id"
-          ],
+          "fieldNames": ["profile_tier_id"],
           "relation": "*"
         },
         {
           "tableName": "profile_tier",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21855,17 +21055,13 @@
         {
           "tableName": "track",
           "schemaName": "public",
-          "fieldNames": [
-            "key_id"
-          ],
+          "fieldNames": ["key_id"],
           "relation": "*"
         },
         {
           "tableName": "key",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21878,17 +21074,13 @@
         {
           "tableName": "track_file",
           "schemaName": "public",
-          "fieldNames": [
-            "metadata_id"
-          ],
+          "fieldNames": ["metadata_id"],
           "relation": "*"
         },
         {
           "tableName": "audio_metadata",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21901,17 +21093,13 @@
         {
           "tableName": "track_file",
           "schemaName": "public",
-          "fieldNames": [
-            "track_id"
-          ],
+          "fieldNames": ["track_id"],
           "relation": "*"
         },
         {
           "tableName": "track",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21924,17 +21112,13 @@
         {
           "tableName": "track_file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "audio_metadata"
-          ],
+          "fieldNames": ["audio_metadata"],
           "relation": "*"
         },
         {
           "tableName": "audio_metadata",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21947,17 +21131,13 @@
         {
           "tableName": "track_file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "file_upload"
-          ],
+          "fieldNames": ["file_upload"],
           "relation": "*"
         },
         {
           "tableName": "file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21970,17 +21150,13 @@
         {
           "tableName": "track_file_upload",
           "schemaName": "public",
-          "fieldNames": [
-            "track_file_id"
-          ],
+          "fieldNames": ["track_file_id"],
           "relation": "*"
         },
         {
           "tableName": "track_file",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -21993,17 +21169,13 @@
         {
           "tableName": "user_invite",
           "schemaName": "public",
-          "fieldNames": [
-            "accepted_by_user_id"
-          ],
+          "fieldNames": ["accepted_by_user_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22016,17 +21188,13 @@
         {
           "tableName": "user_invite",
           "schemaName": "public",
-          "fieldNames": [
-            "invited_by_user_id"
-          ],
+          "fieldNames": ["invited_by_user_id"],
           "relation": "*"
         },
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22039,17 +21207,13 @@
         {
           "tableName": "user_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "catalog_listing_id"
-          ],
+          "fieldNames": ["catalog_listing_id"],
           "relation": "*"
         },
         {
           "tableName": "catalog_listing",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22062,17 +21226,13 @@
         {
           "tableName": "user_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "direct_transfer_event_id"
-          ],
+          "fieldNames": ["direct_transfer_event_id"],
           "relation": "*"
         },
         {
           "tableName": "direct_transfer_event",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22085,17 +21245,13 @@
         {
           "tableName": "user_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "license_payout_manifest_item_id"
-          ],
+          "fieldNames": ["license_payout_manifest_item_id"],
           "relation": "*"
         },
         {
           "tableName": "license_payout_manifest_item",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22108,17 +21264,13 @@
         {
           "tableName": "user_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_id"
-          ],
+          "fieldNames": ["license_transaction_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22131,17 +21283,13 @@
         {
           "tableName": "user_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "license_transaction_payer_id"
-          ],
+          "fieldNames": ["license_transaction_payer_id"],
           "relation": "*"
         },
         {
           "tableName": "license_transaction_payer",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22154,17 +21302,13 @@
         {
           "tableName": "user_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "payer_profile_id"
-          ],
+          "fieldNames": ["payer_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22177,17 +21321,13 @@
         {
           "tableName": "user_payment",
           "schemaName": "public",
-          "fieldNames": [
-            "recipient_profile_id"
-          ],
+          "fieldNames": ["recipient_profile_id"],
           "relation": "*"
         },
         {
           "tableName": "profile",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22200,17 +21340,13 @@
         {
           "tableName": "users",
           "schemaName": "public",
-          "fieldNames": [
-            "address_id"
-          ],
+          "fieldNames": ["address_id"],
           "relation": "*"
         },
         {
           "tableName": "address",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],
@@ -22223,17 +21359,13 @@
         {
           "tableName": "written_component",
           "schemaName": "public",
-          "fieldNames": [
-            "creative_work_id"
-          ],
+          "fieldNames": ["creative_work_id"],
           "relation": "*"
         },
         {
           "tableName": "creative_work",
           "schemaName": "public",
-          "fieldNames": [
-            "id"
-          ],
+          "fieldNames": ["id"],
           "relation": "1"
         }
       ],

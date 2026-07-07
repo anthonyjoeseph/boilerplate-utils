@@ -6,7 +6,7 @@ import React, {
   HTMLElementType,
   DetailedReactHTMLElement,
   HTMLAttributes,
-  InputHTMLAttributes,
+  InputHTMLAttributes
 } from "react";
 
 export type UnionToIntersection<T> = (
@@ -17,10 +17,10 @@ export type UnionToIntersection<T> = (
 
 export const narrowFn = <
   Fn extends (props: Record<string, unknown>) => any,
-  const Keep extends (keyof Parameters<Fn>[0])[],
+  const Keep extends (keyof Parameters<Fn>[0])[]
 >(
   fn: Fn,
-  keep: Keep,
+  keep: Keep
 ): ((narrowProps: {
   [K in Keep[number]]: Parameters<Fn>[0][K];
 }) => ReturnType<Fn>) => null;
@@ -29,7 +29,7 @@ const thing = narrowFn(primitive("input"), ["onClick", "value"]);
 
 export const element = <Children extends JSXElementConstructor<any>[]>(
   el: ReactElement,
-  children: Children,
+  children: Children
 ): FunctionComponent<
   UnionToIntersection<
     Children[number] extends any ? ComponentProps<Children[number]> : never
@@ -39,18 +39,20 @@ export const element = <Children extends JSXElementConstructor<any>[]>(
 export const component = <
   Parent extends JSXElementConstructor<any>,
   StaticProps extends Partial<ComponentProps<Parent>>,
-  Children extends JSXElementConstructor<any>[],
+  Children extends JSXElementConstructor<any>[]
 >(
   parent: Parent,
   staticProps: StaticProps,
-  children: Children,
+  children: Children
 ): FunctionComponent<
   {
-    [K in keyof ComponentProps<Parent> as K extends keyof StaticProps
-      ? undefined extends StaticProps[K]
-        ? K
-        : never
-      : K]: ComponentProps<Parent>[K];
+    [
+      K in keyof ComponentProps<Parent> as K extends keyof StaticProps
+        ? undefined extends StaticProps[K]
+          ? K
+          : never
+        : K
+    ]: ComponentProps<Parent>[K];
   } & UnionToIntersection<
     Children[number] extends any ? ComponentProps<Children[number]> : never
   >
@@ -58,36 +60,34 @@ export const component = <
 
 export const name = <
   Name extends string,
-  Parent extends JSXElementConstructor<any>,
+  Parent extends JSXElementConstructor<any>
 >(
   name: Name,
-  parent: Parent,
+  parent: Parent
 ): FunctionComponent<{ [K in Name]: ComponentProps<Parent> }> => null;
 
 export const array = <Parent extends JSXElementConstructor<any>>(
-  parent: Parent,
+  parent: Parent
 ): FunctionComponent<ComponentProps<Parent>[]> => null;
 
 export const discriminatedUnion = <
   Discriminator extends string,
-  Items extends Record<string, JSXElementConstructor<any>>,
+  Items extends Record<string, JSXElementConstructor<any>>
 >(
   discriminator: Discriminator,
-  options: Items,
+  options: Items
 ): FunctionComponent<
   {
     [K in keyof Items]: {
-      [D in
-        | Discriminator
-        | keyof ComponentProps<Items[K]>]: D extends Discriminator
-        ? K
-        : ComponentProps<Items[K]>[D];
+      [
+        D in Discriminator | keyof ComponentProps<Items[K]>
+      ]: D extends Discriminator ? K : ComponentProps<Items[K]>[D];
     };
   }[keyof Items]
 > => null;
 
 export const optional = <Parent extends JSXElementConstructor<any>>(
-  parent: Parent,
+  parent: Parent
 ): FunctionComponent<ComponentProps<Parent> | undefined> => null;
 
 export const e = element;
@@ -112,7 +112,7 @@ const TestArray = array(TestCompA);
 
 const TestDisc = discriminatedUnion("type", {
   thing1: TestCompA,
-  thing2: TestCompB,
+  thing2: TestCompB
 });
 
 const TestOpt = optional(TestCompA);
@@ -121,9 +121,9 @@ const TestAll = e(<div />, [n("a", TestCompA), TestCompB]);
 
 // Overload for <input> — uses InputHTMLAttributes and HTMLInputElement
 export function primitive(
-  type: "input",
+  type: "input"
 ): (
-  props: InputHTMLAttributes<HTMLInputElement>,
+  props: InputHTMLAttributes<HTMLInputElement>
 ) => DetailedReactHTMLElement<
   InputHTMLAttributes<HTMLInputElement>,
   HTMLInputElement
@@ -131,9 +131,9 @@ export function primitive(
 
 // General overload for all other HTML elements
 export function primitive<T extends HTMLElementType>(
-  type: T,
+  type: T
 ): (
-  props: HTMLAttributes<HTMLElement>,
+  props: HTMLAttributes<HTMLElement>
 ) => DetailedReactHTMLElement<HTMLAttributes<HTMLElement>, HTMLElement>;
 
 // Implementation
@@ -141,6 +141,6 @@ export function primitive<T extends HTMLElementType>(type: T) {
   return (
     props: T extends "input"
       ? InputHTMLAttributes<HTMLInputElement>
-      : HTMLAttributes<HTMLElement>,
+      : HTMLAttributes<HTMLElement>
   ) => React.createElement(type, props);
 }

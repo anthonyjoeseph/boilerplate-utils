@@ -7,13 +7,13 @@ import * as ts from "typescript";
 import {
   getBooleanLiteralValue,
   isDeepConstExpr,
-  resolveConstExpression,
+  resolveConstExpression
 } from "./inliningConst";
 
 export function substituteAndSimplifyExpression(
   expr: ts.Expression,
   argMap: Map<string, ts.Expression>,
-  paramConstEnv: Map<string, ts.Expression>,
+  paramConstEnv: Map<string, ts.Expression>
 ): ts.Expression {
   const factory = ts.factory;
 
@@ -101,13 +101,13 @@ export function substituteAndSimplifyExpression(
     onEmitNode: (
       _hint: ts.EmitHint,
       node: ts.Node,
-      emit: (hint: ts.EmitHint, node: ts.Node) => void,
+      emit: (hint: ts.EmitHint, node: ts.Node) => void
     ) => emit(_hint, node),
     onSubstituteNode: (_hint: ts.EmitHint, node: ts.Node) => node,
     readEmitHelpers: () => undefined,
     requestEmitHelper: () => {},
     resumeLexicalEnvironment: () => {},
-    startLexicalEnvironment: () => {},
+    startLexicalEnvironment: () => {}
   } as unknown as ts.TransformationContext;
 
   function simplify(node: ts.Expression): ts.Expression {
@@ -137,7 +137,7 @@ export function substituteAndSimplifyExpression(
         node.questionToken,
         whenTrue,
         node.colonToken,
-        whenFalse,
+        whenFalse
       );
     }
 
@@ -169,7 +169,7 @@ export function substituteAndSimplifyExpression(
       }
 
       const newSpans = node.templateSpans.map((span) =>
-        factory.createTemplateSpan(simplify(span.expression), span.literal),
+        factory.createTemplateSpan(simplify(span.expression), span.literal)
       );
       return factory.createTemplateExpression(node.head, newSpans);
     }
@@ -181,7 +181,7 @@ export function substituteAndSimplifyExpression(
       const synthetic = factory.createBinaryExpression(
         left,
         node.operatorToken,
-        right,
+        right
       );
       const val = evalLiteralExpression(synthetic);
       if (val !== undefined) {
@@ -203,7 +203,7 @@ export function substituteAndSimplifyExpression(
       const operand = simplify(node.operand);
       const synthetic = factory.createPrefixUnaryExpression(
         node.operator,
-        operand,
+        operand
       );
       const val = evalLiteralExpression(synthetic);
       if (val !== undefined) {
@@ -230,7 +230,7 @@ export function substituteAndSimplifyExpression(
               ? (resolveConstExpression(
                   spreadExprSimplified,
                   paramConstEnv,
-                  0,
+                  0
                 ) ?? spreadExprSimplified)
               : spreadExprSimplified;
 
@@ -264,7 +264,7 @@ export function substituteAndSimplifyExpression(
       }
       return factory.createArrayLiteralExpression(
         elements,
-        /*multiLine*/ false,
+        /*multiLine*/ false
       );
     }
 
@@ -281,7 +281,7 @@ export function substituteAndSimplifyExpression(
               ? (resolveConstExpression(
                   spreadExprSimplified,
                   paramConstEnv,
-                  0,
+                  0
                 ) ?? spreadExprSimplified)
               : spreadExprSimplified;
 
@@ -296,7 +296,7 @@ export function substituteAndSimplifyExpression(
                   const newInit = simplify(init);
                   const newProp = factory.createPropertyAssignment(
                     inner.name,
-                    newInit,
+                    newInit
                   );
                   properties.push(newProp);
                 }
@@ -320,7 +320,7 @@ export function substituteAndSimplifyExpression(
               changed = true;
             }
             properties.push(
-              factory.createPropertyAssignment(prop.name, newInit),
+              factory.createPropertyAssignment(prop.name, newInit)
             );
           } else {
             properties.push(prop);
@@ -336,7 +336,7 @@ export function substituteAndSimplifyExpression(
 
       return factory.createObjectLiteralExpression(
         properties,
-        /*multiLine*/ false,
+        /*multiLine*/ false
       );
     }
 
@@ -347,7 +347,7 @@ export function substituteAndSimplifyExpression(
         node,
         node.expression,
         node.typeArguments,
-        newArgs,
+        newArgs
       );
     }
 
@@ -355,7 +355,7 @@ export function substituteAndSimplifyExpression(
     return ts.visitEachChild(
       node,
       (child) => (ts.isExpression(child) ? simplify(child) : child),
-      nullTransformationContext,
+      nullTransformationContext
     ) as ts.Expression;
   }
 

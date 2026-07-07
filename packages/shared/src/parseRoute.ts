@@ -8,7 +8,7 @@ import {
   zero,
   Parser,
   Formatter,
-  Match,
+  Match
 } from "fp-ts-routing";
 import * as O from "fp-ts/Option";
 import { identity, tuple } from "fp-ts/function";
@@ -35,15 +35,15 @@ type GreedyParams<Path extends string> = Path extends `*`
 
 const greedy: Match<{ tail: string }> = new Match(
   new Parser((r) =>
-    O.some(tuple({ tail: r.parts.join("/") }, new Route([], r.query))),
+    O.some(tuple({ tail: r.parts.join("/") }, new Route([], r.query)))
   ),
   new Formatter(
-    (r, o) => new Route([...r.parts, ...o.tail.split("/")], r.query),
-  ),
+    (r, o) => new Route([...r.parts, ...o.tail.split("/")], r.query)
+  )
 );
 const neverMatch: Match<{}> = new Match(
   new Parser(() => O.none),
-  new Formatter(identity),
+  new Formatter(identity)
 );
 
 export function pathCodec<Keys extends string[]>(...paths: Keys) {
@@ -91,7 +91,7 @@ export function pathCodec<Keys extends string[]>(...paths: Keys) {
         segment.startsWith(":")
           ? match.then(str(segment.slice(1)))
           : match.then(lit(segment)),
-      lit("/"),
+      lit("/")
     );
     const withGreedy = greedyPath ? fullMatch.then(greedy) : fullMatch;
     return [path, withGreedy.then(end)] as const;
@@ -105,23 +105,23 @@ export function pathCodec<Keys extends string[]>(...paths: Keys) {
               ? {
                   path,
                   params,
-                  tail: params["tail"],
+                  tail: params["tail"]
                 }
               : {
                   path,
-                  params,
+                  params
                 }
             : "tail" in params
               ? { path, tail: params["tail"] }
-              : { path },
-        ) as Parser<Path>,
+              : { path }
+        ) as Parser<Path>
       ),
-    zero<Path>(),
+    zero<Path>()
   );
   return {
     parse: (string: string): Path =>
       fpParse(parser, Route.parse(string), {
-        path: "NotFound",
+        path: "NotFound"
       } as Path) as Path,
 
     format: (struct: Path): string =>
@@ -129,13 +129,13 @@ export function pathCodec<Keys extends string[]>(...paths: Keys) {
         ? fpFormat(
             (matches.find(([key]) => struct.path === key)?.[1]
               ?.formatter as Formatter<{ tail: string }>) ?? end.formatter,
-            struct,
+            struct
           )
         : fpFormat(
             (matches.find(([key]) => struct.path === key)?.[1]
               ?.formatter as Formatter<{}>) ?? end.formatter,
-            struct,
-          ),
+            struct
+          )
   };
 }
 
@@ -143,6 +143,6 @@ const { parse, format } = pathCodec(
   "/one/:var/two/:var2/",
   "/one/:var/two/:var2/*",
   "/two/",
-  "/two/*",
+  "/two/*"
 );
 type Path = ReturnType<typeof parse>;

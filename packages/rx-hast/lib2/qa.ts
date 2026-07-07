@@ -7,7 +7,7 @@ import { CSSProperties } from "react";
 
 const testParent = parentComponent<{}, { onAbort: Observable<unknown> }>()(
   (child) =>
-    component("div", ["style"], ["onClick"], {}, keyedSiblings({ child })),
+    component("div", ["style"], ["onClick"], {}, keyedSiblings({ child }))
 );
 
 const testImpl = testParent(component("input", ["color"], ["onAbort"], {}));
@@ -18,21 +18,21 @@ const testMap = mapParentComponent(
     getEvent,
     newAttrs: { hello: Observable<boolean> },
     getChildEvent,
-    newChildAttrs,
+    newChildAttrs
   ) => {
     const thing = getEvent((e) => e.onClick);
 
     return {
       attrs: {
-        style: thing.pipe(map(() => "color: green" as CSSProperties)),
+        style: thing.pipe(map(() => "color: green" as CSSProperties))
       },
       newEvents: {
-        myStyle: thing,
+        myStyle: thing
       },
       childAttrs: {},
-      newChildEvents: {},
+      newChildEvents: {}
     };
-  },
+  }
 );
 
 declare const thing: <A>(
@@ -40,7 +40,7 @@ declare const thing: <A>(
     onClick: Observable<void>;
     nums: number[];
     num: number;
-  }) => Observable<A>,
+  }) => Observable<A>
 ) => Observable<A>;
 
 thing((e) => e.onClick);
@@ -57,8 +57,8 @@ declare const testComp: NewComponent<
 const counterProgram: CycleComponent<typeof testComp> = (getEvent) => ({
   text: getEvent((e) => e.onClick).pipe(
     scan((acc) => acc + 1, 0),
-    map(String),
-  ),
+    map(String)
+  )
 });
 
 const counterButton = mapComponent(testComp, (getEvent) => {
@@ -90,8 +90,8 @@ const app = mapComponent(
     attrs: {
       darkMode: newAttrs.darkMode,
       modal: {
-        open: getEvent((e) => e.button.onClick),
-      },
-    },
-  }),
+        open: getEvent((e) => e.button.onClick)
+      }
+    }
+  })
 );

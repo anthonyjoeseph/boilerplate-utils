@@ -16,7 +16,7 @@ export async function resolveFunctionDefinition(
   name: string,
   currentSourceFile: ts.SourceFile,
   currentFileName: string,
-  workspaceRoot: string,
+  workspaceRoot: string
 ): Promise<FunctionInfo | undefined> {
   // 1. Same file
   const local = findFunctionInSourceFile(currentSourceFile, name);
@@ -33,7 +33,7 @@ export async function resolveFunctionDefinition(
   if (importInfo.isRelative) {
     const resolved = resolveRelativeModule(
       importInfo.moduleSpecifier,
-      currentFileName,
+      currentFileName
     );
     if (!resolved) {
       return undefined;
@@ -46,7 +46,7 @@ export async function resolveFunctionDefinition(
       resolved,
       text,
       ts.ScriptTarget.Latest,
-      true,
+      true
     );
     const fn = findExportedFunctionInSourceFile(sf, name);
     if (fn) {
@@ -57,7 +57,7 @@ export async function resolveFunctionDefinition(
     // 3. NPM module with potential source maps
     const resolvedModulePath = tryResolveNodeModule(
       importInfo.moduleSpecifier,
-      workspaceRoot,
+      workspaceRoot
     );
     if (!resolvedModulePath) {
       return undefined;
@@ -72,7 +72,7 @@ export async function resolveFunctionDefinition(
           siblingTs,
           text,
           ts.ScriptTarget.Latest,
-          true,
+          true
         );
         const fn = findExportedFunctionInSourceFile(sf, name);
         if (fn) {
@@ -93,7 +93,7 @@ export async function resolveFunctionDefinition(
 
 function findFunctionInSourceFile(
   sourceFile: ts.SourceFile,
-  name: string,
+  name: string
 ): ts.FunctionLikeDeclaration | undefined {
   let match: ts.FunctionLikeDeclaration | undefined;
 
@@ -127,7 +127,7 @@ function findFunctionInSourceFile(
 
 function findExportedFunctionInSourceFile(
   sourceFile: ts.SourceFile,
-  name: string,
+  name: string
 ): ts.FunctionLikeDeclaration | undefined {
   let match: ts.FunctionLikeDeclaration | undefined;
 
@@ -139,7 +139,7 @@ function findExportedFunctionInSourceFile(
     ) {
       // either `export function` or exported via separate export list
       const hasExportModifier = !!node.modifiers?.some(
-        (m) => m.kind === ts.SyntaxKind.ExportKeyword,
+        (m) => m.kind === ts.SyntaxKind.ExportKeyword
       );
       if (hasExportModifier || isExportedViaExportList(sourceFile, name)) {
         match = node;
@@ -149,7 +149,7 @@ function findExportedFunctionInSourceFile(
 
     if (ts.isVariableStatement(node)) {
       const hasExportModifier = !!node.modifiers?.some(
-        (m) => m.kind === ts.SyntaxKind.ExportKeyword,
+        (m) => m.kind === ts.SyntaxKind.ExportKeyword
       );
       for (const decl of node.declarationList.declarations) {
         if (ts.isIdentifier(decl.name) && decl.initializer) {
@@ -176,7 +176,7 @@ function findExportedFunctionInSourceFile(
 
 function isExportedViaExportList(
   sourceFile: ts.SourceFile,
-  name: string,
+  name: string
 ): boolean {
   let exported = false;
   sourceFile.forEachChild((node) => {
@@ -198,7 +198,7 @@ function isExportedViaExportList(
 
 function findImportForIdentifier(
   sourceFile: ts.SourceFile,
-  name: string,
+  name: string
 ): ImportInfo | undefined {
   for (const stmt of sourceFile.statements) {
     if (
@@ -225,7 +225,7 @@ function findImportForIdentifier(
         if (localName === name) {
           return {
             moduleSpecifier,
-            isRelative: moduleSpecifier.startsWith("."),
+            isRelative: moduleSpecifier.startsWith(".")
           };
         }
       }
@@ -238,7 +238,7 @@ function findImportForIdentifier(
 
 function resolveRelativeModule(
   moduleSpecifier: string,
-  fromFile: string,
+  fromFile: string
 ): string | undefined {
   const base = path.dirname(fromFile);
   const full = path.resolve(base, moduleSpecifier);
@@ -248,7 +248,7 @@ function resolveRelativeModule(
     full + ".ts",
     full + ".tsx",
     path.join(full, "index.ts"),
-    path.join(full, "index.tsx"),
+    path.join(full, "index.tsx")
   ];
 
   for (const c of candidates) {
@@ -262,11 +262,11 @@ function resolveRelativeModule(
 
 function tryResolveNodeModule(
   moduleSpecifier: string,
-  workspaceRoot: string,
+  workspaceRoot: string
 ): string | undefined {
   try {
     const resolved = require.resolve(moduleSpecifier, {
-      paths: [workspaceRoot],
+      paths: [workspaceRoot]
     });
     return resolved;
   } catch {
@@ -284,7 +284,7 @@ async function tryReadFile(filePath: string): Promise<string | undefined> {
 
 async function tryResolveFromSourceMap(
   jsFilePath: string,
-  functionName: string,
+  functionName: string
 ): Promise<FunctionInfo | undefined> {
   const dir = path.dirname(jsFilePath);
   let mapPath = jsFilePath + ".map";

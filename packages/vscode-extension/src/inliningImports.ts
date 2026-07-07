@@ -12,7 +12,7 @@ export interface ImportedNameIndex {
 }
 
 export function collectImportedNames(
-  fnSourceFile: ts.SourceFile,
+  fnSourceFile: ts.SourceFile
 ): ImportedNameIndex {
   const byName = new Map<string, ts.ImportDeclaration>();
   const byModule = new Map<string, ts.ImportDeclaration[]>();
@@ -49,13 +49,13 @@ export function collectImportedNames(
     byModule,
     getAllByModule(module: string) {
       return byModule.get(module) ?? [];
-    },
+    }
   };
 }
 
 export function collectUsedImportedNames(
   expr: ts.Expression,
-  importedNames: ImportedNameIndex,
+  importedNames: ImportedNameIndex
 ): ts.ImportDeclaration[] {
   const used = new Set<ts.ImportDeclaration>();
 

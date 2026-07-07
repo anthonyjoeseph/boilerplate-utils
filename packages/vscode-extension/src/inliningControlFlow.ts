@@ -13,7 +13,7 @@ export interface IfBranch {
 }
 
 export function extractReturnExpressionFromStatement(
-  stmt: ts.Statement,
+  stmt: ts.Statement
 ): ts.Expression | undefined {
   if (ts.isReturnStatement(stmt) && stmt.expression) {
     return stmt.expression;
@@ -33,7 +33,7 @@ function collectIfBranches(ifStmt: ts.IfStatement): IfBranch[] | undefined {
 
   while (current) {
     const thenExpr = extractReturnExpressionFromStatement(
-      current.thenStatement,
+      current.thenStatement
     );
     if (!thenExpr) {
       return undefined;
@@ -61,7 +61,7 @@ function collectIfBranches(ifStmt: ts.IfStatement): IfBranch[] | undefined {
 export function tryReduceIfElseChainToExpression(
   body: ts.Block,
   argMap: Map<string, ts.Expression>,
-  paramConstEnv: Map<string, ts.Expression>,
+  paramConstEnv: Map<string, ts.Expression>
 ): ts.Expression | undefined {
   if (body.statements.length !== 1) {
     return undefined;
@@ -86,7 +86,7 @@ export function tryReduceIfElseChainToExpression(
     const simplifiedCond = substituteAndSimplifyExpression(
       cond,
       argMap,
-      paramConstEnv,
+      paramConstEnv
     );
     const boolVal = getBooleanLiteralValue(simplifiedCond);
     if (boolVal === undefined) {
@@ -117,7 +117,7 @@ export function tryReduceIfElseChainToExpression(
   return substituteAndSimplifyExpression(
     chosenReturnExpr,
     argMap,
-    paramConstEnv,
+    paramConstEnv
   );
 }
 
@@ -141,7 +141,7 @@ function literalsEqual(a: ts.Expression, b: ts.Expression): boolean {
 export function tryReduceSwitchToExpression(
   body: ts.Block,
   argMap: Map<string, ts.Expression>,
-  paramConstEnv: Map<string, ts.Expression>,
+  paramConstEnv: Map<string, ts.Expression>
 ): ts.Expression | undefined {
   if (body.statements.length !== 1) {
     return undefined;
@@ -156,7 +156,7 @@ export function tryReduceSwitchToExpression(
   const simplifiedDiscriminant = substituteAndSimplifyExpression(
     first.expression,
     argMap,
-    paramConstEnv,
+    paramConstEnv
   );
 
   if (!isSimpleLiteral(simplifiedDiscriminant)) {
@@ -174,7 +174,7 @@ export function tryReduceSwitchToExpression(
       const simplifiedCaseExpr = substituteAndSimplifyExpression(
         clause.expression,
         argMap,
-        paramConstEnv,
+        paramConstEnv
       );
 
       if (!isSimpleLiteral(simplifiedCaseExpr)) {
@@ -189,7 +189,7 @@ export function tryReduceSwitchToExpression(
         return undefined;
       }
       const returnExpr = extractReturnExpressionFromStatement(
-        clause.statements[0],
+        clause.statements[0]
       );
       if (!returnExpr) {
         return undefined;
@@ -201,7 +201,7 @@ export function tryReduceSwitchToExpression(
         return undefined;
       }
       const returnExpr = extractReturnExpressionFromStatement(
-        clause.statements[0],
+        clause.statements[0]
       );
       if (!returnExpr) {
         return undefined;
@@ -217,6 +217,6 @@ export function tryReduceSwitchToExpression(
   return substituteAndSimplifyExpression(
     defaultReturnExpr,
     argMap,
-    paramConstEnv,
+    paramConstEnv
   );
 }

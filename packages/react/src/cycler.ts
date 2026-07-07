@@ -15,11 +15,11 @@ export type Propify<A> = undefined extends A ? OptProp<A> : Prop<A>;
 export type CycledProps<
   Props extends Record<string, unknown>,
   NewProps extends Record<string, Prop<any> | OptProp<any>>,
-  RetProps extends Partial<{ [K in keyof Props]: Propify<Props[K]> }>,
+  RetProps extends Partial<{ [K in keyof Props]: Propify<Props[K]> }>
 > = {
-  [K in keyof Props | keyof NewProps as K extends keyof RetProps
-    ? never
-    : K]-?: K extends keyof Props
+  [
+    K in keyof Props | keyof NewProps as K extends keyof RetProps ? never : K
+  ]-?: K extends keyof Props
     ? Props[K]
     : K extends keyof NewProps
       ? ExtractProp<NewProps[K]>
@@ -29,15 +29,15 @@ export type CycledProps<
 export const cycler = <
   Props extends Record<string, unknown>,
   NewProps extends Record<string, Prop<any> | OptProp<any>>,
-  RetProps extends Partial<{ [K in keyof Props]: Propify<Props[K]> }>,
+  RetProps extends Partial<{ [K in keyof Props]: Propify<Props[K]> }>
 >(
   component: (p: Props) => React.ReactNode,
   cycle: (
     selectEvent: <Fn extends (a: any) => any>(
-      selector: (props: Props) => Fn,
+      selector: (props: Props) => Fn
     ) => Observable<Parameters<Fn>[0]>,
-    newProps: NewProps,
-  ) => RetProps,
+    newProps: NewProps
+  ) => RetProps
 ): FunctionComponent<CycledProps<Props, NewProps, RetProps>> => {
   // implement 'selectEvent' using defer()
   return null;
@@ -59,11 +59,11 @@ const TestCycled = cycler(
         init: "1",
         obs: merge([
           evt((p) => p.voidFn).pipe(R.scan((acc) => acc + 1, 1)),
-          newProps.addedProp.obs ?? EMPTY,
-        ]).pipe(R.map(String)),
-      },
+          newProps.addedProp.obs ?? EMPTY
+        ]).pipe(R.map(String))
+      }
     };
-  },
+  }
 );
 
 const testEl = TestCycled({});

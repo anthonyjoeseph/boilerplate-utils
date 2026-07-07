@@ -8,14 +8,13 @@ import * as ts from "typescript";
 import {
   collectLiteralConstsVisibleAtCall,
   isDeepConstExpr,
-  resolveConstExpression,
+  resolveConstExpression
 } from "./inliningConst";
 import { extractReturnExpressionFromStatement } from "./inliningControlFlow";
 import { substituteAndSimplifyExpression } from "./inliningSubstitute";
 
 export type LiteralInlineResult =
-  | { ok: true; text: string }
-  | { ok: false; error: string };
+  { ok: true; text: string } | { ok: false; error: string };
 
 /**
  * Fold a standalone expression to literals using the given const environment.
@@ -26,7 +25,7 @@ export type LiteralInlineResult =
 export function literalFoldExpression(
   expr: ts.Expression,
   constEnv: Map<string, ts.Expression>,
-  sourceFile: ts.SourceFile,
+  sourceFile: ts.SourceFile
 ): string {
   const argMap = new Map<string, ts.Expression>();
   const paramConstEnv = new Map<string, ts.Expression>();
@@ -44,7 +43,7 @@ export function literalFoldExpression(
   const simplified = substituteAndSimplifyExpression(
     expr,
     argMap,
-    paramConstEnv,
+    paramConstEnv
   );
   const printer = ts.createPrinter({ removeComments: false });
   return printer
@@ -53,7 +52,7 @@ export function literalFoldExpression(
 }
 
 function getCallbackBodyExpression(
-  callback: ts.Expression,
+  callback: ts.Expression
 ): ts.Expression | undefined {
   if (ts.isArrowFunction(callback)) {
     if (ts.isBlock(callback.body)) {
@@ -73,7 +72,7 @@ function getCallbackBodyExpression(
  */
 export function literalInlineArray(
   sourceFile: ts.SourceFile,
-  mapCall: ts.CallExpression,
+  mapCall: ts.CallExpression
 ): LiteralInlineResult {
   const constEnv = collectLiteralConstsVisibleAtCall(sourceFile, mapCall);
   const factory = ts.factory;
@@ -95,17 +94,17 @@ export function literalInlineArray(
     if (!resolved || !ts.isArrayLiteralExpression(resolved)) {
       return {
         ok: false,
-        error: `"${arrayLikeExpr.text}" must be a const array literal.`,
+        error: `"${arrayLikeExpr.text}" must be a const array literal.`
       };
     }
     if (!isDeepConstExpr(resolved)) {
       return {
         ok: false,
-        error: `"${arrayLikeExpr.text}" must be a const array literal.`,
+        error: `"${arrayLikeExpr.text}" must be a const array literal.`
       };
     }
     sourceElements = resolved.elements.filter((el): el is ts.Expression =>
-      ts.isExpression(el),
+      ts.isExpression(el)
     ) as ts.Expression[];
   } else if (ts.isCallExpression(arrayLikeExpr)) {
     const innerCallee = arrayLikeExpr.expression;
@@ -118,7 +117,7 @@ export function literalInlineArray(
       return {
         ok: false,
         error:
-          "Literal-inline-array supports array or Object.entries(...).map(...) only.",
+          "Literal-inline-array supports array or Object.entries(...).map(...) only."
       };
     }
     const objArg = arrayLikeExpr.arguments[0];
@@ -129,13 +128,13 @@ export function literalInlineArray(
     if (!resolved || !ts.isObjectLiteralExpression(resolved)) {
       return {
         ok: false,
-        error: "Object.entries() argument must be a const object literal.",
+        error: "Object.entries() argument must be a const object literal."
       };
     }
     if (!isDeepConstExpr(resolved)) {
       return {
         ok: false,
-        error: "Object.entries() argument must be a const object literal.",
+        error: "Object.entries() argument must be a const object literal."
       };
     }
     sourceElements = [];
@@ -151,15 +150,15 @@ export function literalInlineArray(
       sourceElements.push(
         factory.createArrayLiteralExpression([
           keyExpr,
-          prop.initializer as ts.Expression,
-        ]),
+          prop.initializer as ts.Expression
+        ])
       );
     }
   } else {
     return {
       ok: false,
       error:
-        "Literal-inline-array supports array or Object.entries(...).map(...) only.",
+        "Literal-inline-array supports array or Object.entries(...).map(...) only."
     };
   }
 
@@ -168,7 +167,7 @@ export function literalInlineArray(
     return {
       ok: false,
       error:
-        "Map callback must be an arrow function or function expression with a single return.",
+        "Map callback must be an arrow function or function expression with a single return."
     };
   }
 
@@ -206,7 +205,7 @@ export function literalInlineArray(
     const resultExpr = substituteAndSimplifyExpression(
       bodyExpr,
       argMap,
-      paramConstEnv,
+      paramConstEnv
     );
     results.push(resultExpr);
   }
@@ -225,11 +224,11 @@ export function literalInlineArray(
  */
 export function literalInlineObject(
   sourceFile: ts.SourceFile,
-  fromEntriesCall: ts.CallExpression,
+  fromEntriesCall: ts.CallExpression
 ): LiteralInlineResult {
   const constEnv = collectLiteralConstsVisibleAtCall(
     sourceFile,
-    fromEntriesCall,
+    fromEntriesCall
   );
   const factory = ts.factory;
 
@@ -251,13 +250,13 @@ export function literalInlineObject(
   if (!resolved || !ts.isArrayLiteralExpression(resolved)) {
     return {
       ok: false,
-      error: "Object.fromEntries() argument must be a const array of entries.",
+      error: "Object.fromEntries() argument must be a const array of entries."
     };
   }
   if (!isDeepConstExpr(resolved)) {
     return {
       ok: false,
-      error: "Object.fromEntries() argument must be a const array of entries.",
+      error: "Object.fromEntries() argument must be a const array of entries."
     };
   }
 
@@ -268,7 +267,7 @@ export function literalInlineObject(
     if (!ts.isArrayLiteralExpression(entry) || entry.elements.length < 2) {
       return {
         ok: false,
-        error: "Each entry must be a [key, value] array.",
+        error: "Each entry must be a [key, value] array."
       };
     }
     const keyExpr = entry.elements[0];
@@ -288,7 +287,7 @@ export function literalInlineObject(
         ? keyExpr
         : factory.createComputedPropertyName(keyExpr);
     properties.push(
-      factory.createPropertyAssignment(propName, valueExpr as ts.Expression),
+      factory.createPropertyAssignment(propName, valueExpr as ts.Expression)
     );
   }
 

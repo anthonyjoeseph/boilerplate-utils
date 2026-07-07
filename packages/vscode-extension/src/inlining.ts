@@ -11,11 +11,11 @@ import * as ts from "typescript";
 import { isDeepConstExpr, resolveConstExpression } from "./inliningConst";
 import {
   tryReduceIfElseChainToExpression,
-  tryReduceSwitchToExpression,
+  tryReduceSwitchToExpression
 } from "./inliningControlFlow";
 import {
   collectImportedNames,
-  collectUsedImportedNames,
+  collectUsedImportedNames
 } from "./inliningImports";
 import { substituteAndSimplifyExpression } from "./inliningSubstitute";
 
@@ -28,7 +28,7 @@ export function inlineCallExpression(
   callExpr: ts.CallExpression,
   fnDecl: ts.FunctionLikeDeclaration,
   fnSourceFile: ts.SourceFile,
-  callerConstEnv: Map<string, ts.Expression>,
+  callerConstEnv: Map<string, ts.Expression>
 ): InlineResult | undefined {
   const printer = ts.createPrinter({ removeComments: false });
 
@@ -92,12 +92,12 @@ export function inlineCallExpression(
         if (ts.isIdentifier(prop)) {
           accessExpr = factory.createPropertyAccessExpression(
             effectiveArg,
-            prop,
+            prop
           );
         } else if (ts.isStringLiteral(prop) || ts.isNumericLiteral(prop)) {
           accessExpr = factory.createElementAccessExpression(
             effectiveArg,
-            prop,
+            prop
           );
         } else {
           return undefined; // computed property names not supported
@@ -129,7 +129,7 @@ export function inlineCallExpression(
         const localId = element.name;
         const accessExpr = factory.createElementAccessExpression(
           effectiveArg,
-          factory.createNumericLiteral(index),
+          factory.createNumericLiteral(index)
         );
         bindLocal(localId.text, accessExpr);
         index++;
@@ -147,7 +147,7 @@ export function inlineCallExpression(
     finalExpr = substituteAndSimplifyExpression(
       fnDecl.body,
       argMap,
-      paramConstEnv,
+      paramConstEnv
     );
   } else if (fnDecl.body && ts.isBlock(fnDecl.body)) {
     const statements = fnDecl.body.statements;
@@ -159,21 +159,21 @@ export function inlineCallExpression(
       finalExpr = substituteAndSimplifyExpression(
         statements[0].expression,
         argMap,
-        paramConstEnv,
+        paramConstEnv
       );
     } else {
       // Try to reduce a simple if / else-if / else chain where all branches return.
       finalExpr = tryReduceIfElseChainToExpression(
         fnDecl.body,
         argMap,
-        paramConstEnv,
+        paramConstEnv
       );
       // If that fails, try to reduce a simple switch statement where all cases return.
       if (!finalExpr) {
         finalExpr = tryReduceSwitchToExpression(
           fnDecl.body,
           argMap,
-          paramConstEnv,
+          paramConstEnv
         );
       }
     }
@@ -192,10 +192,10 @@ export function inlineCallExpression(
       usedImportedNames.map(
         (decl) =>
           `${(decl.moduleSpecifier as ts.StringLiteral).text}::${decl.getText(
-            fnSourceFile,
-          )}`,
-      ),
-    ),
+            fnSourceFile
+          )}`
+      )
+    )
   ).map((key) => {
     const [moduleSpecifierText] = key.split("::");
     // Re-find the declaration by module specifier + textual match.
@@ -203,7 +203,7 @@ export function inlineCallExpression(
     return (
       candidates.find(
         (d) =>
-          d.getText(fnSourceFile) === key.slice(moduleSpecifierText.length + 2),
+          d.getText(fnSourceFile) === key.slice(moduleSpecifierText.length + 2)
       ) ?? candidates[0]
     );
   });
@@ -211,11 +211,11 @@ export function inlineCallExpression(
   const inlinedText = printer.printNode(
     ts.EmitHint.Expression,
     finalExpr,
-    fnSourceFile,
+    fnSourceFile
   );
   return {
     expression: inlinedText.trim(),
-    neededImports,
+    neededImports
   };
 }
 
@@ -225,5 +225,5 @@ export {
   literalFoldExpression,
   literalInlineArray,
   literalInlineObject,
-  type LiteralInlineResult,
+  type LiteralInlineResult
 } from "./inliningLiteral";

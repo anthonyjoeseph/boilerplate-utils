@@ -5,7 +5,7 @@ import { ShallowAnd } from "./util.js";
 
 export type NewComponent<
   Attributes extends Record<string, unknown> = {},
-  Events extends Record<string, unknown> = {},
+  Events extends Record<string, unknown> = {}
 > = {
   // hast-like static info, w/o reference to the DOM
   node: ReactNode;
@@ -14,7 +14,7 @@ export type NewComponent<
   hydrate: (
     self: ReactNode,
     domEmissions: DomActions,
-    attrs: Attributes,
+    attrs: Attributes
   ) => { events: Events; domActions: DomActions };
 };
 
@@ -27,7 +27,7 @@ export type GetEvents<Component extends NewComponent<any, any>> = ReturnType<
 
 export type UsableEventsForTag<
   Tag extends keyof JSX.IntrinsicElements,
-  Keys extends Array<keyof JSX.IntrinsicElements[Tag]>,
+  Keys extends Array<keyof JSX.IntrinsicElements[Tag]>
 > = {
   [K in Keys[number]]: NonNullable<
     JSX.IntrinsicElements[Tag][K]
@@ -43,13 +43,13 @@ export type ComponentFn = {
     Tag extends keyof JSX.IntrinsicElements,
     AttributeKeys extends Array<keyof JSX.IntrinsicElements[Tag]>,
     EventKeys extends Array<keyof JSX.IntrinsicElements[Tag] | "ref">,
-    Child extends NewComponent<any, any>,
+    Child extends NewComponent<any, any>
   >(
     tag: Tag,
     dynamicInputs: AttributeKeys,
     outputs: EventKeys,
     staticInputs: JSX.IntrinsicElements[Tag],
-    child: Child,
+    child: Child
   ): NewComponent<
     ShallowAnd<
       {
@@ -64,12 +64,12 @@ export type ComponentFn = {
   <
     Tag extends keyof JSX.IntrinsicElements,
     AttributeKeys extends Array<keyof JSX.IntrinsicElements[Tag]>,
-    EventKeys extends Array<keyof JSX.IntrinsicElements[Tag] | "ref">,
+    EventKeys extends Array<keyof JSX.IntrinsicElements[Tag] | "ref">
   >(
     tag: Tag,
     dynamicInputs: AttributeKeys,
     outputs: EventKeys,
-    staticInputs: JSX.IntrinsicElements[Tag],
+    staticInputs: JSX.IntrinsicElements[Tag]
   ): NewComponent<
     {
       [K in AttributeKeys[number]]-?: Observable<JSX.IntrinsicElements[Tag][K]>;
@@ -85,7 +85,7 @@ export const childComponentBrand: unique symbol = Symbol();
 export const parentComponent =
   <
     RequiredChildAttributes extends Record<string, unknown> = {},
-    RequiredChildEvents extends Record<string, unknown> = {},
+    RequiredChildEvents extends Record<string, unknown> = {}
   >() =>
   <
     ParentAttributes extends {
@@ -93,19 +93,19 @@ export const parentComponent =
     },
     ParentEvents extends {
       child: RequiredChildEvents & { [childComponentBrand]: undefined };
-    },
+    }
   >(
     createFn: (
       child: NewComponent<
         RequiredChildAttributes & { [childComponentBrand]: undefined },
         RequiredChildEvents & { [childComponentBrand]: undefined }
-      >,
-    ) => NewComponent<ParentAttributes, ParentEvents>,
+      >
+    ) => NewComponent<ParentAttributes, ParentEvents>
   ): (<
     ChildAttributes extends RequiredChildAttributes = RequiredChildAttributes,
-    ChildEvents extends RequiredChildEvents = RequiredChildEvents,
+    ChildEvents extends RequiredChildEvents = RequiredChildEvents
   >(
-    child: NewComponent<ChildAttributes, ChildEvents>,
+    child: NewComponent<ChildAttributes, ChildEvents>
   ) => NewComponent<
     {
       [K in keyof ParentAttributes]: K extends "child"

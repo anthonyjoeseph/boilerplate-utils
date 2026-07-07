@@ -1,6 +1,5 @@
 import { Observable } from "rxjs";
 
-
 export type DomActions = Observable<{ key: string; action: string }>;
 
 // domActions -> domEvents

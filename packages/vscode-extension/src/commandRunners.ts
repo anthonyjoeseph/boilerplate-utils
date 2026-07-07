@@ -9,14 +9,14 @@ import {
   findEnclosingFromEntriesCall,
   findEnclosingMapCall,
   findSelectedCallExpression,
-  findSelectedExpression,
+  findSelectedExpression
 } from "./callSelection";
 import { resolveFunctionDefinition } from "./functionResolution";
 import {
   collectLiteralConstsVisibleAtCall,
   inlineCallExpression,
   literalInlineArray,
-  literalInlineObject,
+  literalInlineObject
 } from "./inlining";
 
 /** Result with replace range for array/object literal-inline (used by extension). */
@@ -48,7 +48,7 @@ export type SmartInlineResult =
   | { ok: false; error: string };
 
 export async function runSmartInline(
-  params: RunSmartInlineParams,
+  params: RunSmartInlineParams
 ): Promise<SmartInlineResult> {
   const {
     sourceText,
@@ -56,7 +56,7 @@ export async function runSmartInline(
     end,
     fileName,
     workspaceRoot,
-    scriptKind = "ts",
+    scriptKind = "ts"
   } = params;
   const sourceFile = createSourceFile(fileName, sourceText, scriptKind);
 
@@ -64,7 +64,7 @@ export async function runSmartInline(
   if (!callExpr) {
     return {
       ok: false,
-      error: "No function call expression found at the selection.",
+      error: "No function call expression found at the selection."
     };
   }
 
@@ -73,7 +73,7 @@ export async function runSmartInline(
     return {
       ok: false,
       error:
-        "Only simple function identifiers are supported (no methods or property accesses).",
+        "Only simple function identifiers are supported (no methods or property accesses)."
     };
   }
 
@@ -82,17 +82,17 @@ export async function runSmartInline(
       callee.text,
       sourceFile,
       fileName,
-      workspaceRoot,
+      workspaceRoot
     );
     if (!functionInfo) {
       return {
         ok: false,
-        error: `Could not resolve function declaration for "${callee.text}".`,
+        error: `Could not resolve function declaration for "${callee.text}".`
       };
     }
 
     const isAsyncCallee = !!functionInfo.node.modifiers?.some(
-      (m) => m.kind === ts.SyntaxKind.AsyncKeyword,
+      (m) => m.kind === ts.SyntaxKind.AsyncKeyword
     );
     if (isAsyncCallee) {
       const asyncCheck = validateAsyncCallContext(sourceFile, callExpr);
@@ -101,25 +101,25 @@ export async function runSmartInline(
           ok: false,
           error:
             asyncCheck.message ??
-            "Cannot inline async function in this context.",
+            "Cannot inline async function in this context."
         };
       }
     }
 
     const callerConstEnv = collectLiteralConstsVisibleAtCall(
       sourceFile,
-      callExpr,
+      callExpr
     );
     const inlineResult = inlineCallExpression(
       callExpr,
       functionInfo.node,
       functionInfo.sourceFile,
-      callerConstEnv,
+      callerConstEnv
     );
     if (!inlineResult) {
       return {
         ok: false,
-        error: "This function is too complex to inline safely.",
+        error: "This function is too complex to inline safely."
       };
     }
     const printer = ts.createPrinter({ removeComments: false });
@@ -128,21 +128,21 @@ export async function runSmartInline(
         printer.printNode(
           ts.EmitHint.Unspecified,
           decl,
-          functionInfo.sourceFile,
-        ) + "\n",
+          functionInfo.sourceFile
+        ) + "\n"
     );
     return {
       ok: true,
       expression: inlineResult.expression,
       neededImportTexts,
       replaceStart: callExpr.getStart(sourceFile),
-      replaceEnd: callExpr.getEnd(),
+      replaceEnd: callExpr.getEnd()
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     return {
       ok: false,
-      error: `Smart Inline Function failed: ${message}`,
+      error: `Smart Inline Function failed: ${message}`
     };
   }
 }
@@ -160,7 +160,7 @@ export type LiteralInlineTextResult =
   | { ok: false; error: string };
 
 export function runLiteralInline(
-  params: RunLiteralInlineParams,
+  params: RunLiteralInlineParams
 ): LiteralInlineTextResult {
   const { sourceText, start, end, fileName, scriptKind = "ts" } = params;
   const sourceFile = createSourceFile(fileName, sourceText, scriptKind);
@@ -169,7 +169,7 @@ export function runLiteralInline(
   if (!expr) {
     return {
       ok: false,
-      error: "No expression found at the selection to literal-inline.",
+      error: "No expression found at the selection to literal-inline."
     };
   }
   const text = literalInlineExpressionAtSelection(sourceFile, expr);
@@ -177,7 +177,7 @@ export function runLiteralInline(
     ok: true,
     text,
     replaceStart: expr.getStart(sourceFile),
-    replaceEnd: expr.getEnd(),
+    replaceEnd: expr.getEnd()
   };
 }
 
@@ -190,7 +190,7 @@ export interface RunLiteralInlineArrayParams {
 }
 
 export function runLiteralInlineArray(
-  params: RunLiteralInlineArrayParams,
+  params: RunLiteralInlineArrayParams
 ): LiteralInlineWithRangeResult {
   const { sourceText, start, end, fileName, scriptKind = "ts" } = params;
   const sourceFile = createSourceFile(fileName, sourceText, scriptKind);
@@ -199,7 +199,7 @@ export function runLiteralInlineArray(
   if (!expr) {
     return {
       ok: false,
-      error: "No expression found at the selection.",
+      error: "No expression found at the selection."
     };
   }
   const mapCall = findEnclosingMapCall(expr);
@@ -207,7 +207,7 @@ export function runLiteralInlineArray(
     return {
       ok: false,
       error:
-        "Selection must be inside a .map(...) call (e.g. myArray.map(...) or Object.entries(obj).map(...)).",
+        "Selection must be inside a .map(...) call (e.g. myArray.map(...) or Object.entries(obj).map(...))."
     };
   }
   const result = literalInlineArray(sourceFile, mapCall);
@@ -216,7 +216,7 @@ export function runLiteralInlineArray(
     ok: true,
     text: result.text,
     replaceStart: mapCall.getStart(sourceFile),
-    replaceEnd: mapCall.getEnd(),
+    replaceEnd: mapCall.getEnd()
   };
 }
 
@@ -229,7 +229,7 @@ export interface RunLiteralInlineObjectParams {
 }
 
 export function runLiteralInlineObject(
-  params: RunLiteralInlineObjectParams,
+  params: RunLiteralInlineObjectParams
 ): LiteralInlineWithRangeResult {
   const { sourceText, start, end, fileName, scriptKind = "ts" } = params;
   const sourceFile = createSourceFile(fileName, sourceText, scriptKind);
@@ -238,14 +238,14 @@ export function runLiteralInlineObject(
   if (!expr) {
     return {
       ok: false,
-      error: "No expression found at the selection.",
+      error: "No expression found at the selection."
     };
   }
   const fromEntriesCall = findEnclosingFromEntriesCall(expr);
   if (!fromEntriesCall) {
     return {
       ok: false,
-      error: "Selection must be inside Object.fromEntries(...).",
+      error: "Selection must be inside Object.fromEntries(...)."
     };
   }
   const result = literalInlineObject(sourceFile, fromEntriesCall);
@@ -254,21 +254,21 @@ export function runLiteralInlineObject(
     ok: true,
     text: result.text,
     replaceStart: fromEntriesCall.getStart(sourceFile),
-    replaceEnd: fromEntriesCall.getEnd(),
+    replaceEnd: fromEntriesCall.getEnd()
   };
 }
 
 function createSourceFile(
   fileName: string,
   sourceText: string,
-  scriptKind: ScriptKind,
+  scriptKind: ScriptKind
 ): ts.SourceFile {
   return ts.createSourceFile(
     fileName,
     sourceText,
     ts.ScriptTarget.Latest,
     true,
-    scriptKind === "tsx" ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+    scriptKind === "tsx" ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   );
 }
 
@@ -283,7 +283,7 @@ function isTopLevelAwaitAllowed(sourceFile: ts.SourceFile): boolean {
 
 function validateAsyncCallContext(
   sourceFile: ts.SourceFile,
-  callExpr: ts.CallExpression,
+  callExpr: ts.CallExpression
 ): AsyncContextCheckResult {
   const parent = callExpr.parent;
   const isAwaited = ts.isAwaitExpression(parent);
@@ -317,20 +317,20 @@ function validateAsyncCallContext(
 
   if (enclosingFunction) {
     const isParentAsync = !!enclosingFunction.modifiers?.some(
-      (m) => m.kind === ts.SyntaxKind.AsyncKeyword,
+      (m) => m.kind === ts.SyntaxKind.AsyncKeyword
     );
     if (!isParentAsync) {
       return {
         ok: false,
         message:
-          "Cannot inline async function here: enclosing function is not async.",
+          "Cannot inline async function here: enclosing function is not async."
       };
     }
     if (!isAwaited) {
       return {
         ok: false,
         message:
-          "Cannot inline async function here: the call is not awaited and inlining would change its behavior.",
+          "Cannot inline async function here: the call is not awaited and inlining would change its behavior."
       };
     }
     return { ok: true };
@@ -340,14 +340,14 @@ function validateAsyncCallContext(
     return {
       ok: false,
       message:
-        "Cannot inline async function at top level unless the call is awaited.",
+        "Cannot inline async function at top level unless the call is awaited."
     };
   }
   if (!isTopLevelAwaitAllowed(sourceFile)) {
     return {
       ok: false,
       message:
-        "Cannot inline async function here: top-level await is not allowed in this file.",
+        "Cannot inline async function here: top-level await is not allowed in this file."
     };
   }
   return { ok: true };
@@ -359,12 +359,12 @@ function validateAsyncCallContext(
  */
 export function selectionOffsets(
   sourceText: string,
-  selectedSubstring: string,
+  selectedSubstring: string
 ): { start: number; end: number } {
   const start = sourceText.indexOf(selectedSubstring);
   if (start === -1) {
     throw new Error(
-      `Selection substring not found: ${JSON.stringify(selectedSubstring)}`,
+      `Selection substring not found: ${JSON.stringify(selectedSubstring)}`
     );
   }
   return { start, end: start + selectedSubstring.length };

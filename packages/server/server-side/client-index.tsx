@@ -9,4 +9,7 @@ declare global {
 console.log(`\n\n\n${JSON.stringify(window.SERVER_SIDE_DATA)}\n\n\n`);
 
 const container = document.getElementById("app") as HTMLElement;
-hydrateRoot(container, <App /*  external={window.SERVER_SIDE_DATA as { id: string }} */ />);
+hydrateRoot(
+  container,
+  <App /*  external={window.SERVER_SIDE_DATA as { id: string }} */ />
+);

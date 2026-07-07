@@ -6,7 +6,7 @@
 import * as ts from "typescript";
 
 export function getBooleanLiteralValue(
-  node: ts.Expression,
+  node: ts.Expression
 ): boolean | undefined {
   if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
   if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
@@ -27,7 +27,7 @@ export function isDeepConstExpr(node: ts.Expression): boolean {
 
   if (ts.isArrayLiteralExpression(node)) {
     return node.elements.every(
-      (el) => ts.isExpression(el) && isDeepConstExpr(el as ts.Expression),
+      (el) => ts.isExpression(el) && isDeepConstExpr(el as ts.Expression)
     );
   }
 
@@ -54,7 +54,7 @@ export function isDeepConstExpr(node: ts.Expression): boolean {
 export function resolveConstExpression(
   expr: ts.Expression,
   env: Map<string, ts.Expression>,
-  depth: number,
+  depth: number
 ): ts.Expression | undefined {
   if (depth > 8) return undefined;
 
@@ -81,14 +81,14 @@ export function resolveConstExpression(
         ts.isPropertyAssignment(p) &&
         ((ts.isIdentifier(p.name) && p.name.text === propName) ||
           (ts.isStringLiteral(p.name) && p.name.text === propName) ||
-          (ts.isNumericLiteral(p.name) && p.name.text === propName)),
+          (ts.isNumericLiteral(p.name) && p.name.text === propName))
     ) as ts.PropertyAssignment | undefined;
     if (!matching || !ts.isExpression(matching.initializer)) return undefined;
     return (
       resolveConstExpression(
         matching.initializer as ts.Expression,
         env,
-        depth + 1,
+        depth + 1
       ) ?? (matching.initializer as ts.Expression)
     );
   }
@@ -122,7 +122,7 @@ export function resolveConstExpression(
             ts.isPropertyAssignment(p) &&
             ((ts.isIdentifier(p.name) && p.name.text === key) ||
               (ts.isStringLiteral(p.name) && p.name.text === key) ||
-              (ts.isNumericLiteral(p.name) && p.name.text === key)),
+              (ts.isNumericLiteral(p.name) && p.name.text === key))
         ) as ts.PropertyAssignment | undefined;
         if (!matching || !ts.isExpression(matching.initializer))
           return undefined;
@@ -130,7 +130,7 @@ export function resolveConstExpression(
           resolveConstExpression(
             matching.initializer as ts.Expression,
             env,
-            depth + 1,
+            depth + 1
           ) ?? (matching.initializer as ts.Expression)
         );
       }
@@ -149,7 +149,7 @@ export function resolveConstExpression(
  */
 export function collectLiteralConstsVisibleAtCall(
   sourceFile: ts.SourceFile,
-  nodeAt: ts.Node,
+  nodeAt: ts.Node
 ): Map<string, ts.Expression> {
   const result = new Map<string, ts.Expression>();
   const callStart = nodeAt.getStart(sourceFile);

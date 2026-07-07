@@ -37,7 +37,6 @@ The practical reason (as far as this repo is concerned) is - it's easy to expand
 
 Items listed are all unfinished. The top item is currently being worked on. It will be deleted from the top of the list once it's done.
 
-1. set up package.jsons & tsconfig.jsons for every package. Packages should be able to depend on each other. Typescript should be noemit, should cache to node_modules, and should not use project references
 1. set up eslint and prettier w/ flat config at roots.
 1. research vscode-extensions - does it make sense to have a separate package for the lsp and for the vscode-specific plugin? It looks like eslint does it all in one...
 1. set up CI w/ vitest smoke tests for all packages (maybe write a custom github action, with package-name as the input?)

@@ -12,7 +12,7 @@ import {
   runLiteralInline,
   runLiteralInlineArray,
   runLiteralInlineObject,
-  runSmartInline,
+  runSmartInline
 } from "./commandRunners";
 
 /** Minimal vscode API needed by handlers; tests pass a mock that satisfies this. */
@@ -24,14 +24,14 @@ export interface VscodeApi {
   };
   workspace: {
     getWorkspaceFolder?: (
-      uri: vscode.Uri,
+      uri: vscode.Uri
     ) => { uri: { fsPath: string } } | undefined;
   };
 }
 
 function getWorkspaceRoot(
   vscodeApi: VscodeApi,
-  document: { fileName: string; uri: vscode.Uri },
+  document: { fileName: string; uri: vscode.Uri }
 ): string {
   const folder = vscodeApi.workspace?.getWorkspaceFolder?.(document.uri);
   return folder ? folder.uri.fsPath : path.dirname(document.fileName);
@@ -47,21 +47,21 @@ function scriptKind(languageId: string): "ts" | "tsx" {
  */
 export async function handleSmartInline(
   vscodeApi: VscodeApi,
-  editor: vscode.TextEditor,
+  editor: vscode.TextEditor
 ): Promise<void> {
   try {
     await doHandleSmartInline(vscodeApi, editor);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     vscodeApi.window.showErrorMessage(
-      `Smart Inline Function failed: ${message}`,
+      `Smart Inline Function failed: ${message}`
     );
   }
 }
 
 async function doHandleSmartInline(
   vscodeApi: VscodeApi,
-  editor: vscode.TextEditor,
+  editor: vscode.TextEditor
 ): Promise<void> {
   const document = editor.document;
   const sourceText = document.getText();
@@ -76,7 +76,7 @@ async function doHandleSmartInline(
     end: offsetEnd,
     fileName: document.fileName,
     workspaceRoot,
-    scriptKind: scriptKind(document.languageId),
+    scriptKind: scriptKind(document.languageId)
   });
 
   if (!result.ok) {
@@ -87,7 +87,7 @@ async function doHandleSmartInline(
   await editor.edit((editBuilder) => {
     const existingText = document.getText();
     const toAdd = result.neededImportTexts.filter(
-      (line) => !existingText.includes(line),
+      (line) => !existingText.includes(line)
     );
     if (toAdd.length > 0) {
       const callerSourceFile = ts.createSourceFile(
@@ -97,10 +97,10 @@ async function doHandleSmartInline(
         true,
         document.languageId === "typescriptreact"
           ? ts.ScriptKind.TSX
-          : ts.ScriptKind.TS,
+          : ts.ScriptKind.TS
       );
       const existingImports = callerSourceFile.statements.filter((s) =>
-        ts.isImportDeclaration(s),
+        ts.isImportDeclaration(s)
       );
       const insertOffset =
         existingImports.length > 0
@@ -110,7 +110,7 @@ async function doHandleSmartInline(
     }
     const range = new vscodeApi.Range(
       document.positionAt(result.replaceStart),
-      document.positionAt(result.replaceEnd),
+      document.positionAt(result.replaceEnd)
     );
     editBuilder.replace(range, result.expression);
   });
@@ -121,7 +121,7 @@ async function doHandleSmartInline(
  */
 export async function handleLiteralInline(
   vscodeApi: VscodeApi,
-  editor: vscode.TextEditor,
+  editor: vscode.TextEditor
 ): Promise<void> {
   const document = editor.document;
   const sourceText = document.getText();
@@ -133,7 +133,7 @@ export async function handleLiteralInline(
     start: offsetStart,
     end: offsetEnd,
     fileName: document.fileName,
-    scriptKind: scriptKind(document.languageId),
+    scriptKind: scriptKind(document.languageId)
   });
 
   if (!result.ok) {
@@ -144,7 +144,7 @@ export async function handleLiteralInline(
   await editor.edit((editBuilder) => {
     const range = new vscodeApi.Range(
       document.positionAt(result.replaceStart),
-      document.positionAt(result.replaceEnd),
+      document.positionAt(result.replaceEnd)
     );
     editBuilder.replace(range, result.text);
   });
@@ -155,7 +155,7 @@ export async function handleLiteralInline(
  */
 export async function handleLiteralInlineArray(
   vscodeApi: VscodeApi,
-  editor: vscode.TextEditor,
+  editor: vscode.TextEditor
 ): Promise<void> {
   const document = editor.document;
   const sourceText = document.getText();
@@ -167,7 +167,7 @@ export async function handleLiteralInlineArray(
     start: offsetStart,
     end: offsetEnd,
     fileName: document.fileName,
-    scriptKind: scriptKind(document.languageId),
+    scriptKind: scriptKind(document.languageId)
   });
 
   if (!result.ok) {
@@ -178,7 +178,7 @@ export async function handleLiteralInlineArray(
   await editor.edit((editBuilder) => {
     const range = new vscodeApi.Range(
       document.positionAt(result.replaceStart),
-      document.positionAt(result.replaceEnd),
+      document.positionAt(result.replaceEnd)
     );
     editBuilder.replace(range, result.text);
   });
@@ -189,7 +189,7 @@ export async function handleLiteralInlineArray(
  */
 export async function handleLiteralInlineObject(
   vscodeApi: VscodeApi,
-  editor: vscode.TextEditor,
+  editor: vscode.TextEditor
 ): Promise<void> {
   const document = editor.document;
   const sourceText = document.getText();
@@ -201,7 +201,7 @@ export async function handleLiteralInlineObject(
     start: offsetStart,
     end: offsetEnd,
     fileName: document.fileName,
-    scriptKind: scriptKind(document.languageId),
+    scriptKind: scriptKind(document.languageId)
   });
 
   if (!result.ok) {
@@ -212,7 +212,7 @@ export async function handleLiteralInlineObject(
   await editor.edit((editBuilder) => {
     const range = new vscodeApi.Range(
       document.positionAt(result.replaceStart),
-      document.positionAt(result.replaceEnd),
+      document.positionAt(result.replaceEnd)
     );
     editBuilder.replace(range, result.text);
   });

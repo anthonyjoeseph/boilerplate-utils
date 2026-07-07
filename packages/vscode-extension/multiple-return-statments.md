@@ -84,7 +84,7 @@ runEffect(
     let returnValue: T;
     // ...inlined multi-return body, assigning returnValue...
     return returnValue;
-  })(),
+  })()
 );
 ```
 

@@ -44,17 +44,19 @@ export type DeepExtract<A, Prop extends string> = A extends readonly (infer E)[]
   ? DeepExtract<E, Prop>[]
   : A extends object
     ? {
-        [K in keyof A as K extends Prop
-          ? K
-          : HasProp<A[K], Prop> extends true
+        [
+          K in keyof A as K extends Prop
             ? K
-            : never]: K extends Prop ? A[K] : DeepExtract<A[K], Prop>;
+            : HasProp<A[K], Prop> extends true
+              ? K
+              : never
+        ]: K extends Prop ? A[K] : DeepExtract<A[K], Prop>;
       }
     : never;
 
 export const deepExtract = <A, const Prop extends string>(
   struct: A,
-  prop: Prop,
+  prop: Prop
 ): DeepExtract<A, Prop> => {
   const walk = (node: unknown): unknown => {
     if (Array.isArray(node)) return node.map(walk);
@@ -98,7 +100,7 @@ type CallRefs<A, Prop extends string> = A extends readonly (infer E)[]
 
 export const extractFn = <A, const Prop extends string>(
   struct: A,
-  prop: Prop,
+  prop: Prop
 ): (() => CallRefs<DeepExtract<A, Prop>, Prop>) => {
   const extracted = extract(struct, prop);
 

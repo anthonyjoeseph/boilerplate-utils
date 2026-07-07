@@ -11,7 +11,7 @@ const FAKE_WORKSPACE = path.dirname(__dirname);
 
 function positionAtOffset(
   text: string,
-  offset: number,
+  offset: number
 ): { line: number; character: number } {
   const lines = text.split(/\r?\n/);
   let current = 0;
@@ -24,13 +24,13 @@ function positionAtOffset(
   }
   return {
     line: lines.length - 1,
-    character: lines[lines.length - 1]?.length ?? 0,
+    character: lines[lines.length - 1]?.length ?? 0
   };
 }
 
 function offsetAtPosition(
   text: string,
-  position: { line: number; character: number },
+  position: { line: number; character: number }
 ): number {
   const lines = text.split(/\r?\n/);
   let offset = 0;
@@ -72,7 +72,7 @@ export interface MockEditor {
 export interface MockVscode {
   Range: new (
     start: { line: number; character: number },
-    end: { line: number; character: number },
+    end: { line: number; character: number }
   ) => { start: unknown; end: unknown };
   window: {
     showErrorMessage: jest.Mock<void, [message: string]>;
@@ -93,7 +93,7 @@ export function createMockEditor(
   sourceText: string,
   selectionStart: number,
   selectionEnd: number,
-  options: { fileName?: string; languageId?: string } = {},
+  options: { fileName?: string; languageId?: string } = {}
 ): MockEditor {
   const fileName = options.fileName ?? FAKE_FILE;
   const languageId = options.languageId ?? "typescript";
@@ -114,7 +114,7 @@ export function createMockEditor(
     },
     positionAt(offset: number) {
       return positionAtOffset(sourceText, offset);
-    },
+    }
   };
 
   const edit = jest.fn<
@@ -127,13 +127,13 @@ export function createMockEditor(
 
   const selection = {
     start: positionAtOffset(sourceText, selectionStart),
-    end: positionAtOffset(sourceText, selectionEnd),
+    end: positionAtOffset(sourceText, selectionEnd)
   };
 
   return {
     document,
     selection,
-    edit,
+    edit
   };
 }
 
@@ -147,20 +147,20 @@ export function createMockVscode(workspaceRoot?: string): MockVscode {
   const Range = jest.fn(
     (
       start: { line: number; character: number },
-      end: { line: number; character: number },
-    ) => ({ start, end }),
+      end: { line: number; character: number }
+    ) => ({ start, end })
   ) as unknown as MockVscode["Range"];
 
   return {
     Range,
     window: {
       showErrorMessage,
-      activeTextEditor: undefined,
+      activeTextEditor: undefined
     },
     workspace: {
       getWorkspaceFolder: () =>
-        workspaceRoot != null ? { uri: { fsPath: workspaceRoot } } : undefined,
-    },
+        workspaceRoot != null ? { uri: { fsPath: workspaceRoot } } : undefined
+    }
   };
 }
 

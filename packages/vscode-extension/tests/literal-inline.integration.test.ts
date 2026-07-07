@@ -19,12 +19,12 @@ const sum = arg + 3;
       const { start, end } = selectionOffsets(source, "arg + 3");
       const vscode = createMockVscode();
       const editor = createMockEditor(source, start, end, {
-        fileName: FAKE_FILE,
+        fileName: FAKE_FILE
       });
 
       await handleLiteralInline(
         vscode as unknown as VscodeApi,
-        editor as unknown as vscode.TextEditor,
+        editor as unknown as vscode.TextEditor
       );
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
@@ -43,12 +43,12 @@ const myString = \`\${month} says hello!\`;
       const { start, end } = selectionOffsets(source, "`${month} says hello!`");
       const vscode = createMockVscode();
       const editor = createMockEditor(source, start, end, {
-        fileName: FAKE_FILE,
+        fileName: FAKE_FILE
       });
 
       await handleLiteralInline(
         vscode as unknown as VscodeApi,
-        editor as unknown as vscode.TextEditor,
+        editor as unknown as vscode.TextEditor
       );
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
@@ -68,12 +68,12 @@ const bigArray = [...arg, 4, 5];
       const { start, end } = selectionOffsets(source, "[...arg, 4, 5]");
       const vscode = createMockVscode();
       const editor = createMockEditor(source, start, end, {
-        fileName: FAKE_FILE,
+        fileName: FAKE_FILE
       });
 
       await handleLiteralInline(
         vscode as unknown as VscodeApi,
-        editor as unknown as vscode.TextEditor,
+        editor as unknown as vscode.TextEditor
       );
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
@@ -92,12 +92,12 @@ const obj = { ...base, b: 2 };
       const { start, end } = selectionOffsets(source, "{ ...base, b: 2 }");
       const vscode = createMockVscode();
       const editor = createMockEditor(source, start, end, {
-        fileName: FAKE_FILE,
+        fileName: FAKE_FILE
       });
 
       await handleLiteralInline(
         vscode as unknown as VscodeApi,
-        editor as unknown as vscode.TextEditor,
+        editor as unknown as vscode.TextEditor
       );
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
@@ -117,16 +117,16 @@ const obj = { ...base, b: 2 };
       const source = `const x = ;`;
       const vscode = createMockVscode();
       const editor = createMockEditor(source, 0, source.length, {
-        fileName: FAKE_FILE,
+        fileName: FAKE_FILE
       });
 
       await handleLiteralInline(
         vscode as unknown as VscodeApi,
-        editor as unknown as vscode.TextEditor,
+        editor as unknown as vscode.TextEditor
       );
 
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-        expect.stringMatching(/No expression/),
+        expect.stringMatching(/No expression/)
       );
       expect(editor.edit).not.toHaveBeenCalled();
     });

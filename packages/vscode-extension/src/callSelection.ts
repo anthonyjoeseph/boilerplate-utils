@@ -3,7 +3,7 @@ import * as ts from "typescript";
 function findSelectedCallExpression(
   sourceFile: ts.SourceFile,
   start: number,
-  end: number,
+  end: number
 ): ts.CallExpression | undefined {
   let bestMatch: ts.CallExpression | undefined;
 
@@ -32,7 +32,7 @@ function findSelectedCallExpression(
 function findSelectedExpression(
   sourceFile: ts.SourceFile,
   start: number,
-  end: number,
+  end: number
 ): ts.Expression | undefined {
   let bestMatch: ts.Expression | undefined;
 
@@ -83,7 +83,7 @@ function findEnclosingMapCall(node: ts.Node): ts.CallExpression | undefined {
  * Returns the innermost CallExpression that is Object.fromEntries(...) containing the given node.
  */
 function findEnclosingFromEntriesCall(
-  node: ts.Node,
+  node: ts.Node
 ): ts.CallExpression | undefined {
   let current: ts.Node | undefined = node;
   while (current) {
@@ -108,5 +108,5 @@ export {
   findSelectedCallExpression,
   findSelectedExpression,
   findEnclosingMapCall,
-  findEnclosingFromEntriesCall,
+  findEnclosingFromEntriesCall
 };

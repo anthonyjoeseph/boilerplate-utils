@@ -24,7 +24,7 @@ module.exports = {
   ...module.exports,
   get alphabet() {
     return "0123456789".split("");
-  },
+  }
 };
 
 console.log(module.exports.newone);
