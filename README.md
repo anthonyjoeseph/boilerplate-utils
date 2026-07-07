@@ -2,7 +2,7 @@
 
 ## Example Repo Setup
 
-Users can use yeoman to quickly scaffold a new monorepo for their app
+Users can use [github template repositories](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-template-repository) to quickly scaffold a new monorepo for their app
 
 Users are encouraged (though not required) to use:
 
@@ -37,14 +37,12 @@ The practical reason (as far as this repo is concerned) is - it's easy to expand
 
 Items listed are all unfinished. The top item is currently being worked on. It will be deleted from the top of the list once it's done.
 
-1. set up pnpm monorepo w/ pnpm-workspace.yaml for shared packages
 1. set up package.jsons & tsconfig.jsons for every package. Packages should be able to depend on each other. Typescript should be noemit, should cache to node_modules, and should not use project references
 1. set up eslint and prettier w/ flat config at roots.
 1. research vscode-extensions - does it make sense to have a separate package for the lsp and for the vscode-specific plugin? It looks like eslint does it all in one...
 1. set up CI w/ vitest smoke tests for all packages (maybe write a custom github action, with package-name as the input?)
 1. set up push-to-npm on merge to main for each package (again - maybe a configurable custom action?)
 1. research yeoman - is it a good fit for us? Can we store code in this repo that gets pushed to the yeoman repo? Can we do it in GHA? How difficult is it to update?
-1.
 
 ## Repo Style
 

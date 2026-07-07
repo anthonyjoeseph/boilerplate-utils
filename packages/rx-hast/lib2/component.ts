@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 import { type Observable } from "rxjs";
-import { DomActions } from "./dom";
-import { ShallowAnd } from "./util";
+import { DomActions } from "./dom.js";
+import { ShallowAnd } from "./util.js";
 
 export type NewComponent<
   Attributes extends Record<string, unknown> = {},

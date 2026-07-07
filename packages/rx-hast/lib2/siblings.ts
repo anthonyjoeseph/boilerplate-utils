@@ -1,6 +1,6 @@
 import { createElement, Fragment, ReactNode } from "react";
-import { component, GetEvents, GetAttributes, NewComponent } from "./component";
-import { HasKeys, UnionToIntersection } from "./util";
+import { component, GetEvents, GetAttributes, NewComponent } from "./component.js";
+import { HasKeys, UnionToIntersection } from "./util.js";
 
 /**
  * As per https://stackoverflow.com/a/30919039 we can rely on Object.keys for

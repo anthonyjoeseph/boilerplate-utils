@@ -3,7 +3,7 @@ import { fileURLToPath } from "url";
 import express from "express";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
-import { App } from "../apps/App";
+import { App } from "../apps/App.js";
 
 // INCREDIBLE tutorial
 // https://a5h.dev/post/build-your-own-ssr-react-app/

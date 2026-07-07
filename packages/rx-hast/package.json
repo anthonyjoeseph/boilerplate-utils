@@ -4,10 +4,20 @@
   "description": "Observable-driven hast-like component tree with hot-module-reload support",
   "license": "MIT",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "lib2", "index.ts"],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

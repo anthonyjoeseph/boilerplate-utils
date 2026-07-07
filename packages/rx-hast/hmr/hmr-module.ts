@@ -1,5 +1,5 @@
 import * as r from "rxjs";
-import { hmr } from "./hmr-operator";
+import { hmr } from "./hmr-operator.js";
 
 export const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 

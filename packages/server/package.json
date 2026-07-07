@@ -4,10 +4,24 @@
   "description": "SSR / static-render example server for a boilerplate-utils app",
   "license": "MIT",
   "type": "module",
+  "main": "./dist/server-side/server-index.js",
+  "types": "./dist/server-side/server-index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/server-side/server-index.d.ts",
+      "default": "./dist/server-side/server-index.js"
+    },
+    "./static-render": {
+      "types": "./dist/static-render/index.d.ts",
+      "default": "./dist/static-render/index.js"
+    }
+  },
+  "files": ["dist", "server-side", "static-render"],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

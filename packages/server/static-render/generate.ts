@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import fs from "fs/promises";
-import { App } from "../apps/PlainApp";
+import { App } from "../apps/PlainApp.js";
 
 const newHtml = `
 <html>

@@ -1,6 +1,6 @@
 import { struct } from "fp-ts";
 import prop from "lodash/fp/prop";
-import { Prop } from "../../react/src/cycler";
+import { Prop } from "@boilerplate-utils/react";
 import { extract } from "fp-ts/es6/Identity";
 
 declare const testPayload: {

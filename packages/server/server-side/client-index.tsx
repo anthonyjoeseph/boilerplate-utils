@@ -1,5 +1,5 @@
 import { hydrateRoot } from "react-dom/client";
-import { App } from "../apps/App";
+import { App } from "../apps/App.js";
 
 declare global {
   interface Window {

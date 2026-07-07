@@ -1,8 +1,8 @@
 import { EMPTY, map, Observable, scan } from "rxjs";
-import { component, NewComponent, parentComponent } from "./component";
-import { CycleComponent, mapComponent, mapParentComponent } from "./map";
-import { proxifyObservable } from "./proxy";
-import { keyedSiblings } from "./siblings";
+import { component, NewComponent, parentComponent } from "./component.js";
+import { CycleComponent, mapComponent, mapParentComponent } from "./map.js";
+import { proxifyObservable } from "./proxy.js";
+import { keyedSiblings } from "./siblings.js";
 import { CSSProperties } from "react";
 
 const testParent = parentComponent<{}, { onAbort: Observable<unknown> }>()(

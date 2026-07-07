@@ -3,6 +3,10 @@ import React, {
   ReactElement,
   ComponentProps,
   JSXElementConstructor,
+  HTMLElementType,
+  DetailedReactHTMLElement,
+  HTMLAttributes,
+  InputHTMLAttributes,
 } from "react";
 
 export type UnionToIntersection<T> = (
@@ -11,65 +15,17 @@ export type UnionToIntersection<T> = (
   ? R
   : never;
 
-const ReffyThing = ({
-  ref,
-}: {
-  ref: React.Ref<HTMLInputElement>;
-  otherinput: number;
-  child?: { ref: React.Ref<HTMLInputElement> };
-}) => <input ref={ref} />;
+export const narrowFn = <
+  Fn extends (props: Record<string, unknown>) => any,
+  const Keep extends (keyof Parameters<Fn>[0])[],
+>(
+  fn: Fn,
+  keep: Keep,
+): ((narrowProps: {
+  [K in Keep[number]]: Parameters<Fn>[0][K];
+}) => ReturnType<Fn>) => null;
 
-const ParentRefComp = ({
-  allRefs,
-}: {
-  allRefs: {
-    single: {
-      ref: React.Ref<HTMLInputElement>;
-      child: {
-        ref: React.Ref<HTMLInputElement>;
-      };
-    };
-    many: { ref: React.Ref<HTMLInputElement> }[];
-  };
-}) => (
-  <>
-    <ReffyThing otherinput={42} ref={allRefs.single.ref} />
-    <ReffyThing otherinput={42} ref={allRefs.single.child.ref} />
-    {allRefs.many.map(({ ref }) => (
-      <ReffyThing otherinput={42} ref={ref} />
-    ))}
-  </>
-);
-
-type test = DeepRefObject<{
-  single: {
-    ref: React.Ref<HTMLInputElement>;
-    otherinput: number;
-    child: {
-      ref: React.Ref<HTMLInputElement>;
-    };
-  };
-  many: { ref: React.Ref<HTMLInputElement> }[];
-}>;
-
-type ExtractRef<A> = A extends React.RefObject<infer V> ? V : never;
-
-type DeepRefObject<A> =
-  A extends Array<unknown>
-    ? DeepRefObject<A[number]>[]
-    : A extends Record<string, unknown>
-      ? {
-          [K in keyof A as K extends "ref"
-            ? K
-            : A[K] extends Record<string, unknown>
-              ? K
-              : A[K] extends unknown[]
-                ? K
-                : never]: K extends "ref"
-            ? ExtractRef<A[K]>
-            : DeepRefObject<A[K]>;
-        }
-      : never;
+const thing = narrowFn(primitive("input"), ["onClick", "value"]);
 
 export const element = <Children extends JSXElementConstructor<any>[]>(
   el: ReactElement,
@@ -140,6 +96,7 @@ export const n = name;
 export const a = array;
 export const u = discriminatedUnion;
 export const o = optional;
+export const p = primitive;
 
 declare const TestCompA: FunctionComponent<{ a?: number; other: string }>;
 declare const TestCompB: FunctionComponent<{ b: string }>;
@@ -161,3 +118,29 @@ const TestDisc = discriminatedUnion("type", {
 const TestOpt = optional(TestCompA);
 
 const TestAll = e(<div />, [n("a", TestCompA), TestCompB]);
+
+// Overload for <input> — uses InputHTMLAttributes and HTMLInputElement
+export function primitive(
+  type: "input",
+): (
+  props: InputHTMLAttributes<HTMLInputElement>,
+) => DetailedReactHTMLElement<
+  InputHTMLAttributes<HTMLInputElement>,
+  HTMLInputElement
+>;
+
+// General overload for all other HTML elements
+export function primitive<T extends HTMLElementType>(
+  type: T,
+): (
+  props: HTMLAttributes<HTMLElement>,
+) => DetailedReactHTMLElement<HTMLAttributes<HTMLElement>, HTMLElement>;
+
+// Implementation
+export function primitive<T extends HTMLElementType>(type: T) {
+  return (
+    props: T extends "input"
+      ? InputHTMLAttributes<HTMLInputElement>
+      : HTMLAttributes<HTMLElement>,
+  ) => React.createElement(type, props);
+}

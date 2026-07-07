@@ -1,5 +1,5 @@
 import * as r from "rxjs";
-import { nums, letts, alphabet } from "./hmr-module";
+import { nums, letts, alphabet } from "./hmr-module.js";
 
 // npm install --save-dev @types/parcel-env
 

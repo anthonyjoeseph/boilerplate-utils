@@ -1,6 +1,6 @@
 import { defer, merge, Observable } from "rxjs";
-import { GetAttributes, GetEvents, NewComponent } from "./component";
-import { ShallowAnd } from "./util";
+import { GetAttributes, GetEvents, NewComponent } from "./component.js";
+import { ShallowAnd } from "./util.js";
 
 export const mapComponent = <
   Attributes extends Record<string, unknown> = {},
