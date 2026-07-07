@@ -1,0 +1,19 @@
+{
+  "name": "@boilerplate-utils/language-server",
+  "version": "0.0.1",
+  "description": "Language server backing the boilerplate-utils vscode extension",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

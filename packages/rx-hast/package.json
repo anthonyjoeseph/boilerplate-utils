@@ -1,0 +1,29 @@
+{
+  "name": "@boilerplate-utils/rx-hast",
+  "version": "0.0.1",
+  "description": "Observable-driven hast-like component tree with hot-module-reload support",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "uuid": "^11.0.5"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "react": "catalog:",
+    "rxjs": "catalog:",
+    "@types/react": "catalog:",
+    "@types/uuid": "^10.0.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

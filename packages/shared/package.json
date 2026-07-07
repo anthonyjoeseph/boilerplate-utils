@@ -1,0 +1,25 @@
+{
+  "name": "@boilerplate-utils/shared",
+  "version": "0.0.1",
+  "description": "Shared utilities meant to be re-used across every app in a monorepo",
+  "license": "MIT",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@boilerplate-utils/react": "workspace:*",
+    "fp-ts": "^2.16.9",
+    "fp-ts-routing": "^0.6.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.13",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "name": "smart-inline-function",
+  "displayName": "Smart Inline Function",
+  "description": "Inline TypeScript function calls with smart beta-reduction and conditional simplification, across files and (where possible) npm modules with source maps.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publisher": "your-name-or-org",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:smartInlineFunction.inline",
+    "onCommand:smartInlineFunction.literal-inline",
+    "onCommand:smartInlineFunction.literal-inline-array",
+    "onCommand:smartInlineFunction.literal-inline-object"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "smartInlineFunction.inline",
+        "title": "Smart Inline Function",
+        "category": "Refactor"
+      },
+      {
+        "command": "smartInlineFunction.literal-inline",
+        "title": "Smart Literal Inline",
+        "category": "Refactor"
+      },
+      {
+        "command": "smartInlineFunction.literal-inline-array",
+        "title": "Smart Literal Inline Array",
+        "category": "Refactor"
+      },
+      {
+        "command": "smartInlineFunction.literal-inline-object",
+        "title": "Smart Literal Inline Object",
+        "category": "Refactor"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "typescript": "catalog:"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.3",
+    "@types/jest": "^29.5.14",
+    "@types/node": "catalog:",
+    "@types/vscode": "^1.109.0",
+    "eslint": "^9.39.3",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript-eslint": "^8.56.1",
+    "vscode-test": "^1.6.1"
+  }
+}
