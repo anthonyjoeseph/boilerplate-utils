@@ -15,7 +15,7 @@ const { parse, format } = pathCodec(...(Object.keys(R) as (keyof typeof R)[]));
 const requestHandler = requestHandlerForRoutes(parse, R, {});
 
 app.use(
-  express.static(generateStatic(collectStaticAssets(R, {})), {
+  express.static(generateStatic(await collectStaticAssets(R, {})), {
     extensions: ["html"]
   })
 );

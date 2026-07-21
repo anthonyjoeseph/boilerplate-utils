@@ -8,20 +8,20 @@ export interface StaticAsset {
   extension: string;
 }
 
-export const collectStaticAssets = <
+export const collectStaticAssets = async <
   Routes extends Record<string, MethodHandlers<any, any>>,
   Dependencies
 >(
   routes: Routes,
   dependencies: Dependencies
-): Record<string, StaticAsset> => {
+): Promise<Record<string, StaticAsset>> => {
   const assets: Record<string, StaticAsset> = {};
 
   for (const [routePath, handlers] of Object.entries(routes)) {
     for (const handler of Object.values(handlers)) {
       if (!handler || handler.type !== "static-request") continue;
       assets[routePath] = {
-        content: handler.fn(dependencies),
+        content: await handler.fn(dependencies),
         extension: handler.extension
       };
     }

@@ -220,9 +220,15 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.17
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.17)
       react:
         specifier: 'catalog:'
         version: 19.2.7
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.7(react@19.2.7)
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -269,6 +275,9 @@ importers:
 
   packages/server:
     dependencies:
+      '@boilerplate-utils/react':
+        specifier: workspace:*
+        version: link:../react
       express:
         specifier: ^4.21.2
         version: 4.22.2
@@ -294,6 +303,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+      vite:
+        specifier: ^5.4.21
+        version: 5.4.21(@types/node@26.1.0)
       vitest:
         specifier: 'catalog:'
         version: 2.1.9(@types/node@26.1.0)
@@ -4449,14 +4461,6 @@ snapshots:
     optionalDependencies:
       vite: 5.4.21(@types/node@25.9.4)
 
-  '@vitest/mocker@2.1.9(vite@5.4.21(@types/node@26.1.0))':
-    dependencies:
-      '@vitest/spy': 2.1.9
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 5.4.21(@types/node@26.1.0)
-
   '@vitest/pretty-format@2.1.9':
     dependencies:
       tinyrainbow: 1.2.0
@@ -7072,7 +7076,7 @@ snapshots:
   vitest@2.1.9(@types/node@26.1.0):
     dependencies:
       '@vitest/expect': 2.1.9
-      '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@26.1.0))
+      '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@25.9.4))
       '@vitest/pretty-format': 2.1.9
       '@vitest/runner': 2.1.9
       '@vitest/snapshot': 2.1.9

@@ -35,7 +35,7 @@ export interface DynamicRequest<
       dependencies: Dependencies;
     },
     requestBody: RequestBody
-  ) => HttpResponse<ResponseBody>;
+  ) => Promise<HttpResponse<ResponseBody>>;
 }
 export const dynamicRequest = <
   Params,
@@ -51,7 +51,7 @@ export const dynamicRequest = <
       dependencies: Dependencies;
     },
     requestBody: RequestBody
-  ) => HttpResponse<ResponseBody>;
+  ) => Promise<HttpResponse<ResponseBody>>;
 }): DynamicRequest<Params, RequestBody, ResponseBody, Dependencies> => ({
   type: "dynamic-request",
   ...data
@@ -64,7 +64,7 @@ export interface StaticRequest<
   type: "static-request";
   extension: string;
   parseResponseBody?: z.ZodType<ClientResponse>;
-  fn: (dependencies: Dependencies) => NodeJS.ArrayBufferView;
+  fn: (dependencies: Dependencies) => Promise<NodeJS.ArrayBufferView>;
 }
 export const staticRequest = <
   Dependencies = unknown,
@@ -72,7 +72,7 @@ export const staticRequest = <
 >(data: {
   extension: string;
   parseResponseBody?: z.ZodType<ClientResponse>;
-  fn: (dependencies: Dependencies) => NodeJS.ArrayBufferView;
+  fn: (dependencies: Dependencies) => Promise<NodeJS.ArrayBufferView>;
 }): StaticRequest<Dependencies, ClientResponse> => ({
   type: "static-request",
   ...data

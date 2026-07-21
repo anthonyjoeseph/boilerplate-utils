@@ -4,6 +4,6 @@ export const GET: StaticRequest = {
   type: "static-request",
   extension: "html",
   fn: () => {
-    return Buffer.from(`<html>hello page</html>`);
+    return Promise.resolve(Buffer.from(`<html>hello page</html>`));
   }
 };

@@ -64,18 +64,20 @@ export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, D
       requestBody = result.data;
     }
 
-    const { statusCode = 200, statusMessage, headers, body } = handler.fn(
-      { params, dependencies },
-      requestBody
-    );
+    void (async () => {
+      const { statusCode = 200, statusMessage, headers, body } = await handler.fn(
+        { params, dependencies },
+        requestBody
+      );
 
-    res.status(statusCode);
-    if (statusMessage) res.statusMessage = statusMessage;
-    if (headers) {
-      for (const [key, value] of Object.entries(headers)) {
-        res.setHeader(key, value);
+      res.status(statusCode);
+      if (statusMessage) res.statusMessage = statusMessage;
+      if (headers) {
+        for (const [key, value] of Object.entries(headers)) {
+          res.setHeader(key, value);
+        }
       }
-    }
-    res.send(body);
+      res.send(body);
+    })().catch(next);
   };
 };
