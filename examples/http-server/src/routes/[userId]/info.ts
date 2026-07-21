@@ -1,6 +1,7 @@
-import type { RequestHandler } from "express";
+import { dynamicRequest } from "@boilerplate-utils/server";
 
-export const GET: RequestHandler<{ userId: string }> = (req, res) => {
-  res.status(200);
-  res.send(`user with id: ${req.params.userId}`);
-};
+export const GET = dynamicRequest({
+  fn: ({ params }: { params: { userId: string } }) => {
+    return { body: `user with id: ${params.userId}` };
+  }
+});

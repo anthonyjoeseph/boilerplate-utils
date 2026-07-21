@@ -312,6 +312,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.18.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@types/lodash':
         specifier: ^4.17.13
@@ -4446,6 +4449,14 @@ snapshots:
     optionalDependencies:
       vite: 5.4.21(@types/node@25.9.4)
 
+  '@vitest/mocker@2.1.9(vite@5.4.21(@types/node@26.1.0))':
+    dependencies:
+      '@vitest/spy': 2.1.9
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 5.4.21(@types/node@26.1.0)
+
   '@vitest/pretty-format@2.1.9':
     dependencies:
       tinyrainbow: 1.2.0
@@ -7061,7 +7072,7 @@ snapshots:
   vitest@2.1.9(@types/node@26.1.0):
     dependencies:
       '@vitest/expect': 2.1.9
-      '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@25.9.4))
+      '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@26.1.0))
       '@vitest/pretty-format': 2.1.9
       '@vitest/runner': 2.1.9
       '@vitest/snapshot': 2.1.9

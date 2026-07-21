@@ -1,6 +1,7 @@
-import type { RequestHandler } from "express";
+import { dynamicRequest } from "@boilerplate-utils/server";
 
-export const GET: RequestHandler = (_req, res) => {
-  res.status(200);
-  res.send("ok");
-};
+export const GET = dynamicRequest({
+  fn: () => {
+    return { body: "ok" };
+  }
+});

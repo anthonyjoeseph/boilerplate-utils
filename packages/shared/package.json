@@ -28,7 +28,8 @@
     "@boilerplate-utils/react": "workspace:*",
     "fp-ts": "^2.16.9",
     "fp-ts-routing": "^0.6.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.13",
