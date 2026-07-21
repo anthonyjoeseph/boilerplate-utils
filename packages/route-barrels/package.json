@@ -1,0 +1,24 @@
+{
+  "name": "@boilerplate-utils/route-barrels",
+  "version": "0.0.1",
+  "description": "CLI to generate typed barrel files for file-based routers",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "route-barrels": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

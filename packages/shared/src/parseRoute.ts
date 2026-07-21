@@ -1,144 +1,171 @@
-import {
-  Route,
-  parse as fpParse,
-  format as fpFormat,
-  end,
-  lit,
-  str,
-  zero,
-  Parser,
-  Formatter,
-  Match
-} from "fp-ts-routing";
-import * as O from "fp-ts/Option";
-import { identity, tuple } from "fp-ts/function";
+// Next.js dynamic-route syntax:
+//   [param]       – single dynamic segment
+//   [...slug]     – required catch-all  (one or more segments)
+//   [[...slug]]   – optional catch-all  (zero or more segments)
 
-// https://davidtimms.github.io/programming-languages/typescript/2020/11/20/exploring-template-literal-types-in-typescript-4.1.html
+// ── Type helpers ──────────────────────────────────────────────────────────────
+
+type SegmentParam<Seg extends string> =
+  Seg extends `[[...${string}]]`
+    ? never
+    : Seg extends `[...${string}]`
+      ? never
+      : Seg extends `[${infer P}]`
+        ? P
+        : never;
+
+// Collect all [param] names from a path string
 type PathParams<Path extends string> =
-  Path extends `:${infer Param}/${infer Rest}`
-    ? Param | PathParams<Rest>
-    : Path extends `:${infer Param}`
-      ? Param
-      : Path extends `${infer _Prefix}:${infer Rest}`
-        ? PathParams<`:${Rest}`>
-        : never;
+  Path extends `${infer Head}/${infer Tail}`
+    ? SegmentParam<Head> | PathParams<Tail>
+    : SegmentParam<Path>;
 
-type GreedyParams<Path extends string> = Path extends `*`
-  ? "tail"
-  : Path extends `*/`
-    ? "tail"
-    : Path extends `${infer _}/*`
-      ? "tail"
-      : Path extends `${infer _}/*/`
-        ? "tail"
-        : never;
+type CatchAllName<Path extends string> =
+  Path extends `${string}[[...${infer P}]]${string}`
+    ? P
+    : Path extends `${string}[...${infer P}]${string}`
+      ? P
+      : never;
 
-const greedy = new Match<{ tail: string }>(
-  new Parser((r) =>
-    O.some(tuple({ tail: r.parts.join("/") }, new Route([], r.query)))
-  ),
-  new Formatter(
-    (r, o) => new Route([...r.parts, ...o.tail.split("/")], r.query)
-  )
-);
-const neverMatch = new Match<{}>(
-  new Parser(() => O.none),
-  new Formatter(identity)
-);
+type IsOptionalCatchAll<Path extends string> =
+  Path extends `${string}[[...${string}]]${string}` ? true : false;
 
-export function pathCodec<Keys extends string[]>(...paths: Keys) {
-  type Path =
-    | {
-        [K in keyof Keys]: PathParams<Keys[K]> extends never
-          ? GreedyParams<Keys[K]> extends never
-            ? { path: Keys[K] }
-            : { path: Keys[K]; tail: string }
-          : GreedyParams<Keys[K]> extends never
-            ? {
-                path: Keys[K];
-                params: Record<PathParams<Keys[K]>, string>;
-              }
-            : {
-                path: Keys[K];
-                params: Record<PathParams<Keys[K]>, string>;
-                tail: string;
-              };
-      }[number]
-    | {
-        path: "NotFound";
-      };
-  const matches = paths.map((path) => {
-    const greedyPath = path.endsWith("/*")
-      ? "/*"
-      : path.endsWith("/*/")
-        ? "/*/"
-        : path === "*"
-          ? "*"
-          : path === "*/"
-            ? "*/"
-            : undefined;
-    if (!greedyPath && path.includes("*")) return [path, neverMatch] as const;
-    const rawSegments = greedyPath
-      ? path.replace(greedyPath, "").split("/")
-      : path.split("/");
-    const segments = rawSegments[0] === "" ? rawSegments.slice(1) : rawSegments;
-    const fullMatch = segments.reduce(
-      (match, segment) =>
-        segment.startsWith(":")
-          ? match.then(str(segment.slice(1)))
-          : match.then(lit(segment)),
-      lit("/")
-    );
-    const withGreedy = greedyPath ? fullMatch.then(greedy) : fullMatch;
-    return [path, withGreedy.then(end)] as const;
-  });
-  const parser = matches.reduce(
-    (acc, [path, cur]) =>
-      acc.alt(
-        cur.parser.map((params) =>
-          Object.keys(params).length > 0
-            ? "tail" in params
-              ? {
-                  path,
-                  params,
-                  tail: params.tail
-                }
-              : {
-                  path,
-                  params
-                }
-            : "tail" in params
-              ? { path, tail: params.tail }
-              : { path }
-        ) as Parser<Path>
-      ),
-    zero<Path>()
-  );
+type PathVariant<P extends string> = P extends string
+  ? [CatchAllName<P>] extends [never]
+    ? [PathParams<P>] extends [never]
+      ? { path: P }
+      : { path: P; params: Record<PathParams<P>, string> }
+    : IsOptionalCatchAll<P> extends true
+      ? [PathParams<P>] extends [never]
+        ? { path: P; tail?: string[] }
+        : { path: P; params: Record<PathParams<P>, string>; tail?: string[] }
+      : [PathParams<P>] extends [never]
+        ? { path: P; tail: string[] }
+        : { path: P; params: Record<PathParams<P>, string>; tail: string[] }
+  : never;
+
+// ── Runtime ───────────────────────────────────────────────────────────────────
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+interface MatcherInfo {
+  regex: RegExp;
+  paramNames: string[];
+  catchAllName: string | null;
+  isOptional: boolean;
+}
+
+function buildMatcher(path: string): MatcherInfo {
+  const parts = path.split("/");
+  const segments = parts[0] === "" ? parts.slice(1) : parts;
+
+  let regexStr = "";
+  const paramNames: string[] = [];
+  let catchAllName: string | null = null;
+  let isOptional = false;
+
+  for (const seg of segments) {
+    if (seg === "") continue; // trailing slash in template
+    if (seg.startsWith("[[...") && seg.endsWith("]]")) {
+      const name = seg.slice(5, -2);
+      catchAllName = name;
+      isOptional = true;
+      regexStr += `(?:/(?<${name}>.*))?`;
+    } else if (seg.startsWith("[...") && seg.endsWith("]")) {
+      const name = seg.slice(4, -1);
+      catchAllName = name;
+      regexStr += `/(?<${name}>.+)`;
+    } else if (seg.startsWith("[") && seg.endsWith("]")) {
+      const name = seg.slice(1, -1);
+      paramNames.push(name);
+      regexStr += `/(?<${name}>[^/]+)`;
+    } else {
+      regexStr += `/${escapeRegex(seg)}`;
+    }
+  }
+
+  if (!catchAllName) {
+    regexStr += "/?"; // trailing slash optional for static/param routes
+  }
+
   return {
-    parse: (string: string): Path =>
-      fpParse(parser, Route.parse(string), {
-        path: "NotFound"
-      } as Path) as Path,
-
-    format: (struct: Path): string =>
-      "tail" in struct
-        ? fpFormat(
-            (matches.find(([key]) => struct.path === key)?.[1]
-              ?.formatter as Formatter<{ tail: string }>) ?? end.formatter,
-            struct
-          )
-        : fpFormat(
-            (matches.find(([key]) => struct.path === key)?.[1]
-              ?.formatter as Formatter<{}>) ?? end.formatter,
-            struct
-          )
+    regex: new RegExp(`^${regexStr}$`),
+    paramNames,
+    catchAllName,
+    isOptional,
   };
 }
 
-const { parse, format } = pathCodec(
-  "/one/:var/two/:var2/",
-  "/one/:var/two/:var2/*",
-  "/two/",
-  "/two/*"
-);
-type Path = ReturnType<typeof parse>;
+function formatPath(
+  template: string,
+  params?: Record<string, string>,
+  tail?: string[]
+): string {
+  const parts = template.split("/");
+  const segments = parts[0] === "" ? parts.slice(1) : parts;
+  const result: string[] = [""];
+
+  for (const seg of segments) {
+    if (seg === "") continue;
+    if (seg.startsWith("[[...") && seg.endsWith("]]")) {
+      if (tail && tail.length > 0) result.push(...tail);
+    } else if (seg.startsWith("[...") && seg.endsWith("]")) {
+      if (tail) result.push(...tail);
+    } else if (seg.startsWith("[") && seg.endsWith("]")) {
+      const name = seg.slice(1, -1);
+      result.push(params?.[name] ?? "");
+    } else {
+      result.push(seg);
+    }
+  }
+
+  return result.join("/");
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export function pathCodec<Keys extends string[]>(...paths: Keys) {
+  type Path = PathVariant<Keys[number] & string> | { path: "NotFound" };
+
+  const matchers = paths.map((path) => ({ path, ...buildMatcher(path) }));
+
+  function parse(url: string): Path {
+    const pathname = url.split("?")[0] ?? url;
+    for (const { path, regex, paramNames, catchAllName, isOptional } of matchers) {
+      const match = pathname.match(regex);
+      if (!match) continue;
+      const groups = match.groups ?? {};
+
+      const params: Record<string, string> = {};
+      for (const name of paramNames) params[name] = groups[name] ?? "";
+      const hasParams = paramNames.length > 0;
+
+      if (catchAllName !== null) {
+        const raw = groups[catchAllName];
+        const tail = raw !== undefined && raw !== "" ? raw.split("/") : undefined;
+        if (hasParams && tail !== undefined) return { path, params, tail } as Path;
+        if (hasParams) return { path, params, ...(isOptional ? {} : { tail: [] }) } as Path;
+        if (tail !== undefined) return { path, tail } as Path;
+        return { path } as Path; // optional catch-all matched zero segments
+      }
+
+      if (hasParams) return { path, params } as Path;
+      return { path } as Path;
+    }
+    return { path: "NotFound" } as Path;
+  }
+
+  function format(struct: Path): string {
+    if (struct.path === "NotFound") return "/not-found";
+    const params =
+      "params" in struct
+        ? (struct.params as Record<string, string>)
+        : undefined;
+    const tail = "tail" in struct ? (struct.tail as string[] | undefined) : undefined;
+    return formatPath(struct.path, params, tail);
+  }
+
+  return { parse, format };
+}

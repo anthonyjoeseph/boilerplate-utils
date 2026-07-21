@@ -1,0 +1,26 @@
+{
+  "name": "@boilerplate-utils/example-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Server-side-rendered example: Express serving React, with Vite as the dev middleware",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "NODE_ENV=production tsx src/server.ts",
+    "generate-barrels": "route-barrels -d src/routes",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@boilerplate-utils/server": "workspace:*",
+    "@boilerplate-utils/shared": "workspace:*",
+    "express": "^4.21.2",
+    "rxjs": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@boilerplate-utils/route-barrels": "workspace:*",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

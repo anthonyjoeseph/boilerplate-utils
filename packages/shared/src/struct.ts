@@ -1,33 +1,3 @@
-import { struct } from "fp-ts";
-import prop from "lodash/fp/prop";
-import { Prop } from "@boilerplate-utils/react";
-import { extract } from "fp-ts/es6/Identity";
-
-declare const testPayload: {
-  name: {
-    ref: () => string;
-    errors: string[];
-  };
-  isSingle: {
-    ref: () => boolean;
-    errors: string[];
-  };
-  nothing: {
-    a: string;
-  };
-  friends: {
-    email: {
-      ref: () => string;
-      errors: string[];
-      onSubmit: () => void;
-    };
-    age: {
-      ref: () => number;
-      errors: string[];
-    };
-  }[];
-};
-
 type HasProp<A, Prop extends string> = A extends readonly (infer E)[]
   ? HasProp<E, Prop>
   : A extends (...args: never[]) => unknown
@@ -79,11 +49,7 @@ export const deepExtract = <A, const Prop extends string>(
   };
   return walk(struct) as DeepExtract<A, Prop>;
 };
-const testval = deepExtract(testPayload, "ref");
-
-// write `deepCall` and `deepCollapse` , for `() => string` and `{ ref: ... }` respectively
-
-type test = keyof { a: string } extends never ? true : false;
+/* 
 
 // Recursively replace `Prop: () => T` with `Prop: T`
 type CallRefs<A, Prop extends string> = A extends readonly (infer E)[]
@@ -123,8 +89,4 @@ export const extractFn = <A, const Prop extends string>(
     DeepExtract<A, Prop>,
     Prop
   >;
-};
-
-const testval2 = extractFn(testPayload, "ref");
-
-const val = testval2();
+}; */

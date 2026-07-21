@@ -8,7 +8,12 @@ import turboPlugin from "eslint-plugin-turbo";
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
-const REACT_FILES = ["packages/react/**/*.ts", "packages/react/**/*.tsx"];
+const REACT_FILES = [
+  "packages/react/**/*.ts",
+  "packages/react/**/*.tsx",
+  "examples/**/*.ts",
+  "examples/**/*.tsx"
+];
 
 export default defineConfig(
   includeIgnoreFile(path.join(import.meta.dirname, ".gitignore")),

@@ -1,21 +1,19 @@
+import fs from "node:fs/promises";
 import { renderToString } from "react-dom/server";
-import fs from "fs/promises";
 import { App } from "./App";
 
-const newHtml = `
-<html>
-    <div id="app">${renderToString(App)}</div>
-    <script type="module" src="index.ts"></script>
-</html>
-`;
-const existingHtml = await fs
-  .readFile("./src/examples/react/static-render/index.html", {
-    encoding: "utf-8"
-  })
-  .catch(() => "");
+const template = await fs.readFile("./index.html", { encoding: "utf-8" });
+const appHtml = renderToString(App());
+const newHtml = template.replace("<!--ssg-outlet-->", appHtml);
+
+const outDir = "./dist-ssg";
+const outFile = `${outDir}/index.html`;
+
+const existingHtml = await fs.readFile(outFile, { encoding: "utf-8" }).catch(() => "");
 if (existingHtml !== newHtml) {
   console.log("writing file");
-  await fs.writeFile("./src/examples/react/static-render/index.html", newHtml);
+  await fs.mkdir(outDir, { recursive: true });
+  await fs.writeFile(outFile, newHtml);
 } else {
   console.log("no changes");
 }
