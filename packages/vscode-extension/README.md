@@ -1,5 +1,22 @@
 # @boilerplate-utils vscode extension
 
+## Features
+
+- ctl+opt+cmd+click
+  - on a function - 'expand & reduce function'
+  - on an '@action' comment - run action
+- ctl+opt+cmd+. - 'semantic find & import'
+  - uses type information to narrow & sort the list
+  - inspired by haskell's 'typed holes'
+- ctl+opt+cmd+space - 'jump-to (semantic best guess)'
+  - user-provided '@hotspot' comments narrow the list
+- opt+cmd+click - jump to 'top' reference
+  - well defined if the definition is referenced exactly once
+  - otherwise, 'best guess' based on semantics
+- command pallette - 'talk to Jerry'
+
+# Prompt List / Roadmap
+
 Using fable. Finish the extension (expanding functions & adding imports, pruning imports that won’t be used, object.map etc, handling all possible cases of return value situations)
 
 --

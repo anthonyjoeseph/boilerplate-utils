@@ -1,13 +1,11 @@
-import React, {
+import type {
   FunctionComponent,
-  ReactElement,
   ComponentProps,
   JSXElementConstructor,
   HTMLElementType,
-  DetailedReactHTMLElement,
-  HTMLAttributes,
-  InputHTMLAttributes
+  JSX
 } from "react";
+import React from "react";
 
 export type UnionToIntersection<T> = (
   T extends any ? (x: T) => any : never
@@ -15,94 +13,171 @@ export type UnionToIntersection<T> = (
   ? R
   : never;
 
-export const narrowFn = <
-  Fn extends (props: Record<string, unknown>) => any,
-  const Keep extends (keyof Parameters<Fn>[0])[]
->(
-  fn: Fn,
-  keep: Keep
-): ((narrowProps: {
-  [K in Keep[number]]: Parameters<Fn>[0][K];
-}) => ReturnType<Fn>) => null;
+export type OptionalKeys<T> = {
+  [K in keyof T]-?: {} extends Pick<T, K> ? K : never;
+}[keyof T];
 
-const thing = narrowFn(primitive("input"), ["onClick", "value"]);
-
-export const element = <Children extends JSXElementConstructor<any>[]>(
-  el: ReactElement,
-  children: Children
-): FunctionComponent<
-  UnionToIntersection<
-    Children[number] extends any ? ComponentProps<Children[number]> : never
-  >
-> => null;
-
-export const component = <
-  Parent extends JSXElementConstructor<any>,
-  StaticProps extends Partial<ComponentProps<Parent>>,
-  Children extends JSXElementConstructor<any>[]
->(
-  parent: Parent,
-  staticProps: StaticProps,
-  children: Children
-): FunctionComponent<
-  {
+export const narrowFn =
+  <
+    Fn extends (props: any) => any,
+    const Keep extends OptionalKeys<Parameters<Fn>[0]>[]
+  >(
+    fn: Fn,
+    keep: Keep
+  ): ((narrowProps: {
     [
-      K in keyof ComponentProps<Parent> as K extends keyof StaticProps
-        ? undefined extends StaticProps[K]
+      K in keyof Parameters<Fn>[0] as {} extends Pick<Parameters<Fn>[0], K>
+        ? K extends Keep[number]
           ? K
           : never
         : K
-    ]: ComponentProps<Parent>[K];
-  } & UnionToIntersection<
-    Children[number] extends any ? ComponentProps<Children[number]> : never
-  >
-> => null;
+    ]: Parameters<Fn>[0][K];
+  }) => ReturnType<Fn>) =>
+  (narrowProps) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    fn(narrowProps) as any;
 
-export const name = <
-  Name extends string,
-  Parent extends JSXElementConstructor<any>
->(
-  name: Name,
-  parent: Parent
-): FunctionComponent<{ [K in Name]: ComponentProps<Parent> }> => null;
+export const applyPartial =
+  <
+    Fn extends (props: any) => any,
+    const Defaults extends Partial<Parameters<Fn>[0]>
+  >(
+    fn: Fn,
+    defaultVals: Defaults
+  ): ((narrowProps: {
+    [
+      K in keyof Parameters<Fn>[0] as undefined extends Defaults[K] ? K : never
+    ]: Parameters<Fn>[0][K];
+  }) => ReturnType<Fn>) =>
+  (narrowProps) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
+    fn({ ...defaultVals, ...narrowProps }) as any;
 
-export const array = <Parent extends JSXElementConstructor<any>>(
-  parent: Parent
-): FunctionComponent<ComponentProps<Parent>[]> => null;
+export function primitive<T extends HTMLElementType>(
+  type: T
+): (props: JSX.IntrinsicElements[T]) => React.ReactNode {
+  return (props: JSX.IntrinsicElements[T]) => React.createElement(type, props);
+}
 
-export const discriminatedUnion = <
-  Discriminator extends string,
-  Items extends Record<string, JSXElementConstructor<any>>
->(
-  discriminator: Discriminator,
-  options: Items
-): FunctionComponent<
+export const staticPrimitive = <T extends HTMLElementType>(
+  type: T,
+  staticProps: Partial<JSX.IntrinsicElements[T]>
+): ((props: {
+  children?: JSX.IntrinsicElements[T]["children"];
+}) => React.ReactNode) =>
+  narrowFn(
+    // The generic mapped types can't be resolved concretely here, so assert
+    // the post-`applyPartial` shape (only `children` survives narrowing).
+    applyPartial(primitive(type), staticProps) as (props: {
+      children?: JSX.IntrinsicElements[T]["children"];
+    }) => React.ReactNode,
+    ["children"]
+  );
+
+const Clickable = applyPartial(
+  narrowFn(primitive("input"), ["onClick", "value", "children"]),
   {
-    [K in keyof Items]: {
-      [
-        D in Discriminator | keyof ComponentProps<Items[K]>
-      ]: D extends Discriminator ? K : ComponentProps<Items[K]>[D];
-    };
-  }[keyof Items]
-> => null;
+    value: 1
+  }
+);
 
-export const optional = <Parent extends JSXElementConstructor<any>>(
-  parent: Parent
-): FunctionComponent<ComponentProps<Parent> | undefined> => null;
+export const component =
+  <
+    Parent extends JSXElementConstructor<any>,
+    Children extends JSXElementConstructor<any>[]
+  >(
+    parent: "children" extends keyof ComponentProps<Parent> ? Parent : never,
+    children: Children
+  ): FunctionComponent<
+    Omit<ComponentProps<Parent>, "children"> &
+      UnionToIntersection<
+        Children[number] extends any ? ComponentProps<Children[number]> : never
+      >
+  > =>
+  (props) =>
+    React.createElement(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+      parent as any,
+      props,
+      ...children.map((child, i) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        React.createElement(child as any, { ...props, key: i })
+      )
+    );
 
-export const e = element;
+export const name =
+  <Name extends string, Parent extends JSXElementConstructor<any>>(
+    name: Name,
+    parent: Parent
+    // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+  ): FunctionComponent<{ [K in Name]: ComponentProps<Parent> }> =>
+  (props) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+    React.createElement(parent as any, props[name]);
+
+export const array =
+  <Parent extends JSXElementConstructor<any>>(
+    parent: Parent
+  ): FunctionComponent<ComponentProps<Parent>[]> =>
+  (propsList) =>
+    React.createElement(
+      React.Fragment,
+      null,
+      ...propsList.map((props, i) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        React.createElement(parent as any, { ...props, key: i })
+      )
+    );
+
+export const discriminatedUnion =
+  <
+    Discriminator extends string,
+    Items extends Record<string, JSXElementConstructor<any>>
+  >(
+    discriminator: Discriminator,
+    options: Items
+  ): FunctionComponent<
+    {
+      [K in keyof Items]: {
+        [
+          D in Discriminator | keyof ComponentProps<Items[K]>
+        ]: D extends Discriminator ? K : ComponentProps<Items[K]>[D];
+      };
+    }[keyof Items]
+  > =>
+  (props) =>
+    React.createElement(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      options[(props as any)[discriminator]] as any,
+      props
+    );
+
+export const optional =
+  <Parent extends JSXElementConstructor<any>>(
+    parent: Parent
+  ): FunctionComponent<ComponentProps<Parent> | undefined> =>
+  (props) =>
+    props === undefined
+      ? null
+      : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        React.createElement(parent as any, props);
+
 export const c = component;
 export const n = name;
 export const a = array;
 export const u = discriminatedUnion;
 export const o = optional;
 export const p = primitive;
+export const sp = staticPrimitive;
 
 declare const TestCompA: FunctionComponent<{ a?: number; other: string }>;
-declare const TestCompB: FunctionComponent<{ b: string }>;
+declare const TestCompB: FunctionComponent<{ b: string; href: string }>;
 declare const TestCompC: FunctionComponent<{ c: boolean }>;
 
-const TestElement = element(<a />, [TestCompA, TestCompB]);
+const TestElement = c(sp("a", { style: { width: 300 } }), [
+  TestCompA,
+  TestCompB
+]);
 
 const TestComponent = component(TestCompA, { a: 3 }, [TestCompB, TestCompC]);
 
@@ -116,31 +191,3 @@ const TestDisc = discriminatedUnion("type", {
 });
 
 const TestOpt = optional(TestCompA);
-
-const TestAll = e(<div />, [n("a", TestCompA), TestCompB]);
-
-// Overload for <input> — uses InputHTMLAttributes and HTMLInputElement
-export function primitive(
-  type: "input"
-): (
-  props: InputHTMLAttributes<HTMLInputElement>
-) => DetailedReactHTMLElement<
-  InputHTMLAttributes<HTMLInputElement>,
-  HTMLInputElement
->;
-
-// General overload for all other HTML elements
-export function primitive<T extends HTMLElementType>(
-  type: T
-): (
-  props: HTMLAttributes<HTMLElement>
-) => DetailedReactHTMLElement<HTMLAttributes<HTMLElement>, HTMLElement>;
-
-// Implementation
-export function primitive<T extends HTMLElementType>(type: T) {
-  return (
-    props: T extends "input"
-      ? InputHTMLAttributes<HTMLInputElement>
-      : HTMLAttributes<HTMLElement>
-  ) => React.createElement(type, props);
-}

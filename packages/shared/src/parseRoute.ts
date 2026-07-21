@@ -33,7 +33,7 @@ type GreedyParams<Path extends string> = Path extends `*`
         ? "tail"
         : never;
 
-const greedy: Match<{ tail: string }> = new Match(
+const greedy = new Match<{ tail: string }>(
   new Parser((r) =>
     O.some(tuple({ tail: r.parts.join("/") }, new Route([], r.query)))
   ),
@@ -41,7 +41,7 @@ const greedy: Match<{ tail: string }> = new Match(
     (r, o) => new Route([...r.parts, ...o.tail.split("/")], r.query)
   )
 );
-const neverMatch: Match<{}> = new Match(
+const neverMatch = new Match<{}>(
   new Parser(() => O.none),
   new Formatter(identity)
 );
@@ -56,15 +56,11 @@ export function pathCodec<Keys extends string[]>(...paths: Keys) {
           : GreedyParams<Keys[K]> extends never
             ? {
                 path: Keys[K];
-                params: {
-                  [Param in PathParams<Keys[K]>]: string;
-                };
+                params: Record<PathParams<Keys[K]>, string>;
               }
             : {
                 path: Keys[K];
-                params: {
-                  [Param in PathParams<Keys[K]>]: string;
-                };
+                params: Record<PathParams<Keys[K]>, string>;
                 tail: string;
               };
       }[number]
@@ -105,14 +101,14 @@ export function pathCodec<Keys extends string[]>(...paths: Keys) {
               ? {
                   path,
                   params,
-                  tail: params["tail"]
+                  tail: params.tail
                 }
               : {
                   path,
                   params
                 }
             : "tail" in params
-              ? { path, tail: params["tail"] }
+              ? { path, tail: params.tail }
               : { path }
         ) as Parser<Path>
       ),

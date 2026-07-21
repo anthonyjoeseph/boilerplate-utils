@@ -1,12 +1,12 @@
-import { type ReactNode } from "react";
-import { type Observable } from "rxjs";
-import { DomActions } from "./dom.js";
-import { ShallowAnd } from "./util.js";
+import type { ReactNode, JSX } from "react";
+import type { Observable } from "rxjs";
+import type { DomActions } from "./dom.js";
+import type { ShallowAnd } from "./util.js";
 
-export type NewComponent<
+export interface NewComponent<
   Attributes extends Record<string, unknown> = {},
   Events extends Record<string, unknown> = {}
-> = {
+> {
   // hast-like static info, w/o reference to the DOM
   node: ReactNode;
 
@@ -16,7 +16,7 @@ export type NewComponent<
     domEmissions: DomActions,
     attrs: Attributes
   ) => { events: Events; domActions: DomActions };
-};
+}
 
 export type GetAttributes<Component extends NewComponent<any, any>> =
   Parameters<Component["hydrate"]>[2];
@@ -27,7 +27,7 @@ export type GetEvents<Component extends NewComponent<any, any>> = ReturnType<
 
 export type UsableEventsForTag<
   Tag extends keyof JSX.IntrinsicElements,
-  Keys extends Array<keyof JSX.IntrinsicElements[Tag]>
+  Keys extends (keyof JSX.IntrinsicElements[Tag])[]
 > = {
   [K in Keys[number]]: NonNullable<
     JSX.IntrinsicElements[Tag][K]
@@ -38,11 +38,11 @@ export type UsableEventsForTag<
       : never;
 };
 
-export type ComponentFn = {
+export interface ComponentFn {
   <
     Tag extends keyof JSX.IntrinsicElements,
-    AttributeKeys extends Array<keyof JSX.IntrinsicElements[Tag]>,
-    EventKeys extends Array<keyof JSX.IntrinsicElements[Tag] | "ref">,
+    AttributeKeys extends (keyof JSX.IntrinsicElements[Tag])[],
+    EventKeys extends (keyof JSX.IntrinsicElements[Tag] | "ref")[],
     Child extends NewComponent<any, any>
   >(
     tag: Tag,
@@ -63,8 +63,8 @@ export type ComponentFn = {
   >;
   <
     Tag extends keyof JSX.IntrinsicElements,
-    AttributeKeys extends Array<keyof JSX.IntrinsicElements[Tag]>,
-    EventKeys extends Array<keyof JSX.IntrinsicElements[Tag] | "ref">
+    AttributeKeys extends (keyof JSX.IntrinsicElements[Tag])[],
+    EventKeys extends (keyof JSX.IntrinsicElements[Tag] | "ref")[]
   >(
     tag: Tag,
     dynamicInputs: AttributeKeys,
@@ -76,7 +76,7 @@ export type ComponentFn = {
     },
     UsableEventsForTag<Tag, EventKeys>
   >;
-};
+}
 
 export const component: ComponentFn = 3 as any;
 

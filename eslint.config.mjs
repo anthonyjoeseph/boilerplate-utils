@@ -75,6 +75,9 @@ export default defineConfig(
   },
   {
     ...reactHooks.configs.flat["recommended-latest"],
-    files: REACT_FILES
+    files: REACT_FILES,
+    rules: {
+      "react-hooks/refs": ["off"]
+    }
   }
 );
