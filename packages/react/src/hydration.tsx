@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { JsonValue } from "./json.js";
 
 /**
  * Fixed ids shared between server and client. Never spelled out in user code —
@@ -11,7 +12,11 @@ export const PAGE_ROOT_ID = "__page";
 const PAGE_DATA_ID = "__page_data";
 
 /** Embeds loader data as JSON in the document. Renders nothing if `data` is undefined. */
-export const PageData = ({ data }: { data: unknown }): React.ReactElement | null =>
+export const PageData = <Data extends JsonValue | undefined>({
+  data
+}: {
+  data: Data;
+}): React.ReactElement | null =>
   data === undefined ? null : (
     <script
       id={PAGE_DATA_ID}
@@ -22,7 +27,7 @@ export const PageData = ({ data }: { data: unknown }): React.ReactElement | null
   );
 
 /** Client-side counterpart to {@link PageData}. */
-export const readPageData = <Data,>(): Data => {
+export const readPageData = <Data extends JsonValue | undefined>(): Data => {
   const el = document.getElementById(PAGE_DATA_ID);
   return el?.textContent ? (JSON.parse(el.textContent) as Data) : (undefined as Data);
 };
@@ -40,7 +45,7 @@ export const readPageData = <Data,>(): Data => {
  * default export against it at {@link PAGE_ROOT_ID} — the same root
  * `staticPage`/`dynamicPage` rendered server-side.
  */
-export const hydratePage = async <Props,>(
+export const hydratePage = async <Props extends JsonValue | undefined>(
   loadApp: () => Promise<{ default: ComponentType<Props> }>
 ): Promise<void> => {
   const [{ hydrateRoot }, React, { default: App }] = await Promise.all([

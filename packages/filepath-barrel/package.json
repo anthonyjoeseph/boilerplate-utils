@@ -1,11 +1,11 @@
 {
-  "name": "@boilerplate-utils/route-barrels",
+  "name": "@boilerplate-utils/filepath-barrel",
   "version": "0.0.1",
   "description": "CLI to generate typed barrel files for file-based routers",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "route-barrels": "./dist/index.js"
+    "filepath-barrel": "./dist/index.js"
   },
   "files": [
     "dist"

@@ -2,20 +2,20 @@
   "name": "@boilerplate-utils/example-ssr",
   "version": "0.0.0",
   "private": true,
-  "description": "Server-side-rendered example: Express serving React, with Vite as the dev middleware",
+  "description": "SSR example: vitePagesPlugin for dev, serveBuiltRoutes for prod, dynamicPage with a loader",
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev:client": "vite",
-    "dev:server": "vite-node --watch server-index.ts",
-    "build:client": "vite build --outDir dist/client",
-    "build:server": "vite build --outDir dist/server --ssr entry-server.tsx",
-    "build": "pnpm run build:client && pnpm run build:server",
-    "start": "NODE_ENV=production vite-node server-index.ts",
+    "dev": "vite",
+    "generate": "tsx scripts/generate.ts",
+    "build": "pnpm generate && vite build",
+    "start": "tsx server.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@boilerplate-utils/react": "workspace:*",
+    "@boilerplate-utils/server": "workspace:*",
+    "@boilerplate-utils/shared": "workspace:*",
     "express": "^4.21.2",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -26,8 +26,8 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "catalog:",
     "typescript": "catalog:",
-    "vite": "^5.4.21",
-    "vite-node": "^2.1.8"
+    "vite": "^5.4.21"
   }
 }

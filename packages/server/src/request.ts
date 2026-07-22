@@ -1,3 +1,4 @@
+import type { Readable } from "node:stream";
 import type { z } from "zod";
 export interface HttpResponse<Body> {
   /**
@@ -57,6 +58,25 @@ export const dynamicRequest = <
   ...data
 });
 
+export interface DynamicStreamingRequest<Params, Dependencies = unknown> {
+  type: "dynamic-streaming-request";
+  fn: (input: {
+    params: Params;
+    dependencies: Dependencies;
+    requestStream: Readable;
+  }) => Promise<HttpResponse<Readable>>;
+}
+export const dynamicStreamingRequest = <Params, Dependencies = unknown>(data: {
+  fn: (input: {
+    params: Params;
+    dependencies: Dependencies;
+    requestStream: Readable;
+  }) => Promise<HttpResponse<Readable>>;
+}): DynamicStreamingRequest<Params, Dependencies> => ({
+  type: "dynamic-streaming-request",
+  ...data
+});
+
 export interface StaticRequest<
   Dependencies = unknown,
   ClientResponse = ArrayBuffer
@@ -86,4 +106,5 @@ export type RequestObj<
   ClientResponse = ArrayBuffer
 > =
   | DynamicRequest<Params, RequestBody, ResponseBody, Dependencies>
+  | DynamicStreamingRequest<Params, Dependencies>
   | StaticRequest<Dependencies, ClientResponse>;

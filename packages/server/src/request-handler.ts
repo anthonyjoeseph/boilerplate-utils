@@ -1,15 +1,64 @@
+import type { ServerResponse } from "node:http";
+import type { Readable } from "node:stream";
 import type { RequestHandler } from "express";
-import type { RequestObj } from "./request.js";
+import type { DynamicStreamingRequest, HttpResponse, RequestObj } from "./request.js";
+type AnyHandler<T, Dependencies> =
+  | RequestObj<T, any, any, Dependencies, any>
+  | DynamicStreamingRequest<T, Dependencies>;
+
+/**
+ * Wires a streaming `HttpResponse<Readable>` into a response. Typed against
+ * plain `http.ServerResponse` (which Express's `Response` extends) rather
+ * than Express specifically, so it works both from the production request
+ * handler (Express) and from `vitePagesPlugin`'s dev middleware (connect,
+ * which hands middleware the raw Node response) without the two ever able to
+ * drift on close/flush/buffering behavior.
+ */
+export const pipeStreamingResponse = (
+  res: ServerResponse,
+  result: HttpResponse<Readable>
+): void => {
+  res.statusCode = result.statusCode ?? 200;
+  if (result.statusMessage) res.statusMessage = result.statusMessage;
+  // Ask any reverse proxy in front of this process (nginx, several CDNs) not
+  // to buffer the response — buffering would hold every chunk until the
+  // connection closes, defeating the whole point of streaming them. Set
+  // first so handler-provided headers can override it.
+  res.setHeader("X-Accel-Buffering", "no");
+  if (result.headers) {
+    for (const [key, value] of Object.entries(result.headers)) {
+      res.setHeader(key, value);
+    }
+  }
+
+  result.body.pipe(res);
+
+  // compression middleware buffers writes until flushed; force each chunk
+  // out as it arrives. `res.flush` only exists when such middleware is
+  // installed, hence the optional call.
+  result.body.on("data", () => {
+    (res as unknown as { flush?: () => void }).flush?.();
+  });
+
+  // The client disconnecting doesn't automatically stop `body` (pipe() does
+  // not propagate destination closure back to the source) — tie its lifetime
+  // to `res`'s explicitly, so the handler's own `body.on("close", ...)`
+  // cleanup (unsubscribing an rxjs source, say) fires.
+  res.on("close", () => {
+    result.body.destroy();
+  });
+};
+
 export interface MethodHandlers<T = Record<string | number, string>, Dependencies = unknown> {
-  GET?: RequestObj<T, any, any, Dependencies, any>;
-  POST?: RequestObj<T, any, any, Dependencies, any>;
-  PUT?: RequestObj<T, any, any, Dependencies, any>;
-  DELETE?: RequestObj<T, any, any, Dependencies, any>;
-  PATCH?: RequestObj<T, any, any, Dependencies, any>;
-  HEAD?: RequestObj<T, any, any, Dependencies, any>;
-  OPTIONS?: RequestObj<T, any, any, Dependencies, any>;
-  CONNECT?: RequestObj<T, any, any, Dependencies, any>;
-  TRACE?: RequestObj<T, any, any, Dependencies, any>;
+  GET?: AnyHandler<T, Dependencies>;
+  POST?: AnyHandler<T, Dependencies>;
+  PUT?: AnyHandler<T, Dependencies>;
+  DELETE?: AnyHandler<T, Dependencies>;
+  PATCH?: AnyHandler<T, Dependencies>;
+  HEAD?: AnyHandler<T, Dependencies>;
+  OPTIONS?: AnyHandler<T, Dependencies>;
+  CONNECT?: AnyHandler<T, Dependencies>;
+  TRACE?: AnyHandler<T, Dependencies>;
 }
 
 export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, Dependencies>(
@@ -45,14 +94,22 @@ export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, D
       return;
     }
 
+    const params = "params" in parsed ? parsed.params : {};
     const method = req.method.toUpperCase() as keyof MethodHandlers;
     const handler = handlers[method];
+
+    if (handler?.type === "dynamic-streaming-request") {
+      void (async () => {
+        const result = await handler.fn({ params, dependencies, requestStream: req });
+        pipeStreamingResponse(res, result);
+      })().catch(next);
+      return;
+    }
+
     if (handler?.type !== "dynamic-request") {
       next();
       return;
     }
-
-    const params = "params" in parsed ? parsed.params : {};
 
     let requestBody: unknown = req.body;
     if (handler.parseRequestBody) {

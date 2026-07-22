@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "start": "NODE_ENV=production tsx src/server.ts",
-    "generate-barrels": "route-barrels -d src/routes",
+    "generate-barrels": "filepath-barrel -d src/routes -b src/routes/index.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -19,7 +19,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@boilerplate-utils/route-barrels": "workspace:*",
+    "@boilerplate-utils/filepath-barrel": "workspace:*",
     "@types/express": "^4.17.21",
     "tsx": "catalog:",
     "typescript": "catalog:"

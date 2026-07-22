@@ -4,7 +4,7 @@ import express from "express";
 import type { Plugin, UserConfig } from "vite";
 import type { RequestHandler } from "express";
 import type { MethodHandlers } from "./request-handler.js";
-import { requestHandlerForRoutes } from "./request-handler.js";
+import { pipeStreamingResponse, requestHandlerForRoutes } from "./request-handler.js";
 import type { BundlerAdapter, PageDependencies } from "./bundler.js";
 
 type AnyRoutes = Record<string, MethodHandlers<any, any>>;
@@ -43,9 +43,15 @@ export const viteAdapter = (opts: {
         scripts: [`${base}@vite/client`, `${base}${toKey(sourcePath)}`],
         styles: []
       }),
+      // Dynamic `import()` with a bare top-level `await`, not a static
+      // `import` declaration or a self-invoking wrapper — see the
+      // `preambleScript` doc comment on `BundlerAdapter` for why: a static
+      // `import` is a SyntaxError outside `type="module"`, and a wrapper
+      // would return (and let the *next* script run) before this actually
+      // finishes installing the refresh hooks that next script may depend on.
       preambleScript: () =>
         [
-          `import { injectIntoGlobalHook } from "${base}@react-refresh";`,
+          `const { injectIntoGlobalHook } = await import("${base}@react-refresh");`,
           "injectIntoGlobalHook(window);",
           "window.$RefreshReg$ = () => {};",
           "window.$RefreshSig$ = () => (type) => type;"
@@ -178,6 +184,20 @@ export const vitePagesPlugin = (opts: {
         const bundler = viteAdapter({ mode: "dev", root: server.config.root });
         const dependencies = { ...opts.dependencies, bundler } as PageDependencies;
         const params = ("params" in parsed ? parsed.params : {}) as Record<string, string>;
+
+        if (handler.type === "dynamic-streaming-request") {
+          // Not run through `transformIndexHtml`: that expects a complete
+          // string, but a streaming response's body is written out over
+          // time as the source Observable emits — there is no final string
+          // to hand it. This is fine in practice because the one thing
+          // `transformIndexHtml` exists to inject for a custom SSR setup
+          // like this — the react-refresh preamble and `/@vite/client` — is
+          // already added by hand via `bundler.preambleScript()` /
+          // `resolveEntry()`, the same as every other page type here.
+          const result = await handler.fn({ params, dependencies, requestStream: req });
+          pipeStreamingResponse(res, result);
+          return;
+        }
 
         let html: string;
         if (handler.type === "static-request") {

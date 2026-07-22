@@ -32,7 +32,18 @@ export interface EntryAssets {
 export interface BundlerAdapter {
   mode: "dev" | "prod";
   resolveEntry: (sourcePath: string) => EntryAssets;
-  /** inline JS run before any entry script; dev-only (e.g. the react-refresh shim) */
+  /**
+   * Inline JS run before any entry script; dev-only (e.g. the react-refresh
+   * shim). A sequence of statements — not a self-invoking wrapper — safe to
+   * run under top-level `await` (as in a `type="module"` script) or inside an
+   * `async` function body (as in a classic script): callers that need the
+   * entry script to run immediately, rather than deferred until parsing
+   * completes, can't use `type="module"` for the preamble either (deferred
+   * module scripts execute in document order relative to each other, so a
+   * deferred preamble would still block a *deferred* entry — but not an
+   * intentionally non-deferred one), and have to fold this into their own
+   * wrapper instead.
+   */
   preambleScript?: () => string;
 }
 
