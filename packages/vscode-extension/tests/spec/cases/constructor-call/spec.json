@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "new F() is a NewExpression, not a CallExpression; findSelectedCallExpression returns null, so constructor calls are refused with 'No function call expression found'"
+}

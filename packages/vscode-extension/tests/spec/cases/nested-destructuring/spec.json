@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "nested destructuring patterns in parameters are not supported; ts.isIdentifier(element.name) fails for a BindingPattern, so the expansion is refused"
+}

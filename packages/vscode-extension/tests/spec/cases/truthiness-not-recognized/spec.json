@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "truthiness is not recognized; only literal true/false satisfy the if/else collapse condition check, so `if (n)` with n=0 is refused"
+}

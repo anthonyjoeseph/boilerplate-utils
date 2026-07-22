@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "rest parameters are not supported; the inliner returns undefined immediately when it encounters a dotDotDotToken parameter"
+}

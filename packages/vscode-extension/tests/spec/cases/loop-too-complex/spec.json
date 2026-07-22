@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "any body containing a loop is refused as 'too complex'; loop unrolling is a Phase 4 feature"
+}

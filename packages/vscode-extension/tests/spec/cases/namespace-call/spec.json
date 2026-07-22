@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "namespace-qualified calls (ns.f()) have a PropertyAccessExpression callee; rejected with 'Only simple function identifiers' even though the target function is statically known"
+}
