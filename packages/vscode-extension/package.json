@@ -11,33 +11,13 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:smartInlineFunction.inline",
-    "onCommand:smartInlineFunction.literal-inline",
-    "onCommand:smartInlineFunction.literal-inline-array",
-    "onCommand:smartInlineFunction.literal-inline-object"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "smartInlineFunction.inline",
-        "title": "Smart Inline Function",
-        "category": "Refactor"
-      },
-      {
-        "command": "smartInlineFunction.literal-inline",
-        "title": "Smart Literal Inline",
-        "category": "Refactor"
-      },
-      {
-        "command": "smartInlineFunction.literal-inline-array",
-        "title": "Smart Literal Inline Array",
-        "category": "Refactor"
-      },
-      {
-        "command": "smartInlineFunction.literal-inline-object",
-        "title": "Smart Literal Inline Object",
+        "title": "Smart Inline",
         "category": "Refactor"
       }
     ]

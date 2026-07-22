@@ -8,12 +8,7 @@ import * as path from "path";
 import * as ts from "typescript";
 import type * as vscode from "vscode";
 
-import {
-  runLiteralInline,
-  runLiteralInlineArray,
-  runLiteralInlineObject,
-  runSmartInline
-} from "./commandRunners";
+import { runInline } from "./commandRunners";
 
 /** Minimal vscode API needed by handlers; tests pass a mock that satisfies this. */
 export interface VscodeApi {
@@ -42,8 +37,13 @@ function scriptKind(languageId: string): "ts" | "tsx" {
 }
 
 /**
- * Handler for Smart Inline Function. Uses runSmartInline and then
- * showErrorMessage or editor.edit (replace + optional import insertion).
+ * Handler for the unified Smart Inline command (`smartInlineFunction.inline`).
+ *
+ * It classifies what the selection points at and dispatches to one of four
+ * behaviors — relocate a function body, evaluate a `.map(...)`, evaluate an
+ * `Object.fromEntries(...)`, or fold an expression — then applies the edit
+ * (replace + optional import insertion). The name is retained because the
+ * surviving command is `smartInlineFunction.inline`.
  */
 export async function handleSmartInline(
   vscodeApi: VscodeApi,
@@ -53,9 +53,7 @@ export async function handleSmartInline(
     await doHandleSmartInline(vscodeApi, editor);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    vscodeApi.window.showErrorMessage(
-      `Smart Inline Function failed: ${message}`
-    );
+    vscodeApi.window.showErrorMessage(`Smart Inline failed: ${message}`);
   }
 }
 
@@ -70,7 +68,7 @@ async function doHandleSmartInline(
   const offsetEnd = document.offsetAt(selection.end);
   const workspaceRoot = getWorkspaceRoot(vscodeApi, document);
 
-  const result = await runSmartInline({
+  const result = await runInline({
     sourceText,
     start: offsetStart,
     end: offsetEnd,
@@ -111,107 +109,5 @@ async function doHandleSmartInline(
       document.positionAt(result.replaceEnd)
     );
     editBuilder.replace(range, result.expression);
-  });
-}
-
-/**
- * Handler for Smart Literal Inline.
- */
-export async function handleLiteralInline(
-  vscodeApi: VscodeApi,
-  editor: vscode.TextEditor
-): Promise<void> {
-  const document = editor.document;
-  const sourceText = document.getText();
-  const offsetStart = document.offsetAt(editor.selection.start);
-  const offsetEnd = document.offsetAt(editor.selection.end);
-
-  const result = runLiteralInline({
-    sourceText,
-    start: offsetStart,
-    end: offsetEnd,
-    fileName: document.fileName,
-    scriptKind: scriptKind(document.languageId)
-  });
-
-  if (!result.ok) {
-    vscodeApi.window.showErrorMessage(result.error);
-    return;
-  }
-
-  await editor.edit((editBuilder) => {
-    const range = new vscodeApi.Range(
-      document.positionAt(result.replaceStart),
-      document.positionAt(result.replaceEnd)
-    );
-    editBuilder.replace(range, result.text);
-  });
-}
-
-/**
- * Handler for Smart Literal Inline Array.
- */
-export async function handleLiteralInlineArray(
-  vscodeApi: VscodeApi,
-  editor: vscode.TextEditor
-): Promise<void> {
-  const document = editor.document;
-  const sourceText = document.getText();
-  const offsetStart = document.offsetAt(editor.selection.start);
-  const offsetEnd = document.offsetAt(editor.selection.end);
-
-  const result = runLiteralInlineArray({
-    sourceText,
-    start: offsetStart,
-    end: offsetEnd,
-    fileName: document.fileName,
-    scriptKind: scriptKind(document.languageId)
-  });
-
-  if (!result.ok) {
-    vscodeApi.window.showErrorMessage(result.error);
-    return;
-  }
-
-  await editor.edit((editBuilder) => {
-    const range = new vscodeApi.Range(
-      document.positionAt(result.replaceStart),
-      document.positionAt(result.replaceEnd)
-    );
-    editBuilder.replace(range, result.text);
-  });
-}
-
-/**
- * Handler for Smart Literal Inline Object.
- */
-export async function handleLiteralInlineObject(
-  vscodeApi: VscodeApi,
-  editor: vscode.TextEditor
-): Promise<void> {
-  const document = editor.document;
-  const sourceText = document.getText();
-  const offsetStart = document.offsetAt(editor.selection.start);
-  const offsetEnd = document.offsetAt(editor.selection.end);
-
-  const result = runLiteralInlineObject({
-    sourceText,
-    start: offsetStart,
-    end: offsetEnd,
-    fileName: document.fileName,
-    scriptKind: scriptKind(document.languageId)
-  });
-
-  if (!result.ok) {
-    vscodeApi.window.showErrorMessage(result.error);
-    return;
-  }
-
-  await editor.edit((editBuilder) => {
-    const range = new vscodeApi.Range(
-      document.positionAt(result.replaceStart),
-      document.positionAt(result.replaceEnd)
-    );
-    editBuilder.replace(range, result.text);
   });
 }

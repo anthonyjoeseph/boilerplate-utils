@@ -173,7 +173,8 @@ a fresh node with no `questionDotToken`, silently turning `o?.b` into `o.b`. The
 
 ### Hygiene / packaging
 
-- `activationEvents` uses the pre-1.74 `onCommand:` form.
+- ~~`activationEvents` uses the pre-1.74 `onCommand:` form.~~ **Fixed** in the command
+  merge — now `[]`, auto-activated from `contributes.commands`.
 - `publisher` is the literal placeholder `"your-name-or-org"`.
 - `README.md` advertises `ctrl+opt+cmd+click`, `ctrl+opt+cmd+.`, and
   `ctrl+opt+cmd+space`; `package.json` contributes zero keybindings, menus, or config.
@@ -329,11 +330,12 @@ Runs over already-relocated code. Every item here is all-or-nothing per construc
 2. Preview/diff pane with attached warnings before applying.
 3. Diagnostics naming the exact blocking node, replacing
    `"This function is too complex to inline safely."`
-4. Fix `activationEvents`, `publisher`; delete `schema.json` and `vscode-test`.
+4. Fix `publisher`; delete `schema.json` and `vscode-test`. (`activationEvents` fixed
+   in the command merge.)
 5. Reconcile `README.md` / `README.old.md` / `TODO.md` / this file into one story.
-6. **Command unification** — collapse the four commands into a single
-   `smartInlineFunction.inline` that dispatches by context. See the dedicated
-   section below.
+6. ~~**Command unification** — collapse the four commands into a single
+   `smartInlineFunction.inline` that dispatches by context.~~ **Done** — see the
+   dedicated section below.
 
 ### Not on the roadmap: LSP extraction
 
@@ -377,9 +379,12 @@ reaches it. Context-dispatch enforces the rule mechanically instead of relying o
 user to pick the matching command.
 
 **The one genuine ambiguity.** A plain user-function call `f(x)` is both a
-smart-inline target and a foldable expression. Resolve by precedence: attempt
-relocation first; fall back to fold. Nothing is lost — `literal-inline` on a bare
-call currently leaves the callee untouched anyway (Phase 4 item 8).
+smart-inline target and a foldable expression. Precedence resolves it: it is
+classified as `smart-inline`, and if relocation isn't available the command reports
+*why* ("too complex" / "could not resolve") rather than silently folding — see the
+"no fold-fallback" decision under Steps. Nothing useful is lost, since `literal-inline`
+on a bare call leaves the callee untouched anyway (Phase 4 item 8). A user who
+specifically wants to fold a call's arguments is escape-hatch territory (below).
 
 **Precedence.** First match wins: object → array → smart-inline → fold. A `none`
 result (nothing actionable) yields a single, honest error instead of four different
@@ -392,50 +397,71 @@ result (nothing actionable) yields a single, honest error instead of four differ
    `literal-inline-object` / `literal-inline-array` / `smart-inline` /
    `literal-inline` / `none` by the precedence above. Pure and side-effect free; it
    only classifies. Covered by `tests/inline-dispatch.test.ts`, including the
-   "cursor on the outer call must not be hijacked by a nested `.map`" case. Nothing
-   is wired to it yet, so behavior is unchanged.
-2. **Dispatching runner.** Add `runInline` (or fold into `handleSmartInline`) that
-   calls `classifyInlineTarget`, then delegates to the existing `runSmartInline` /
-   `runLiteralInline` / `runLiteralInlineArray` / `runLiteralInlineObject`. The
-   result shapes already unify (all carry `replaceStart` / `replaceEnd` / text; only
-   smart-inline adds `neededImportTexts`), so the handler's editor-edit path barely
-   changes.
-3. **Fallback chain for the ambiguous case.** When `smart-inline` classification
-   fails to *resolve* the callee or the body is "too complex," fall back to `fold`
-   rather than surfacing the smart-inline error — the classifier says "this is a
-   call," but resolution is what decides whether relocation is actually available.
-4. **Rewire `handleSmartInline` to dispatch.** This is the behavior-changing step and
-   the reason it is sequenced last. Several existing error-case tests assert
-   smart-inline-specific messages (`(f)()` → "simple function identifiers"; a bare
-   expression → "No function call expression found") that will change once dispatch
-   falls through to fold. Update those tests deliberately, one behavior at a time.
-5. **Collapse `package.json`.** Remove the three `literal-*` `commands` and
-   `activationEvents` entries (the `onCommand:` cleanup in Phase 6.4 lands here too),
-   leaving a single contributed command. Keep the one title generic
-   ("Smart Inline") since it now covers all four behaviors.
-6. **Diagnostics.** The merged command needs a "what did I do?" signal — the four
-   behaviors are no longer distinguished by which menu item was clicked. A brief
-   status-bar / info message ("Inlined function body", "Evaluated `.map`") closes the
-   loop; wire it through the Phase 6.2 preview pane once that exists.
+   "cursor on the outer call must not be hijacked by a nested `.map`" case. Now
+   consumed by `runInline` (step 2).
+2. ~~**Dispatching runner.**~~ **Done** — `runInline` in `commandRunners.ts` calls
+   `classifyInlineTarget`, then delegates to `runSmartInline` / `runLiteralInline` /
+   `runLiteralInlineArray` / `runLiteralInlineObject`. It normalizes all four into one
+   result shape (`expression` + `neededImportTexts`, the latter always `[]` except
+   smart-inline) plus a `behavior` tag for diagnostics, so the handler's editor-edit
+   path is a single branch.
+3. ~~**Fallback chain.**~~ **Decided against — no fold-fallback.** The earlier plan was
+   to fall back to `fold` when a `smart-inline` classification failed to resolve or was
+   "too complex." Rejected: folding a call the user pointed at is a no-op reprint (the
+   fold engine leaves callees untouched), so the user sees the call silently reprint
+   with no explanation. Reporting *why* relocation failed ("too complex", "could not
+   resolve") is strictly better UX, and it keeps dispatch honest — the behavioral spec
+   harness can still see a failed relocation as a failure rather than a masked no-op.
+   Cases that genuinely want folding are classified as `literal-inline` up front.
+4. ~~**Rewire `handleSmartInline` to dispatch.**~~ **Done** — it now calls `runInline`.
+   The behavior-changing cases were updated in the consolidated integration test: a
+   bare expression (`1 + 2`) now folds instead of erroring "No function call found"; a
+   const array outside any `.map` now folds instead of erroring "must be inside a
+   `.map`". Inputs with a non-identifier callee (`(f)()`, `obj.f()`) route to fold
+   rather than the old "simple function identifiers" refusal.
+5. ~~**Collapse `package.json`.**~~ **Done** — one contributed command
+   (`smartInlineFunction.inline`, title "Smart Inline"); the three `literal-*` commands
+   and their handlers are gone, `extension.ts` registers only the one, and
+   `activationEvents` is now `[]` (the pre-1.74 `onCommand:` form is retired; VS Code
+   ≥1.74 auto-activates from `contributes.commands`).
+6. **Diagnostics (open).** The merged command needs a "what did I do?" signal — the
+   four behaviors are no longer distinguished by which menu item was clicked.
+   `runInline`'s result already carries a `behavior` tag for exactly this; it is not
+   yet surfaced. A brief status-bar / info message ("Inlined function body",
+   "Evaluated `.map`") closes the loop; wire it through the Phase 6.2 preview pane
+   once that exists.
 
-### Escape hatch
+### Escape hatch (open)
 
-Some users may want to *force* fold-over-relocate on an ambiguous `f(x)`, or force a
-specific builtin evaluation. Options, cheapest first: (a) drop the overrides entirely
-and rely on cursor placement — ship this and see if anyone misses them; (b) keep the
-three `literal-*` commands unlisted (removed from the command palette / menus but
-still invokable via keybinding) as power-user overrides; (c) a command *argument*
-(`smartInlineFunction.inline` with `{ mode: "fold" }`). Decide after step 4, when the
-merged command's real-world ambiguity rate is observable — do not build the escape
-hatch preemptively.
+Some users may want to *force* fold-over-relocate on an `f(x)`, or force a specific
+builtin evaluation. Options, cheapest first: (a) drop the overrides entirely and rely
+on cursor placement — this is what shipped; see if anyone misses them; (b) re-add the
+three `literal-*` commands unlisted (invokable via keybinding, hidden from palette /
+menus) as power-user overrides; (c) a command *argument* (`smartInlineFunction.inline`
+with `{ mode: "fold" }`). Decide once the merged command's real-world ambiguity rate is
+observable — do not build the escape hatch preemptively.
 
-### What's already landed toward this
+### The behavioral-spec boundary
 
-Only step 1: the pure `classifyInlineTarget` classifier and its tests. It is
-purely additive — no command is wired to it, so the four commands behave exactly as
-before. It exists so that steps 2–4 compose existing pieces instead of re-deriving
-the selection logic, and so the dispatch precedence has a tested home before any
-behavior changes.
+`tests/spec/` continues to drive `runSmartInline` directly, **not** `runInline`. That
+harness tests the *relocation engine* — the `smart-inline` dispatch target — and the
+merge does not change the engine. Routing it through `runInline` would be actively
+harmful: a `known: broken` relocation that the engine refuses would, under a
+fold-fallback, "succeed" as a no-op reprint and flip the spec to green, masking the
+very bug it tracks. Even without a fallback, the specs asserting that non-identifier
+callees are *refused* (`refuses-method-call`, `constructor-call`, `namespace-call`,
+`parenthesized-call`) describe an engine property that the command layer now handles by
+routing to fold — a command-level concern, covered by `inline.integration.test.ts`.
+Keep the two layers' tests separate: engine correctness in `tests/spec/`, dispatch
+behavior in the integration test.
+
+### What's landed
+
+Steps 1, 2, 4, 5 are done and step 3 is resolved; the command is merged and shipping.
+The four `.integration.test.ts` files were consolidated into `inline.integration.test.ts`,
+which specs the single command's dispatch, per-behavior failures, and the inputs whose
+behavior changed under the merge. Remaining: step 6 (diagnostics) and the escape-hatch
+decision, both deferred until the merged command has real-world use.
 
 ---
 

@@ -1,12 +1,6 @@
 import * as vscode from "vscode";
 
-import {
-  handleLiteralInline,
-  handleLiteralInlineArray,
-  handleLiteralInlineObject,
-  handleSmartInline,
-  VscodeApi
-} from "./commandHandlers";
+import { handleSmartInline, VscodeApi } from "./commandHandlers";
 
 function isSupportedLanguage(languageId: string): boolean {
   return languageId === "typescript" || languageId === "typescriptreact";
@@ -38,36 +32,9 @@ export function activate(context: vscode.ExtensionContext) {
       "smartInlineFunction.inline",
       runWithEditor(
         vscode,
-        "Smart Inline Function",
-        "Smart Inline Function only supports TypeScript/TSX files.",
+        "Smart Inline",
+        "Smart Inline only supports TypeScript/TSX files.",
         handleSmartInline
-      )
-    ),
-    vscode.commands.registerCommand(
-      "smartInlineFunction.literal-inline",
-      runWithEditor(
-        vscode,
-        "Smart Literal Inline",
-        "Smart Literal Inline only supports TypeScript/TSX files.",
-        handleLiteralInline
-      )
-    ),
-    vscode.commands.registerCommand(
-      "smartInlineFunction.literal-inline-array",
-      runWithEditor(
-        vscode,
-        "Literal Inline Array",
-        "Literal Inline Array only supports TypeScript/TSX files.",
-        handleLiteralInlineArray
-      )
-    ),
-    vscode.commands.registerCommand(
-      "smartInlineFunction.literal-inline-object",
-      runWithEditor(
-        vscode,
-        "Literal Inline Object",
-        "Literal Inline Object only supports TypeScript/TSX files.",
-        handleLiteralInlineObject
       )
     )
   );

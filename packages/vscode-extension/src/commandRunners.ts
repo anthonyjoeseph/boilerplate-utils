@@ -11,6 +11,7 @@ import {
   findSelectedExpression
 } from "./callSelection";
 import { resolveFunctionDefinition } from "./functionResolution";
+import { classifyInlineTarget } from "./inlineDispatch";
 import {
   collectLiteralConstsVisibleAtCall,
   inlineCallExpression,
@@ -143,6 +144,124 @@ export async function runSmartInline(
       ok: false,
       error: `Smart Inline Function failed: ${message}`
     };
+  }
+}
+
+/** Which of the four behaviors the unified command dispatched to. */
+export type InlineBehavior =
+  | "smart-inline"
+  | "literal-inline"
+  | "literal-inline-array"
+  | "literal-inline-object";
+
+export type RunInlineResult =
+  | {
+      ok: true;
+      /** The behavior chosen from context, for diagnostics / status messages. */
+      behavior: InlineBehavior;
+      /** Text to substitute for the replaced range. */
+      expression: string;
+      /** Printed import lines (with newline) to add; always [] except smart-inline. */
+      neededImportTexts: string[];
+      replaceStart: number;
+      replaceEnd: number;
+    }
+  | { ok: false; error: string };
+
+/**
+ * The unified command. Classifies what the selection points at, then dispatches
+ * to the matching behavior. This is the single entry the `smartInlineFunction.inline`
+ * command uses; the four behaviors are no longer separate commands.
+ *
+ * There is deliberately no fall-through from a failed `smart-inline` to `fold`: a
+ * call the user pointed at that can't be relocated should say *why* ("too complex",
+ * "could not resolve") rather than silently reprinting itself as a no-op fold. Cases
+ * that genuinely want folding are already classified as `literal-inline` up front.
+ */
+export async function runInline(
+  params: RunSmartInlineParams
+): Promise<RunInlineResult> {
+  const { sourceText, start, end, fileName, scriptKind = "ts" } = params;
+  const sourceFile = createSourceFile(fileName, sourceText, scriptKind);
+  const intent = classifyInlineTarget(sourceFile, start, end);
+
+  switch (intent.kind) {
+    case "none":
+      return {
+        ok: false,
+        error:
+          "Nothing to inline at the selection. Place the cursor on a function call, a .map(...) or Object.fromEntries(...) call, or a foldable expression."
+      };
+    case "smart-inline": {
+      const r = await runSmartInline(params);
+      return r.ok
+        ? {
+            ok: true,
+            behavior: "smart-inline",
+            expression: r.expression,
+            neededImportTexts: r.neededImportTexts,
+            replaceStart: r.replaceStart,
+            replaceEnd: r.replaceEnd
+          }
+        : r;
+    }
+    case "literal-inline-array": {
+      const r = runLiteralInlineArray({
+        sourceText,
+        start,
+        end,
+        fileName,
+        scriptKind
+      });
+      return r.ok
+        ? {
+            ok: true,
+            behavior: "literal-inline-array",
+            expression: r.text,
+            neededImportTexts: [],
+            replaceStart: r.replaceStart,
+            replaceEnd: r.replaceEnd
+          }
+        : r;
+    }
+    case "literal-inline-object": {
+      const r = runLiteralInlineObject({
+        sourceText,
+        start,
+        end,
+        fileName,
+        scriptKind
+      });
+      return r.ok
+        ? {
+            ok: true,
+            behavior: "literal-inline-object",
+            expression: r.text,
+            neededImportTexts: [],
+            replaceStart: r.replaceStart,
+            replaceEnd: r.replaceEnd
+          }
+        : r;
+    }
+    case "literal-inline": {
+      const r = runLiteralInline({
+        sourceText,
+        start,
+        end,
+        fileName,
+        scriptKind
+      });
+      return r.ok
+        ? {
+            ok: true,
+            behavior: "literal-inline",
+            expression: r.text,
+            neededImportTexts: [],
+            replaceStart: r.replaceStart,
+            replaceEnd: r.replaceEnd
+          }
+        : r;
+    }
   }
 }
 
