@@ -85,7 +85,7 @@ export async function runSmartInline(
 
   try {
     const functionInfo = await resolveFunctionDefinition(
-      calleeId.text,
+      calleeId,
       sourceFile,
       fileName,
       workspaceRoot
@@ -93,7 +93,7 @@ export async function runSmartInline(
     if (!functionInfo) {
       return {
         ok: false,
-        error: `Could not resolve function declaration for "${callee.text}".`
+        error: `Could not resolve function declaration for "${calleeId.text}".`
       };
     }
 
