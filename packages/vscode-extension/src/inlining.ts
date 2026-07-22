@@ -7,6 +7,8 @@
  * inliningImports, inliningLiteral.
  */
 
+import * as path from "path";
+
 import * as ts from "typescript";
 import { isDeepConstExpr, resolveConstExpression } from "./inliningConst";
 import {
@@ -42,7 +44,8 @@ export function inlineCallExpression(
   callExpr: ts.CallExpression,
   fnDecl: ts.FunctionLikeDeclaration,
   fnSourceFile: ts.SourceFile,
-  callerConstEnv: Map<string, ts.Expression>
+  callerConstEnv: Map<string, ts.Expression>,
+  callerFileName = ""
 ): InlineResult | undefined {
   const printer = ts.createPrinter({ removeComments: false });
 
@@ -61,12 +64,20 @@ export function inlineCallExpression(
     }
 
     const hasDefault = !!param.initializer;
-    const providedArg = callExpr.arguments[i];
-    const effectiveArg =
-      (providedArg as ts.Expression | undefined) ||
-      (hasDefault && ts.isExpression(param.initializer!)
-        ? (param.initializer as ts.Expression)
-        : undefined);
+    const providedArg = callExpr.arguments[i] as ts.Expression | undefined;
+    const isExplicitUndefined =
+      providedArg !== undefined &&
+      ts.isIdentifier(providedArg) &&
+      providedArg.text === "undefined";
+
+    let effectiveArg: ts.Expression | undefined;
+    if (isExplicitUndefined && hasDefault) {
+      effectiveArg = param.initializer as ts.Expression;
+    } else if (providedArg !== undefined) {
+      effectiveArg = providedArg;
+    } else if (hasDefault && param.initializer) {
+      effectiveArg = param.initializer as ts.Expression;
+    }
 
     if (!effectiveArg) {
       // No argument and no default value -> cannot safely inline.
@@ -201,6 +212,29 @@ export function inlineCallExpression(
     return undefined; // function body too complex to inline safely
   }
 
+  // Preserve side effects of extra arguments (beyond declared parameters).
+  // Wrap in parentheses to avoid comma-operator precedence surprises in the
+  // caller (e.g. `() => extraArg, result` would be mis-parsed as an arrow
+  // returning `extraArg` followed by a standalone `result` expression).
+  const extraArgs = Array.from(callExpr.arguments).slice(fnDecl.parameters.length);
+  if (extraArgs.length > 0) {
+    let commaLeft: ts.Expression = extraArgs[0]!;
+    for (let i = 1; i < extraArgs.length; i++) {
+      commaLeft = ts.factory.createBinaryExpression(
+        commaLeft,
+        ts.SyntaxKind.CommaToken,
+        extraArgs[i]!
+      );
+    }
+    finalExpr = ts.factory.createParenthesizedExpression(
+      ts.factory.createBinaryExpression(
+        commaLeft,
+        ts.SyntaxKind.CommaToken,
+        finalExpr
+      )
+    );
+  }
+
   // Determine which imported symbols from the callee file are referenced
   // in the final inlined expression, so we can add missing imports in the caller.
   const importedNames = collectImportedNames(fnSourceFile);
@@ -229,6 +263,26 @@ export function inlineCallExpression(
     })
     .filter((d): d is ts.ImportDeclaration => d !== undefined);
 
+  // Rewrite relative import paths from callee-relative to caller-relative.
+  const rewrittenImports = callerFileName
+    ? neededImports.map((decl) => {
+        const spec = decl.moduleSpecifier as ts.StringLiteral;
+        if (!spec.text.startsWith(".")) return decl;
+        const calleeDir = path.dirname(fnSourceFile.fileName);
+        const callerDir = path.dirname(callerFileName);
+        const absolutePath = path.resolve(calleeDir, spec.text);
+        let rel = path.relative(callerDir, absolutePath).replace(/\\/g, "/");
+        if (!rel.startsWith(".")) rel = "./" + rel;
+        return ts.factory.updateImportDeclaration(
+          decl,
+          decl.modifiers,
+          decl.importClause,
+          ts.factory.createStringLiteral(rel),
+          decl.assertClause
+        );
+      })
+    : neededImports;
+
   // Synthesize the entire expression tree (set pos/end = -1 on every node).
   // TypeScript's printer reads node text from sourceFile.text[pos..end] for
   // parsed nodes (pos >= 0) but uses the node's stored .text/.escapedText for
@@ -244,7 +298,7 @@ export function inlineCallExpression(
   );
   return {
     expression: inlinedText.trim(),
-    neededImports
+    neededImports: rewrittenImports
   };
 }
 

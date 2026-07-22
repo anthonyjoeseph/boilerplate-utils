@@ -1,4 +1,1 @@
-{
-  "known": "broken",
-  "reason": "substitution is not hygienic - a shadowing binding inside the body is clobbered. Currently masked by the nested-function crash; this spec starts testing hygiene for real once that is fixed"
-}
+{}

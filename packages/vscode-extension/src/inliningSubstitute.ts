@@ -136,6 +136,107 @@ export function substituteAndSimplifyExpression(
     startLexicalEnvironment: () => {}
   } as unknown as ts.TransformationContext;
 
+  function collectAllIdentifierTexts(e: ts.Node): Set<string> {
+    const texts = new Set<string>();
+    function walk(node: ts.Node): void {
+      if (ts.isIdentifier(node)) texts.add(node.text);
+      node.forEachChild(walk);
+    }
+    walk(e);
+    return texts;
+  }
+
+  function generateFreshName(base: string, usedNames: Set<string>): string {
+    let i = 0;
+    let candidate = `${base}_${i}`;
+    while (usedNames.has(candidate)) { i++; candidate = `${base}_${i}`; }
+    return candidate;
+  }
+
+  function renameInExpr(node: ts.Expression, oldName: string, newName: string): ts.Expression {
+    if (ts.isIdentifier(node) && node.text === oldName) {
+      return factory.createIdentifier(newName);
+    }
+    if (ts.isPropertyAccessExpression(node)) {
+      const newObj = renameInExpr(node.expression, oldName, newName);
+      if (newObj === node.expression) return node;
+      return factory.updatePropertyAccessExpression(node, newObj, node.name);
+    }
+    if (ts.isBinaryExpression(node)) {
+      const l = renameInExpr(node.left, oldName, newName);
+      const r = renameInExpr(node.right, oldName, newName);
+      if (l === node.left && r === node.right) return node;
+      return factory.createBinaryExpression(l, node.operatorToken, r);
+    }
+    if (ts.isCallExpression(node)) {
+      const callee = renameInExpr(node.expression, oldName, newName);
+      const args = node.arguments.map(a => renameInExpr(a, oldName, newName));
+      const changed = callee !== node.expression || args.some((a, i) => a !== node.arguments[i]);
+      if (!changed) return node;
+      return factory.updateCallExpression(node, callee, node.typeArguments, args);
+    }
+    if (ts.isParenthesizedExpression(node)) {
+      const inner = renameInExpr(node.expression, oldName, newName);
+      if (inner === node.expression) return node;
+      return factory.createParenthesizedExpression(inner);
+    }
+    if (ts.isPrefixUnaryExpression(node)) {
+      const operand = renameInExpr(node.operand, oldName, newName);
+      if (operand === node.operand) return node;
+      return factory.createPrefixUnaryExpression(node.operator, operand);
+    }
+    if (ts.isConditionalExpression(node)) {
+      const cond = renameInExpr(node.condition, oldName, newName);
+      const whenTrue = renameInExpr(node.whenTrue, oldName, newName);
+      const whenFalse = renameInExpr(node.whenFalse, oldName, newName);
+      if (cond === node.condition && whenTrue === node.whenTrue && whenFalse === node.whenFalse) return node;
+      return factory.createConditionalExpression(cond, node.questionToken, whenTrue, node.colonToken, whenFalse);
+    }
+    if (ts.isElementAccessExpression(node)) {
+      const obj = renameInExpr(node.expression, oldName, newName);
+      const idx = renameInExpr(node.argumentExpression, oldName, newName);
+      if (obj === node.expression && idx === node.argumentExpression) return node;
+      return factory.updateElementAccessExpression(node, obj, idx);
+    }
+    if (ts.isArrowFunction(node) && !ts.isBlock(node.body)) {
+      const newParams = node.parameters.map(p =>
+        ts.isIdentifier(p.name) && p.name.text === oldName ? p : p
+      );
+      const hasShadow = node.parameters.some(p => ts.isIdentifier(p.name) && p.name.text === oldName);
+      if (hasShadow) return node; // inner scope shadows the name — don't rename body
+      const newBody = renameInExpr(node.body as ts.Expression, oldName, newName);
+      if (newBody === node.body) return node;
+      return factory.updateArrowFunction(node, node.modifiers, node.typeParameters, newParams, node.type, node.equalsGreaterThanToken, newBody);
+    }
+    // Fallback: return unchanged for unsupported node kinds.
+    return node;
+  }
+
+  function renameParamAndBody(
+    fn: ts.ArrowFunction | ts.FunctionExpression,
+    oldName: string,
+    newName: string
+  ): ts.ArrowFunction | ts.FunctionExpression {
+    // Rename the parameter itself.
+    const newParams = fn.parameters.map(p => {
+      if (!ts.isIdentifier(p.name) || p.name.text !== oldName) return p;
+      return factory.updateParameterDeclaration(
+        p, p.modifiers, p.dotDotDotToken,
+        factory.createIdentifier(newName),
+        p.questionToken, p.type, p.initializer
+      );
+    });
+    if (ts.isArrowFunction(fn) && !ts.isBlock(fn.body)) {
+      const newBody = renameInExpr(fn.body as ts.Expression, oldName, newName);
+      return factory.updateArrowFunction(fn, fn.modifiers, fn.typeParameters, newParams, fn.type, fn.equalsGreaterThanToken, newBody);
+    }
+    // For function expressions or block bodies: only rename the parameter declaration.
+    if (ts.isArrowFunction(fn)) {
+      return factory.updateArrowFunction(fn, fn.modifiers, fn.typeParameters, newParams, fn.type, fn.equalsGreaterThanToken, fn.body);
+    }
+    return fn;
+  }
+
   function simplify(node: ts.Expression, inConditionContext = conditionMode): ts.Expression {
     // Substitute identifiers.
     // When in a condition context (ternary condition, if/else, switch discriminant),
@@ -425,6 +526,67 @@ export function substituteAndSimplifyExpression(
         node.typeArguments,
         newArgs
       );
+    }
+
+    // Inner arrow functions and function expressions: scope-limited substitution + alpha-rename.
+    if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
+      // Collect bound param names of this inner function.
+      const innerBoundNames = new Set<string>();
+      for (const param of node.parameters) {
+        if (ts.isIdentifier(param.name)) innerBoundNames.add(param.name.text);
+      }
+
+      // Collect all identifier texts used in current arg values (conservative over-approximation).
+      const argFreeVars = new Set<string>();
+      for (const val of argMap.values()) {
+        for (const id of collectAllIdentifierTexts(val)) argFreeVars.add(id);
+      }
+
+      // Alpha-rename inner params whose names appear in arg free vars (to prevent capture).
+      let processedNode: ts.ArrowFunction | ts.FunctionExpression = node;
+      const allNames = new Set([...argFreeVars, ...argMap.keys(), ...innerBoundNames]);
+      for (const innerName of innerBoundNames) {
+        if (argFreeVars.has(innerName)) {
+          const freshName = generateFreshName(innerName, allNames);
+          allNames.add(freshName);
+          processedNode = renameParamAndBody(processedNode, innerName, freshName);
+        }
+      }
+
+      // Re-collect bound names after possible renaming.
+      const finalBoundNames = new Set<string>();
+      for (const param of processedNode.parameters) {
+        if (ts.isIdentifier(param.name)) finalBoundNames.add(param.name.text);
+      }
+
+      // Temporarily hide inner-bound names from argMap/paramConstEnv (scope-limited substitution).
+      const savedArg: [string, ts.Expression][] = [];
+      const savedConst: [string, ts.Expression][] = [];
+      for (const n of finalBoundNames) {
+        if (argMap.has(n)) { savedArg.push([n, argMap.get(n)!]); argMap.delete(n); }
+        if (paramConstEnv.has(n)) { savedConst.push([n, paramConstEnv.get(n)!]); paramConstEnv.delete(n); }
+      }
+
+      let result: ts.Expression;
+      if (ts.isArrowFunction(processedNode) && !ts.isBlock(processedNode.body)) {
+        const newBody = simplify(processedNode.body as ts.Expression);
+        result = factory.updateArrowFunction(
+          processedNode,
+          processedNode.modifiers,
+          processedNode.typeParameters,
+          processedNode.parameters,
+          processedNode.type,
+          processedNode.equalsGreaterThanToken,
+          newBody
+        );
+      } else {
+        // Block bodies: no expression-level substitution needed inside block statements.
+        result = processedNode;
+      }
+
+      for (const [n, v] of savedArg) argMap.set(n, v);
+      for (const [n, v] of savedConst) paramConstEnv.set(n, v);
+      return result;
     }
 
     // Fallback: recursively visit children for substitution only
