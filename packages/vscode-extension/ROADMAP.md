@@ -28,7 +28,7 @@ only do so when the user **invokes expansion directly on that call**.
 
 A builtin appearing *inside* a body being relocated is copied verbatim and left alone.
 
-This is why there are four commands, not one:
+Today this is expressed as four commands:
 
 | command | what it acts on |
 | --- | --- |
@@ -37,8 +37,12 @@ This is why there are four commands, not one:
 | `smartInlineFunction.literal-inline-array` | a `.map(...)` call — evaluate it |
 | `smartInlineFunction.literal-inline-object` | an `Object.fromEntries(...)` call — evaluate it |
 
-The split is correct. It should be documented as intentional rather than treated as
-overlapping experiments.
+The *semantic distinction* between these is real and worth keeping. What is **not**
+essential is that the user pick it by choosing a command. See "Command unification"
+below: the intent each command encodes is recoverable from **which node the cursor
+sits on**, so the four collapse into one `smartInlineFunction.inline` that dispatches
+by context — and doing so actually *preserves* the ES6-builtin rule rather than
+fighting it.
 
 ---
 
@@ -327,6 +331,9 @@ Runs over already-relocated code. Every item here is all-or-nothing per construc
    `"This function is too complex to inline safely."`
 4. Fix `activationEvents`, `publisher`; delete `schema.json` and `vscode-test`.
 5. Reconcile `README.md` / `README.old.md` / `TODO.md` / this file into one story.
+6. **Command unification** — collapse the four commands into a single
+   `smartInlineFunction.inline` that dispatches by context. See the dedicated
+   section below.
 
 ### Not on the roadmap: LSP extraction
 
@@ -339,6 +346,96 @@ handler layer.** `commandHandlers.ts` already takes an injected `VscodeApi` inte
 so the seam exists — the rule is just not to breach it. That costs nothing now and is
 the only part that would be expensive to retrofit later. Revisit only if a second
 editor is genuinely wanted.
+
+---
+
+## Command unification
+
+**Goal.** The four commands become one: `smartInlineFunction.inline`. The user
+places the cursor and invokes a single command; the tool figures out which behavior
+is wanted from context. `literal-inline`, `literal-inline-array`, and
+`literal-inline-object` are removed as separate commands (kept only, if at all, as
+explicit power-user overrides — see "Escape hatch" below).
+
+**Why this is possible — and why it doesn't break the ES6-builtin rule.** Each
+command keys on a structurally distinct anchor node found by walking *outward* from
+the cursor:
+
+| behavior | anchor the cursor must be on/inside |
+| --- | --- |
+| object | `Object.fromEntries(...)` |
+| array | `.map(...)` |
+| smart-inline | a `CallExpression` with a plain-identifier callee |
+| fold | any other expression |
+
+The intent currently carried by *command choice* is therefore carried by *cursor
+position*. This is exactly what the ES6-builtin rule already asks for: a builtin is
+evaluated only when expansion is invoked **directly on that call**. A `.map` nested
+inside a body being relocated is copied verbatim — because the cursor is on the outer
+call, and `.map` is a *child* of that node, not an ancestor, so the outward walk never
+reaches it. Context-dispatch enforces the rule mechanically instead of relying on the
+user to pick the matching command.
+
+**The one genuine ambiguity.** A plain user-function call `f(x)` is both a
+smart-inline target and a foldable expression. Resolve by precedence: attempt
+relocation first; fall back to fold. Nothing is lost — `literal-inline` on a bare
+call currently leaves the callee untouched anyway (Phase 4 item 8).
+
+**Precedence.** First match wins: object → array → smart-inline → fold. A `none`
+result (nothing actionable) yields a single, honest error instead of four different
+"selection must be inside…" messages.
+
+### Steps
+
+1. ~~**Pure classifier.**~~ **Done** — `src/inlineDispatch.ts` exports
+   `classifyInlineTarget(sourceFile, start, end): InlineIntent`, returning one of
+   `literal-inline-object` / `literal-inline-array` / `smart-inline` /
+   `literal-inline` / `none` by the precedence above. Pure and side-effect free; it
+   only classifies. Covered by `tests/inline-dispatch.test.ts`, including the
+   "cursor on the outer call must not be hijacked by a nested `.map`" case. Nothing
+   is wired to it yet, so behavior is unchanged.
+2. **Dispatching runner.** Add `runInline` (or fold into `handleSmartInline`) that
+   calls `classifyInlineTarget`, then delegates to the existing `runSmartInline` /
+   `runLiteralInline` / `runLiteralInlineArray` / `runLiteralInlineObject`. The
+   result shapes already unify (all carry `replaceStart` / `replaceEnd` / text; only
+   smart-inline adds `neededImportTexts`), so the handler's editor-edit path barely
+   changes.
+3. **Fallback chain for the ambiguous case.** When `smart-inline` classification
+   fails to *resolve* the callee or the body is "too complex," fall back to `fold`
+   rather than surfacing the smart-inline error — the classifier says "this is a
+   call," but resolution is what decides whether relocation is actually available.
+4. **Rewire `handleSmartInline` to dispatch.** This is the behavior-changing step and
+   the reason it is sequenced last. Several existing error-case tests assert
+   smart-inline-specific messages (`(f)()` → "simple function identifiers"; a bare
+   expression → "No function call expression found") that will change once dispatch
+   falls through to fold. Update those tests deliberately, one behavior at a time.
+5. **Collapse `package.json`.** Remove the three `literal-*` `commands` and
+   `activationEvents` entries (the `onCommand:` cleanup in Phase 6.4 lands here too),
+   leaving a single contributed command. Keep the one title generic
+   ("Smart Inline") since it now covers all four behaviors.
+6. **Diagnostics.** The merged command needs a "what did I do?" signal — the four
+   behaviors are no longer distinguished by which menu item was clicked. A brief
+   status-bar / info message ("Inlined function body", "Evaluated `.map`") closes the
+   loop; wire it through the Phase 6.2 preview pane once that exists.
+
+### Escape hatch
+
+Some users may want to *force* fold-over-relocate on an ambiguous `f(x)`, or force a
+specific builtin evaluation. Options, cheapest first: (a) drop the overrides entirely
+and rely on cursor placement — ship this and see if anyone misses them; (b) keep the
+three `literal-*` commands unlisted (removed from the command palette / menus but
+still invokable via keybinding) as power-user overrides; (c) a command *argument*
+(`smartInlineFunction.inline` with `{ mode: "fold" }`). Decide after step 4, when the
+merged command's real-world ambiguity rate is observable — do not build the escape
+hatch preemptively.
+
+### What's already landed toward this
+
+Only step 1: the pure `classifyInlineTarget` classifier and its tests. It is
+purely additive — no command is wired to it, so the four commands behave exactly as
+before. It exists so that steps 2–4 compose existing pieces instead of re-deriving
+the selection logic, and so the dispatch precedence has a tested home before any
+behavior changes.
 
 ---
 
