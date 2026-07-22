@@ -7,95 +7,244 @@ export interface FunctionInfo {
   node: ts.FunctionLikeDeclaration;
 }
 
+// --------------------------------------------------------------------------
+// LanguageService cache (one service per workspace root)
+// --------------------------------------------------------------------------
+
+interface ServiceEntry {
+  service: ts.LanguageService;
+  host: SimpleLanguageServiceHost;
+}
+
+const serviceCache = new Map<string, ServiceEntry>();
+
+class SimpleLanguageServiceHost implements ts.LanguageServiceHost {
+  private readonly root: string;
+  private readonly compilerOptions: ts.CompilerOptions;
+  private readonly overrides = new Map<string, string>();
+  private readonly versions = new Map<string, number>();
+
+  constructor(workspaceRoot: string) {
+    this.root = workspaceRoot;
+    const cfgPath = ts.findConfigFile(workspaceRoot, ts.sys.fileExists, "tsconfig.json");
+    if (cfgPath) {
+      const raw = ts.readConfigFile(cfgPath, ts.sys.readFile);
+      const parsed = ts.parseJsonConfigFileContent(
+        raw.config as object,
+        ts.sys,
+        path.dirname(cfgPath)
+      );
+      this.compilerOptions = parsed.options;
+    } else {
+      this.compilerOptions = { target: ts.ScriptTarget.Latest, allowJs: true };
+    }
+  }
+
+  setFileContent(fileName: string, content: string): void {
+    this.overrides.set(fileName, content);
+    this.versions.set(fileName, (this.versions.get(fileName) ?? 0) + 1);
+  }
+
+  getCompilationSettings(): ts.CompilerOptions {
+    return this.compilerOptions;
+  }
+
+  getScriptFileNames(): string[] {
+    return [...this.overrides.keys()];
+  }
+
+  getScriptVersion(fileName: string): string {
+    return String(this.versions.get(fileName) ?? 0);
+  }
+
+  getScriptSnapshot(fileName: string): ts.IScriptSnapshot | undefined {
+    const ov = this.overrides.get(fileName);
+    if (ov !== undefined) return ts.ScriptSnapshot.fromString(ov);
+    const text = ts.sys.readFile(fileName);
+    if (text !== undefined) return ts.ScriptSnapshot.fromString(text);
+    return undefined;
+  }
+
+  getCurrentDirectory(): string {
+    return this.root;
+  }
+
+  getDefaultLibFileName(options: ts.CompilerOptions): string {
+    return ts.getDefaultLibFilePath(options);
+  }
+
+  fileExists(fileName: string): boolean {
+    return this.overrides.has(fileName) || ts.sys.fileExists(fileName);
+  }
+
+  readFile(fileName: string, encoding?: string): string | undefined {
+    return ts.sys.readFile(fileName, encoding);
+  }
+
+  readDirectory(
+    dirPath: string,
+    extensions?: readonly string[],
+    exclude?: readonly string[],
+    include?: readonly string[],
+    depth?: number
+  ): string[] {
+    return ts.sys.readDirectory(dirPath, extensions, exclude, include, depth);
+  }
+
+  directoryExists(dirName: string): boolean {
+    return ts.sys.directoryExists(dirName);
+  }
+
+  getDirectories(dirName: string): string[] {
+    return ts.sys.getDirectories(dirName);
+  }
+}
+
+function getServiceEntry(workspaceRoot: string): ServiceEntry {
+  let entry = serviceCache.get(workspaceRoot);
+  if (!entry) {
+    const host = new SimpleLanguageServiceHost(workspaceRoot);
+    const service = ts.createLanguageService(host, ts.createDocumentRegistry());
+    entry = { service, host };
+    serviceCache.set(workspaceRoot, entry);
+  }
+  return entry;
+}
+
+// --------------------------------------------------------------------------
+// Public API
+// --------------------------------------------------------------------------
+
+/**
+ * Resolve the function declaration for `calleeId` using three strategies:
+ *   1. Same-file lookup (no I/O, always tried first).
+ *   2. TypeScript LanguageService `getDefinitionAtPosition` — handles aliased
+ *      imports, tsconfig `paths`, re-exports, and workspace symlinks.
+ *   3. Manual import-walking fallback — handles `.js`-suffix ESM specifiers,
+ *      npm source maps, and sibling `.ts` heuristics.
+ */
+export async function resolveFunctionDefinition(
+  calleeId: ts.Identifier,
+  currentSourceFile: ts.SourceFile,
+  currentFileName: string,
+  workspaceRoot: string
+): Promise<FunctionInfo | undefined> {
+  const name = calleeId.text;
+
+  // Strategy 1: same-file declaration (no disk access).
+  const local = findFunctionInSourceFile(currentSourceFile, name);
+  if (local) return { sourceFile: currentSourceFile, node: local };
+
+  // Strategy 2: LanguageService (aliases, paths, re-exports).
+  const lsResult = await tryResolveViaLanguageService(
+    calleeId,
+    currentSourceFile,
+    currentFileName,
+    workspaceRoot
+  );
+  if (lsResult) return lsResult;
+
+  // Strategy 3: manual import walk (fallback for edge cases LS can't handle).
+  return tryResolveViaManualWalk(name, currentSourceFile, currentFileName, workspaceRoot);
+}
+
+// --------------------------------------------------------------------------
+// Strategy 2: LanguageService
+// --------------------------------------------------------------------------
+
+async function tryResolveViaLanguageService(
+  calleeId: ts.Identifier,
+  currentSourceFile: ts.SourceFile,
+  currentFileName: string,
+  workspaceRoot: string
+): Promise<FunctionInfo | undefined> {
+  try {
+    const { service, host } = getServiceEntry(workspaceRoot);
+    // Inject the live buffer so the LS sees unsaved edits.
+    host.setFileContent(currentFileName, currentSourceFile.text);
+
+    const pos = calleeId.getStart(currentSourceFile);
+    const defs = service.getDefinitionAtPosition(currentFileName, pos);
+    if (!defs || defs.length === 0) return undefined;
+
+    for (const def of defs) {
+      if (def.fileName === currentFileName) continue;
+
+      const defText = await tryReadFile(def.fileName);
+      if (!defText) continue;
+
+      const defSf = ts.createSourceFile(def.fileName, defText, ts.ScriptTarget.Latest, true);
+
+      // def.name is the resolved export name (e.g. "addTwo" even when imported as "add").
+      const byName =
+        findFunctionInSourceFile(defSf, def.name) ??
+        findExportedFunctionInSourceFile(defSf, def.name);
+      if (byName) return { sourceFile: defSf, node: byName };
+
+      // Position-based fallback for anonymous defaults or unusual patterns.
+      const byPos = findFunctionAtPosition(defSf, def.textSpan.start);
+      if (byPos) return { sourceFile: defSf, node: byPos };
+    }
+  } catch {
+    // LanguageService errors are non-fatal; fall through to manual walk.
+  }
+  return undefined;
+}
+
+// --------------------------------------------------------------------------
+// Strategy 3: manual import walk
+// --------------------------------------------------------------------------
+
 interface ImportInfo {
   moduleSpecifier: string;
   isRelative: boolean;
   /**
    * The name as exported by the target module, which differs from the local
-   * binding under `import { a as b }`. Resolution still searches for the local
-   * name - see tests/spec/cases/aliased-import.
+   * binding under `import { a as b }`. Resolution still searches for the
+   * importedName (original export) rather than the local alias.
    */
   importedName: string;
 }
 
-export async function resolveFunctionDefinition(
+async function tryResolveViaManualWalk(
   name: string,
   currentSourceFile: ts.SourceFile,
   currentFileName: string,
   workspaceRoot: string
 ): Promise<FunctionInfo | undefined> {
-  // 1. Same file
-  const local = findFunctionInSourceFile(currentSourceFile, name);
-  if (local) {
-    return { sourceFile: currentSourceFile, node: local };
-  }
-
-  // 2. Imported from other files
   const importInfo = findImportForIdentifier(currentSourceFile, name);
-  if (!importInfo) {
-    return undefined;
-  }
+  if (!importInfo) return undefined;
 
   if (importInfo.isRelative) {
-    const resolved = resolveRelativeModule(
-      importInfo.moduleSpecifier,
-      currentFileName
-    );
-    if (!resolved) {
-      return undefined;
-    }
+    const resolved = resolveRelativeModule(importInfo.moduleSpecifier, currentFileName);
+    if (!resolved) return undefined;
     const text = await tryReadFile(resolved);
-    if (!text) {
-      return undefined;
-    }
-    const sf = ts.createSourceFile(
-      resolved,
-      text,
-      ts.ScriptTarget.Latest,
-      true
-    );
+    if (!text) return undefined;
+    const sf = ts.createSourceFile(resolved, text, ts.ScriptTarget.Latest, true);
     const fn = findExportedFunctionInSourceFile(sf, importInfo.importedName);
-    if (fn) {
-      return { sourceFile: sf, node: fn };
-    }
-    return undefined;
-  } else {
-    // 3. NPM module with potential source maps
-    const resolvedModulePath = tryResolveNodeModule(
-      importInfo.moduleSpecifier,
-      workspaceRoot
-    );
-    if (!resolvedModulePath) {
-      return undefined;
-    }
+    return fn ? { sourceFile: sf, node: fn } : undefined;
+  }
 
-    // Try sibling .ts first
-    const siblingTs = resolvedModulePath.replace(/\.js(x?)$/, ".ts$1");
-    if (fs.existsSync(siblingTs)) {
-      const text = await tryReadFile(siblingTs);
-      if (text) {
-        const sf = ts.createSourceFile(
-          siblingTs,
-          text,
-          ts.ScriptTarget.Latest,
-          true
-        );
-        const fn = findExportedFunctionInSourceFile(sf, name);
-        if (fn) {
-          return { sourceFile: sf, node: fn };
-        }
-      }
-    }
+  // NPM module: try sibling .ts first, then source maps.
+  const resolvedPath = tryResolveNodeModule(importInfo.moduleSpecifier, workspaceRoot);
+  if (!resolvedPath) return undefined;
 
-    // Then try reading source map to get original TS sources
-    const candidate = await tryResolveFromSourceMap(resolvedModulePath, name);
-    if (candidate) {
-      return candidate;
+  const siblingTs = resolvedPath.replace(/\.js(x?)$/, ".ts$1");
+  if (fs.existsSync(siblingTs)) {
+    const text = await tryReadFile(siblingTs);
+    if (text) {
+      const sf = ts.createSourceFile(siblingTs, text, ts.ScriptTarget.Latest, true);
+      const fn = findExportedFunctionInSourceFile(sf, name);
+      if (fn) return { sourceFile: sf, node: fn };
     }
   }
 
-  return undefined;
+  return tryResolveFromSourceMap(resolvedPath, name);
 }
+
+// --------------------------------------------------------------------------
+// AST helpers
+// --------------------------------------------------------------------------
 
 function findFunctionInSourceFile(
   sourceFile: ts.SourceFile,
@@ -143,7 +292,6 @@ function findExportedFunctionInSourceFile(
       node.name?.text === name &&
       node.body
     ) {
-      // either `export function` or exported via separate export list
       const hasExportModifier = !!node.modifiers?.some(
         (m) => m.kind === ts.SyntaxKind.ExportKeyword
       );
@@ -164,10 +312,7 @@ function findExportedFunctionInSourceFile(
             (ts.isArrowFunction(decl.initializer) ||
               ts.isFunctionExpression(decl.initializer))
           ) {
-            if (
-              hasExportModifier ||
-              isExportedViaExportList(sourceFile, name)
-            ) {
+            if (hasExportModifier || isExportedViaExportList(sourceFile, name)) {
               match = decl.initializer;
               return;
             }
@@ -180,10 +325,7 @@ function findExportedFunctionInSourceFile(
   return match;
 }
 
-function isExportedViaExportList(
-  sourceFile: ts.SourceFile,
-  name: string
-): boolean {
+function isExportedViaExportList(sourceFile: ts.SourceFile, name: string): boolean {
   let exported = false;
   sourceFile.forEachChild((node) => {
     if (
@@ -200,6 +342,44 @@ function isExportedViaExportList(
     }
   });
   return exported;
+}
+
+/**
+ * Find the function-like declaration whose name identifier spans position `pos`
+ * (character offset in sourceFile.text, no leading trivia). Used as a fallback
+ * when name-based search fails (e.g. anonymous default exports).
+ */
+function findFunctionAtPosition(
+  sourceFile: ts.SourceFile,
+  pos: number
+): ts.FunctionLikeDeclaration | undefined {
+  function visit(node: ts.Node): ts.FunctionLikeDeclaration | undefined {
+    if (pos < node.pos || pos > node.end) return undefined;
+
+    if (
+      ts.isFunctionDeclaration(node) &&
+      node.name &&
+      node.name.pos <= pos &&
+      pos <= node.name.end &&
+      node.body
+    ) {
+      return node;
+    }
+
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.pos <= pos &&
+      pos <= node.name.end &&
+      node.initializer &&
+      (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))
+    ) {
+      return node.initializer;
+    }
+
+    return ts.forEachChild(node, visit);
+  }
+  return ts.forEachChild(sourceFile, visit);
 }
 
 function findImportForIdentifier(
@@ -305,7 +485,6 @@ async function tryResolveFromSourceMap(
   let mapPath = jsFilePath + ".map";
 
   if (!fs.existsSync(mapPath)) {
-    // Try reading //# sourceMappingURL from file
     let jsText: string;
     try {
       jsText = await fs.promises.readFile(jsFilePath, "utf8");
@@ -314,17 +493,11 @@ async function tryResolveFromSourceMap(
     }
 
     const match = jsText.match(/\/\/# sourceMappingURL=(.+)$/m);
-    if (!match) {
-      return undefined;
-    }
+    if (!match) return undefined;
     const sourceMappingUrl = match[1];
-    if (!sourceMappingUrl) {
-      return undefined;
-    }
+    if (!sourceMappingUrl) return undefined;
     mapPath = path.resolve(dir, sourceMappingUrl);
-    if (!fs.existsSync(mapPath)) {
-      return undefined;
-    }
+    if (!fs.existsSync(mapPath)) return undefined;
   }
 
   let raw: string;
@@ -341,24 +514,17 @@ async function tryResolveFromSourceMap(
     return undefined;
   }
 
-  const sources: string[] | undefined = (json as { sources?: string[] })
-    .sources;
-  if (!Array.isArray(sources)) {
-    return undefined;
-  }
+  const sources: string[] | undefined = (json as { sources?: string[] }).sources;
+  if (!Array.isArray(sources)) return undefined;
 
   for (const srcRel of sources) {
     const srcPath = path.resolve(path.dirname(mapPath), srcRel);
-    if (!srcPath.endsWith(".ts") && !srcPath.endsWith(".tsx")) {
-      continue;
-    }
+    if (!srcPath.endsWith(".ts") && !srcPath.endsWith(".tsx")) continue;
     const text = await tryReadFile(srcPath);
     if (!text) continue;
     const sf = ts.createSourceFile(srcPath, text, ts.ScriptTarget.Latest, true);
     const fn = findExportedFunctionInSourceFile(sf, functionName);
-    if (fn) {
-      return { sourceFile: sf, node: fn };
-    }
+    if (fn) return { sourceFile: sf, node: fn };
   }
 
   return undefined;
