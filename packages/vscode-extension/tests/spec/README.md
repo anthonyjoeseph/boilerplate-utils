@@ -96,6 +96,32 @@ one of them turned out to be safe only by accident, and is now a normal passing
 spec (`mutated-const-array-not-folded`) guarding against a future "improvement"
 that would break it.
 
+### Auditing the known-broken list
+
+`known: broken` passes when the spec fails for **any** reason — including a malformed
+fixture or an unrelated crash. So a spec can look like it is tracking a bug while
+actually testing nothing. Audit periodically by removing every marker at once and
+reading the real diagnostics:
+
+```bash
+# strip every "known" flag, run, restore
+python3 - <<'EOF'
+import json, pathlib, shutil
+for d in pathlib.Path("tests/spec/cases").iterdir():
+    f = d / "spec.json"
+    if f.exists() and json.loads(f.read_text()).get("known") == "broken":
+        shutil.copy(f, d / "spec.json.bak")
+        cfg = json.loads(f.read_text()); cfg.pop("known"); f.write_text(json.dumps(cfg))
+EOF
+npx vitest run tests/spec 2>&1 | grep "→ "
+# then restore from the .bak files
+```
+
+Compare each diagnostic against that spec's stated `reason`. This is how
+`negative-number-not-simple-literal` was found to be failing on an unrelated crash in
+the numeric fold rather than on the classification bug it described — the crash was
+severe, common, and completely hidden by the marker.
+
 ## Reading a failure
 
 ```
@@ -122,10 +148,10 @@ after:
 | `sandbox.ts` | transpile + CommonJS loader + `vm` execution |
 | `runSpec.ts` | marker stripping, edit application, comparison |
 | `corpus.ts` | loads `cases/` from disk |
-| `spec.test.ts` | jest adapter — the only framework-aware file |
+| `spec.test.ts` | vitest adapter — the only framework-aware file |
 
-`runSpec.ts` is framework-agnostic on purpose: moving this package to vitest is
-a change to `spec.test.ts` alone.
+`runSpec.ts` is framework-agnostic on purpose: the jest-to-vitest move touched
+`spec.test.ts` alone.
 
 One deliberate limitation: `applyExpansion` is the *idealised* applier. It
 replaces the call and adds missing imports at the top of the file, rather than

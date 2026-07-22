@@ -8,7 +8,12 @@ import type * as vscode from "vscode";
 import { describe, it, expect, vi } from "vitest";
 import { handleLiteralInline, type VscodeApi } from "../src/commandHandlers";
 import { selectionOffsets } from "../src/commandRunners";
-import { createMockEditor, createMockVscode, FAKE_FILE } from "./mockVscode";
+import {
+  firstCallArgs,
+  createMockEditor,
+  createMockVscode,
+  FAKE_FILE
+} from "./mockVscode";
 
 describe("Smart Literal Inline (smartInlineFunction.literal-inline)", () => {
   describe("when selection is on an expression with const bindings in scope", () => {
@@ -32,7 +37,7 @@ const sum = arg + 3;
       expect(editor.edit).toHaveBeenCalledTimes(1);
       const replace = vi.fn();
       const insert = vi.fn();
-      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
+      await firstCallArgs(editor.edit, "editor.edit")[0]({ replace, insert });
       expect(replace).toHaveBeenCalledWith(expect.anything(), "6");
     });
 
@@ -56,9 +61,9 @@ const myString = \`\${month} says hello!\`;
       expect(editor.edit).toHaveBeenCalledTimes(1);
       const replace = vi.fn();
       const insert = vi.fn();
-      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
+      await firstCallArgs(editor.edit, "editor.edit")[0]({ replace, insert });
       expect(replace).toHaveBeenCalled();
-      expect(replace.mock.calls[0][1]).toMatch(/June says hello!/);
+      expect(firstCallArgs(replace, "replace")[1]).toMatch(/June says hello!/);
     });
 
     it("flattens array spread when spread source is const array", async () => {
@@ -81,7 +86,7 @@ const bigArray = [...arg, 4, 5];
       expect(editor.edit).toHaveBeenCalledTimes(1);
       const replace = vi.fn();
       const insert = vi.fn();
-      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
+      await firstCallArgs(editor.edit, "editor.edit")[0]({ replace, insert });
       expect(replace).toHaveBeenCalledWith(expect.anything(), "[7, 8, 4, 5]");
     });
 
@@ -105,9 +110,9 @@ const obj = { ...base, b: 2 };
       expect(editor.edit).toHaveBeenCalledTimes(1);
       const replace = vi.fn();
       const insert = vi.fn();
-      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
+      await firstCallArgs(editor.edit, "editor.edit")[0]({ replace, insert });
       expect(replace).toHaveBeenCalled();
-      const text = replace.mock.calls[0][1];
+      const text = firstCallArgs(replace, "replace")[1];
       expect(text).toMatch(/a.*1/);
       expect(text).toMatch(/b.*2/);
     });

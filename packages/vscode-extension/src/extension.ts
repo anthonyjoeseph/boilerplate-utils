@@ -14,7 +14,7 @@ function isSupportedLanguage(languageId: string): boolean {
 
 function runWithEditor(
   vscodeApi: VscodeApi,
-  commandName: string,
+  _commandName: string,
   unsupportedMessage: string,
   handler: (vscodeApi: VscodeApi, editor: vscode.TextEditor) => Promise<void>
 ): () => Promise<void> {

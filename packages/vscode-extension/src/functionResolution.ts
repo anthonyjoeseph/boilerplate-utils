@@ -10,6 +10,12 @@ export interface FunctionInfo {
 interface ImportInfo {
   moduleSpecifier: string;
   isRelative: boolean;
+  /**
+   * The name as exported by the target module, which differs from the local
+   * binding under `import { a as b }`. Resolution still searches for the local
+   * name - see tests/spec/cases/aliased-import.
+   */
+  importedName: string;
 }
 
 export async function resolveFunctionDefinition(
@@ -211,7 +217,11 @@ function findImportForIdentifier(
 
     // import runMe from "./foo";
     if (stmt.importClause.name && stmt.importClause.name.text === name) {
-      return { moduleSpecifier, isRelative: moduleSpecifier.startsWith(".") };
+      return {
+        moduleSpecifier,
+        isRelative: moduleSpecifier.startsWith("."),
+        importedName: "default"
+      };
     }
 
     // import { runMe } from "./foo";
@@ -225,7 +235,8 @@ function findImportForIdentifier(
         if (localName === name) {
           return {
             moduleSpecifier,
-            isRelative: moduleSpecifier.startsWith(".")
+            isRelative: moduleSpecifier.startsWith("."),
+            importedName
           };
         }
       }
@@ -302,7 +313,11 @@ async function tryResolveFromSourceMap(
     if (!match) {
       return undefined;
     }
-    mapPath = path.resolve(dir, match[1]);
+    const sourceMappingUrl = match[1];
+    if (!sourceMappingUrl) {
+      return undefined;
+    }
+    mapPath = path.resolve(dir, sourceMappingUrl);
     if (!fs.existsSync(mapPath)) {
       return undefined;
     }

@@ -47,7 +47,7 @@ overlapping experiments.
 | decision | choice |
 | --- | --- |
 | Resolution foundation | `ts.LanguageService` over a real `Program` |
-| Where the core lives | inside `packages/vscode-extension` (LSP extraction deferred) |
+| Where the core lives | `packages/vscode-extension`, one package. No LSP extraction — see below |
 | Target scope | arbitrary TypeScript, not a curated corpus |
 | Multi-statement output | hoist into caller scope when possible; IIFE only as fallback |
 | Parameter binding | substitute literals and bare identifiers; `const p = arg;` prologue for anything else |
@@ -67,7 +67,11 @@ arguments, element-access arguments, both destructuring cases, if/else collapse,
 collapse, and `Object.entries(obj).map(cb)`. The first four and the last are fixed; the
 two collapse cases are now `known: broken` specs, which is honest — neither has ever
 worked. The package itself does **not** typecheck (43 pre-existing `tsc` errors, mostly
-`noUncheckedIndexedAccess`); that is unaddressed and belongs in Phase 6.
+`noUncheckedIndexedAccess`) — **now fixed**, and `tests/` is covered too. `pnpm
+typecheck` runs `tsconfig.test.json` over `src` and `tests` together and is clean, so
+it can be used as a gate. Spec fixtures under `tests/spec/cases` are excluded from both
+typecheck and lint: they are inputs to the tool, and several are deliberately
+ill-typed.
 
 ### Fixed since this document was written
 
@@ -76,6 +80,12 @@ worked. The package itself does **not** typecheck (43 pre-existing `tsc` errors,
   callback-taking body: `.map`, `.filter`, `.reduce`.
 - ~~**Property keys were substituted like variables.**~~ **Fixed** — `obj.a` with a
   parameter named `a` no longer rewrites the key.
+- ~~**Any fold producing a negative number crashed.**~~ **Fixed** —
+  `factory.createNumericLiteral` throws a TypeScript Debug Failure on a negative value,
+  because the AST has no negative numeric literal, only unary minus over a positive
+  one. This killed every subtraction crossing zero, every `-a`, and every multiply or
+  divide by a negative constant. Both fold sites now route through a helper. Guarded by
+  `folds-to-negative-number` and `negates-a-parameter`.
 
 Both fixes carried a regression that the specs caught, worth recording as a pattern:
 rebuilding a member access with `factory.create…` instead of `factory.update…` produces
@@ -225,8 +235,9 @@ when formatting is the thing being worked on.
    maps, `export * from` re-exports, pnpm workspace symlinks, nested declarations,
    `export default function`.
 4. `checker.getResolvedSignature()` selects the correct overload.
-5. Keep the core in `packages/vscode-extension`, but structure it as vscode-free
-   modules so a later LSP extraction is mechanical rather than a rewrite.
+5. Keep everything in `packages/vscode-extension` — no new package. Keep `src/` free
+   of direct `vscode` imports outside the handler layer, which is already true and
+   costs nothing to maintain.
 
 ### Phase 2 — Relocation correctness
 
@@ -317,11 +328,17 @@ Runs over already-relocated code. Every item here is all-or-nothing per construc
 4. Fix `activationEvents`, `publisher`; delete `schema.json` and `vscode-test`.
 5. Reconcile `README.md` / `README.old.md` / `TODO.md` / this file into one story.
 
-### Phase 7 — LSP extraction
+### Not on the roadmap: LSP extraction
 
-1. Move the vscode-free core into `packages/language-server` (currently `export {}`)
-   and reduce the extension to a thin client. Answers the open question in the root
-   `README.md` roadmap.
+Everything stays in `packages/vscode-extension` until the tool actually works. A second
+package buys nothing today and taxes every change with a build step and a version
+boundary, and `packages/language-server` stays the `export {}` stub it is.
+
+The one piece of discipline worth keeping: **no `import * as vscode` outside the
+handler layer.** `commandHandlers.ts` already takes an injected `VscodeApi` interface,
+so the seam exists — the rule is just not to breach it. That costs nothing now and is
+the only part that would be expensive to retrofit later. Revisit only if a second
+editor is genuinely wanted.
 
 ---
 

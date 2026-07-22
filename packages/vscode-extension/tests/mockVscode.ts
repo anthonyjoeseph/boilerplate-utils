@@ -18,7 +18,7 @@ function positionAtOffset(
   const lines = text.split(/\r?\n/);
   let current = 0;
   for (let line = 0; line < lines.length; line++) {
-    const lineEnd = current + lines[line].length;
+    const lineEnd = current + (lines[line]?.length ?? 0);
     if (offset <= lineEnd) {
       return { line, character: offset - current };
     }
@@ -37,7 +37,7 @@ function offsetAtPosition(
   const lines = text.split(/\r?\n/);
   let offset = 0;
   for (let l = 0; l < position.line && l < lines.length; l++) {
-    offset += lines[l].length + 1;
+    offset += (lines[l]?.length ?? 0) + 1;
   }
   return (
     offset + Math.min(position.character, lines[position.line]?.length ?? 0)
@@ -46,10 +46,9 @@ function offsetAtPosition(
 
 export interface MockEditBuilder {
   replace: MockInstance<
-    [range: { start: unknown; end: unknown }, text: string],
-    void
+    (range: { start: unknown; end: unknown }, text: string) => void
   >;
-  insert: MockInstance<[position: unknown, text: string], void>;
+  insert: MockInstance<(position: unknown, text: string) => void>;
 }
 
 export interface MockEditor {
@@ -66,8 +65,9 @@ export interface MockEditor {
     end: { line: number; character: number };
   };
   edit: MockInstance<
-    [(editBuilder: MockEditBuilder) => void | Promise<void>],
-    Promise<boolean>
+    (
+      editBuilder: (builder: MockEditBuilder) => void | Promise<void>
+    ) => Promise<boolean>
   >;
 }
 
@@ -77,7 +77,7 @@ export interface MockVscode {
     end: { line: number; character: number }
   ) => { start: unknown; end: unknown };
   window: {
-    showErrorMessage: MockInstance<[message: string], void>;
+    showErrorMessage: MockInstance<(message: string) => void>;
     activeTextEditor: MockEditor | undefined;
   };
   workspace: {
@@ -100,11 +100,9 @@ export function createMockEditor(
   const fileName = options.fileName ?? FAKE_FILE;
   const languageId = options.languageId ?? "typescript";
 
-  const replace = vi.fn<
-    void,
-    [range: { start: unknown; end: unknown }, text: string]
-  >();
-  const insert = vi.fn<void, [position: unknown, text: string]>();
+  const replace =
+    vi.fn<(range: { start: unknown; end: unknown }, text: string) => void>();
+  const insert = vi.fn<(position: unknown, text: string) => void>();
 
   const document = {
     getText: () => sourceText,
@@ -119,10 +117,9 @@ export function createMockEditor(
     }
   };
 
-  const edit = vi.fn<
-    Promise<boolean>,
-    [(editBuilder: MockEditBuilder) => void | Promise<void>]
-  >(async (callback) => {
+  const edit = vi.fn(async (
+    callback: (builder: MockEditBuilder) => void | Promise<void>
+  ) => {
     await callback({ replace, insert });
     return true;
   });
@@ -144,7 +141,7 @@ export function createMockEditor(
  * window.activeTextEditor is not set; tests pass the editor to the handler explicitly.
  */
 export function createMockVscode(workspaceRoot?: string): MockVscode {
-  const showErrorMessage = vi.fn<void, [message: string]>();
+  const showErrorMessage = vi.fn<(message: string) => void>();
 
   const Range = vi.fn(
     (
@@ -166,7 +163,26 @@ export function createMockVscode(workspaceRoot?: string): MockVscode {
   };
 }
 
-export function getWorkspaceRootForFile(fileName: string): string {
+/**
+ * The arguments of a mock's first recorded call, asserting it was called.
+ *
+ * `mock.calls[0]` is `T | undefined` under noUncheckedIndexedAccess, and an
+ * inline non-null assertion at every call site both hides that and produces a
+ * useless "cannot read property of undefined" when a handler silently does
+ * nothing. This fails with a sentence instead.
+ */
+export function firstCallArgs<A extends unknown[]>(
+  mock: { mock: { calls: A[] } },
+  label = "mock"
+): A {
+  const call = mock.mock.calls[0];
+  if (!call) {
+    throw new Error(`expected ${label} to have been called, but it was not`);
+  }
+  return call;
+}
+
+export function getWorkspaceRootForFile(_fileName: string): string {
   return FAKE_WORKSPACE;
 }
 

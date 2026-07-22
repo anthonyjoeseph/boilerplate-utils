@@ -1,0 +1,22 @@
+{
+  // Typecheck-only project covering src *and* tests.
+  //
+  // tsconfig.json exists to emit `out/` and so is scoped to `src`, which left
+  // everything under `tests/` unchecked - vitest transpiles via esbuild without
+  // typechecking, so the spec harness had no type coverage at all.
+  //
+  // Spec fixtures under tests/spec/cases are excluded: they are inputs to the
+  // tool, not code that has to compile. Several are deliberately ill-typed.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "rootDir": ".",
+    "outDir": null,
+    "tsBuildInfoFile": "node_modules/.cache/tsconfig.test.tsbuildinfo"
+  },
+  "include": ["src", "tests"],
+  "exclude": ["tests/spec/cases"]
+}

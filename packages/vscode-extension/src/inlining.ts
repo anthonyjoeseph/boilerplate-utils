@@ -38,6 +38,9 @@ export function inlineCallExpression(
 
   for (let i = 0; i < fnDecl.parameters.length; i++) {
     const param = fnDecl.parameters[i];
+    if (!param) {
+      return undefined;
+    }
 
     if (param.dotDotDotToken) {
       return undefined; // rest params not supported
@@ -151,13 +154,14 @@ export function inlineCallExpression(
     );
   } else if (fnDecl.body && ts.isBlock(fnDecl.body)) {
     const statements = fnDecl.body.statements;
+    const onlyStatement = statements.length === 1 ? statements[0] : undefined;
     if (
-      statements.length === 1 &&
-      ts.isReturnStatement(statements[0]) &&
-      statements[0].expression
+      onlyStatement &&
+      ts.isReturnStatement(onlyStatement) &&
+      onlyStatement.expression
     ) {
       finalExpr = substituteAndSimplifyExpression(
-        statements[0].expression,
+        onlyStatement.expression,
         argMap,
         paramConstEnv
       );
@@ -196,17 +200,20 @@ export function inlineCallExpression(
           )}`
       )
     )
-  ).map((key) => {
-    const [moduleSpecifierText] = key.split("::");
-    // Re-find the declaration by module specifier + textual match.
-    const candidates = importedNames.getAllByModule(moduleSpecifierText);
-    return (
-      candidates.find(
-        (d) =>
-          d.getText(fnSourceFile) === key.slice(moduleSpecifierText.length + 2)
-      ) ?? candidates[0]
-    );
-  });
+  )
+    .map((key) => {
+      const [moduleSpecifierText] = key.split("::");
+      if (moduleSpecifierText === undefined) return undefined;
+      // Re-find the declaration by module specifier + textual match.
+      const candidates = importedNames.getAllByModule(moduleSpecifierText);
+      return (
+        candidates.find(
+          (d) =>
+            d.getText(fnSourceFile) === key.slice(moduleSpecifierText.length + 2)
+        ) ?? candidates[0]
+      );
+    })
+    .filter((d): d is ts.ImportDeclaration => d !== undefined);
 
   const inlinedText = printer.printNode(
     ts.EmitHint.Expression,

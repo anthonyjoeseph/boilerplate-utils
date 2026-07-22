@@ -9,6 +9,7 @@ import { describe, it, expect, vi } from "vitest";
 import { handleSmartInline, type VscodeApi } from "../src/commandHandlers";
 import { selectionOffsets } from "../src/commandRunners";
 import {
+  firstCallArgs,
   createMockEditor,
   createMockVscode,
   FAKE_FILE,
@@ -36,7 +37,7 @@ const result = addTwo(three);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const editBuilder = firstCallArgs(editor.edit, "editor.edit")[0];
       const replace = vi.fn();
       const insert = vi.fn();
       await editBuilder({ replace, insert });
@@ -45,8 +46,8 @@ const result = addTwo(three);
         (c: unknown[]) =>
           typeof c[1] === "string" && (c[1] as string).trim() === "three + 2"
       );
-      expect(replaceCall).toBeDefined();
-      expect(replaceCall[1].trim()).toBe("three + 2");
+      if (!replaceCall) throw new Error("expected a replace with the inlined text");
+      expect(String(replaceCall[1]).trim()).toBe("three + 2");
     });
 
     it("inlines when argument is a property access and preserves the expression", async () => {
@@ -68,7 +69,7 @@ const result = addTwo(nums.four);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const editBuilder = firstCallArgs(editor.edit, "editor.edit")[0];
       const replace = vi.fn();
       const insert = vi.fn();
       await editBuilder({ replace, insert });
@@ -98,7 +99,7 @@ const result = addTwo(arr[1]);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const editBuilder = firstCallArgs(editor.edit, "editor.edit")[0];
       const replace = vi.fn();
       const insert = vi.fn();
       await editBuilder({ replace, insert });
@@ -127,7 +128,7 @@ const result = add(pair);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const editBuilder = firstCallArgs(editor.edit, "editor.edit")[0];
       const replace = vi.fn();
       const insert = vi.fn();
       await editBuilder({ replace, insert });
@@ -156,7 +157,7 @@ const result = sumTwo(tup);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const editBuilder = firstCallArgs(editor.edit, "editor.edit")[0];
       const replace = vi.fn();
       const insert = vi.fn();
       await editBuilder({ replace, insert });
@@ -214,13 +215,13 @@ async function run() {
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const editBuilder = firstCallArgs(editor.edit, "editor.edit")[0];
       const replace = vi.fn();
       const insert = vi.fn();
       await editBuilder({ replace, insert });
       expect(
         replace.mock.calls.some(
-          ([, text]: [unknown, string]) => text.trim() === "42"
+          (call) => String(call[1]).trim() === "42"
         )
       ).toBe(true);
     });
@@ -309,8 +310,7 @@ const result = complex();
       );
 
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();
-      const msg = (vscode.window.showErrorMessage as ReturnType<typeof vi.fn>).mock
-        .calls[0][0];
+      const msg = firstCallArgs(vscode.window.showErrorMessage, "showErrorMessage")[0];
       expect(msg).toMatch(/too complex|No function call expression/);
       expect(editor.edit).not.toHaveBeenCalled();
     });

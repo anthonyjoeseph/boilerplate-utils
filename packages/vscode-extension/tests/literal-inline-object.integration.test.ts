@@ -10,7 +10,12 @@ import {
   type VscodeApi
 } from "../src/commandHandlers";
 import { selectionOffsets } from "../src/commandRunners";
-import { createMockEditor, createMockVscode, FAKE_FILE } from "./mockVscode";
+import {
+  firstCallArgs,
+  createMockEditor,
+  createMockVscode,
+  FAKE_FILE
+} from "./mockVscode";
 
 describe("Smart Literal Inline Object (smartInlineFunction.literal-inline-object)", () => {
   describe("when selection is inside Object.fromEntries(...) and argument is const", () => {
@@ -37,9 +42,9 @@ const obj = Object.fromEntries(entries);
       expect(editor.edit).toHaveBeenCalledTimes(1);
       const replace = vi.fn();
       const insert = vi.fn();
-      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
+      await firstCallArgs(editor.edit, "editor.edit")[0]({ replace, insert });
       expect(replace).toHaveBeenCalled();
-      const text = replace.mock.calls[0][1];
+      const text = firstCallArgs(replace, "replace")[1];
       expect(text).toMatch(/a.*1|1.*a/);
       expect(text).toMatch(/b.*2|2.*b/);
     });

@@ -178,8 +178,8 @@ export function literalInlineArray(
       : [];
   const paramNames: string[] = [];
   for (let i = 0; i < Math.min(3, params.length); i++) {
-    const name = params[i].name;
-    paramNames.push(ts.isIdentifier(name) ? name.text : "");
+    const name = params[i]?.name;
+    paramNames.push(name && ts.isIdentifier(name) ? name.text : "");
   }
 
   const fullArrayExpr = factory.createArrayLiteralExpression(sourceElements);
@@ -187,6 +187,9 @@ export function literalInlineArray(
 
   for (let i = 0; i < sourceElements.length; i++) {
     const element = sourceElements[i];
+    if (!element) {
+      continue;
+    }
     const argMap = new Map<string, ts.Expression>();
     const paramConstEnv = new Map<string, ts.Expression>();
     if (paramNames[0]) {
@@ -195,7 +198,7 @@ export function literalInlineArray(
     } else if (params[0] && ts.isArrayBindingPattern(params[0].name)) {
       // Array destructuring in the first param: ([k, v]) => body
       // Each element is expected to be an array literal (e.g. from Object.entries).
-      if (element && ts.isArrayLiteralExpression(element)) {
+      if (ts.isArrayLiteralExpression(element)) {
         let bIdx = 0;
         for (const bindEl of params[0].name.elements) {
           if (ts.isOmittedExpression(bindEl)) { bIdx++; continue; }

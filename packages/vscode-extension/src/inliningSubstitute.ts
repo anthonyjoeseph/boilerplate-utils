@@ -17,6 +17,24 @@ export function substituteAndSimplifyExpression(
 ): ts.Expression {
   const factory = ts.factory;
 
+  /**
+   * Build a numeric literal node for `value`.
+   *
+   * `factory.createNumericLiteral` throws a TypeScript Debug Failure on a
+   * negative value — the AST has no negative numeric literal, only a unary
+   * minus applied to a positive one. Any fold that goes negative (`a - b`,
+   * `-a`, a multiply by a negative constant) hits this, so every numeric fold
+   * must route through here.
+   */
+  function createNumberLiteral(value: number): ts.Expression {
+    return value < 0
+      ? factory.createPrefixUnaryExpression(
+          ts.SyntaxKind.MinusToken,
+          factory.createNumericLiteral(-value)
+        )
+      : factory.createNumericLiteral(value);
+  }
+
   function evalLiteralExpression(node: ts.Expression): unknown | undefined {
     if (paramConstEnv.size > 0) {
       const constExpr = resolveConstExpression(node, paramConstEnv, 0);
@@ -193,7 +211,7 @@ export function substituteAndSimplifyExpression(
           return val ? factory.createTrue() : factory.createFalse();
         }
         if (typeof val === "number") {
-          return factory.createNumericLiteral(val);
+          return createNumberLiteral(val);
         }
         if (typeof val === "string") {
           return factory.createStringLiteral(val);
@@ -215,7 +233,7 @@ export function substituteAndSimplifyExpression(
           return val ? factory.createTrue() : factory.createFalse();
         }
         if (typeof val === "number") {
-          return factory.createNumericLiteral(val);
+          return createNumberLiteral(val);
         }
       }
       return synthetic;

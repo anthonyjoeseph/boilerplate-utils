@@ -8,7 +8,7 @@ import { getBooleanLiteralValue, isSimpleLiteral } from "./inliningConst";
 import { substituteAndSimplifyExpression } from "./inliningSubstitute";
 
 export interface IfBranch {
-  condition?: ts.Expression; // undefined for final else
+  condition?: ts.Expression | undefined; // undefined for final else
   returnExpr: ts.Expression;
 }
 
@@ -20,7 +20,7 @@ export function extractReturnExpressionFromStatement(
   }
   if (ts.isBlock(stmt) && stmt.statements.length === 1) {
     const inner = stmt.statements[0];
-    if (ts.isReturnStatement(inner) && inner.expression) {
+    if (inner && ts.isReturnStatement(inner) && inner.expression) {
       return inner.expression;
     }
   }
@@ -67,7 +67,7 @@ export function tryReduceIfElseChainToExpression(
     return undefined;
   }
   const first = body.statements[0];
-  if (!ts.isIfStatement(first)) {
+  if (!first || !ts.isIfStatement(first)) {
     return undefined;
   }
 
@@ -76,15 +76,21 @@ export function tryReduceIfElseChainToExpression(
     return undefined;
   }
 
-  const hasElse = branches[branches.length - 1].condition === undefined;
-  const condBranchCount = hasElse ? branches.length - 1 : branches.length;
+  const lastBranch = branches[branches.length - 1];
+  if (!lastBranch) {
+    return undefined;
+  }
+  const hasElse = lastBranch.condition === undefined;
+  const condBranches = hasElse ? branches.slice(0, -1) : branches;
 
   const condValues: boolean[] = [];
 
-  for (let i = 0; i < condBranchCount; i++) {
-    const cond = branches[i].condition!;
+  for (const branch of condBranches) {
+    if (!branch.condition) {
+      return undefined;
+    }
     const simplifiedCond = substituteAndSimplifyExpression(
-      cond,
+      branch.condition,
       argMap,
       paramConstEnv
     );
@@ -93,21 +99,16 @@ export function tryReduceIfElseChainToExpression(
       // Condition is not statically true/false after substitution -> cannot safely reduce.
       return undefined;
     }
-    condValues[i] = boolVal;
+    condValues.push(boolVal);
   }
 
-  let chosenReturnExpr: ts.Expression | undefined;
-
-  for (let i = 0; i < condBranchCount; i++) {
-    if (condValues[i]) {
-      chosenReturnExpr = branches[i].returnExpr;
-      break;
-    }
-  }
+  let chosenReturnExpr = condBranches.find(
+    (_, i) => condValues[i]
+  )?.returnExpr;
 
   if (!chosenReturnExpr) {
     if (hasElse) {
-      chosenReturnExpr = branches[branches.length - 1].returnExpr;
+      chosenReturnExpr = lastBranch.returnExpr;
     } else {
       return undefined;
     }
@@ -148,7 +149,7 @@ export function tryReduceSwitchToExpression(
   }
 
   const first = body.statements[0];
-  if (!ts.isSwitchStatement(first)) {
+  if (!first || !ts.isSwitchStatement(first)) {
     return undefined;
   }
 
@@ -185,24 +186,22 @@ export function tryReduceSwitchToExpression(
         continue;
       }
 
-      if (clause.statements.length !== 1) {
+      const onlyStatement = clause.statements[0];
+      if (clause.statements.length !== 1 || !onlyStatement) {
         return undefined;
       }
-      const returnExpr = extractReturnExpressionFromStatement(
-        clause.statements[0]
-      );
+      const returnExpr = extractReturnExpressionFromStatement(onlyStatement);
       if (!returnExpr) {
         return undefined;
       }
       return substituteAndSimplifyExpression(returnExpr, argMap, paramConstEnv);
     } else {
       // Default clause
-      if (clause.statements.length !== 1) {
+      const onlyStatement = clause.statements[0];
+      if (clause.statements.length !== 1 || !onlyStatement) {
         return undefined;
       }
-      const returnExpr = extractReturnExpressionFromStatement(
-        clause.statements[0]
-      );
+      const returnExpr = extractReturnExpressionFromStatement(onlyStatement);
       if (!returnExpr) {
         return undefined;
       }

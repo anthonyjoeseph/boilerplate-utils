@@ -24,6 +24,8 @@ import { runSmartInline } from "../../src/commandRunners";
 
 import { executeProgram, type ExecutionResult, type ProgramFiles } from "./sandbox";
 
+export type { ProgramFiles };
+
 const CARET = "/*|*/";
 const OPEN = "/*<*/";
 const CLOSE = "/*>*/";

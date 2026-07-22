@@ -102,10 +102,8 @@ async function doHandleSmartInline(
       const existingImports = callerSourceFile.statements.filter((s) =>
         ts.isImportDeclaration(s)
       );
-      const insertOffset =
-        existingImports.length > 0
-          ? existingImports[existingImports.length - 1].getEnd()
-          : 0;
+      const lastImport = existingImports[existingImports.length - 1];
+      const insertOffset = lastImport ? lastImport.getEnd() : 0;
       editBuilder.insert(document.positionAt(insertOffset), toAdd.join(""));
     }
     const range = new vscodeApi.Range(

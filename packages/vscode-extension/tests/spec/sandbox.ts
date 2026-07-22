@@ -119,7 +119,7 @@ const createSandbox = (
       if (args.length === 0) super(FROZEN_CLOCK);
       else super(...(args as [number]));
     }
-    static now(): number {
+    static override now(): number {
       return FROZEN_CLOCK;
     }
   }
@@ -203,7 +203,7 @@ export const executeProgram = async (args: {
 
   try {
     const module = sandbox.load(args.entry);
-    const run = module.run;
+    const run = module["run"];
     if (typeof run !== "function") {
       throw new Error(
         `spec fixture "${args.entry}" must export a \`run\` function`

@@ -11,7 +11,12 @@ import {
 import type * as vscode from "vscode";
 import { describe, it, expect, vi } from "vitest";
 import { selectionOffsets } from "../src/commandRunners";
-import { createMockEditor, createMockVscode, FAKE_FILE } from "./mockVscode";
+import {
+  firstCallArgs,
+  createMockEditor,
+  createMockVscode,
+  FAKE_FILE
+} from "./mockVscode";
 
 describe("Smart Literal Inline Array (smartInlineFunction.literal-inline-array)", () => {
   describe("when selection is inside .map(...) and source is const", () => {
@@ -38,7 +43,7 @@ const doubled = myArray.map((x) => x * 2);
       expect(editor.edit).toHaveBeenCalledTimes(1);
       const replace = vi.fn();
       const insert = vi.fn();
-      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
+      await firstCallArgs(editor.edit, "editor.edit")[0]({ replace, insert });
       expect(replace).toHaveBeenCalledWith(expect.anything(), "[2, 4, 6]");
     });
 
@@ -65,9 +70,9 @@ const entries = Object.entries(obj).map(([k, v]) => v * 2);
       expect(editor.edit).toHaveBeenCalledTimes(1);
       const replace = vi.fn();
       const insert = vi.fn();
-      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
+      await firstCallArgs(editor.edit, "editor.edit")[0]({ replace, insert });
       expect(replace).toHaveBeenCalled();
-      const text = replace.mock.calls[0][1];
+      const text = firstCallArgs(replace, "replace")[1];
       expect(text.trim()).toBe("[2, 4]");
     });
   });

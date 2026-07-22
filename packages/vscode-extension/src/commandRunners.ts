@@ -2,7 +2,6 @@
  * Command runners: pure logic for each extension command.
  * Used by the extension and by integration tests so behavior is consistent and testable.
  */
-import * as path from "path";
 import * as ts from "typescript";
 
 import {
