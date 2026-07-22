@@ -108,6 +108,12 @@ importers:
 
   examples/spa:
     dependencies:
+      '@boilerplate-utils/react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@boilerplate-utils/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       react:
         specifier: 'catalog:'
         version: 19.2.7

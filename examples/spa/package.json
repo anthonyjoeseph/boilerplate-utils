@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@boilerplate-utils/react": "workspace:*",
+    "@boilerplate-utils/shared": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
