@@ -1,508 +1,236 @@
 # Smart Inline — Roadmap
 
-## The model
+Smart Inline is a VS Code extension (`packages/vscode-extension`) that expands a
+TypeScript call at the cursor.
 
-This is a **relocation tool**, not an evaluator.
+## What the tool does
 
-The primary job is to copy a function's body to the call site, rewrite its parameters
-to the caller's arguments, and bring along whatever the body needs in order to still
-resolve in its new home. Impure code is fine — it gets copied, not executed. Purity
-is not a precondition, because nothing is being evaluated.
+It is a **relocation tool, not an evaluator**. Its main job: copy a function's body
+to the call site, rewrite the parameters to the caller's arguments, and bring along
+anything the body needs to still resolve in its new home. Impure code is fine — it is
+copied, not executed.
 
-Collapse (constant folding, branch elimination, loop unrolling) is a **second pass**
-that runs over the relocated code. It is best-effort and conservative: each construct
-either collapses cleanly or is left exactly as it was.
+**Collapse** (constant folding, branch elimination, loop unrolling) is a separate,
+best-effort second pass over the relocated code.
 
-Two rules follow from this framing, and most of the design falls out of them:
+Two rules govern everything:
 
-1. **Relocation must never change runtime behavior.** Not because the code is pure,
-   but because moving code is not supposed to mean anything.
+1. **Relocation must never change runtime behavior.** Moving code is not supposed to
+   mean anything.
 2. **Collapse is all-or-nothing per construct.** If a construct is complicated in any
-   way, it stays. Partial or speculative collapse is worse than none.
+   way, leave it exactly as it was. A half-collapsed form is worse than none.
 
 ### The ES6 builtin rule
 
-`Object.keys` / `Object.entries` / `Object.values` / `Array.prototype.map` / `.filter`
-/ `.reduce` and friends have well-defined semantics that we could evaluate — but we
-only do so when the user **invokes expansion directly on that call**.
+Builtins like `Object.entries`, `.map`, `.filter`, and `.reduce` have semantics we can
+evaluate — but we only evaluate one when the cursor is **directly on that call**. A
+builtin *inside* a body being relocated is copied verbatim.
 
-A builtin appearing *inside* a body being relocated is copied verbatim and left alone.
+## How the command works
 
-Today this is expressed as four commands:
+There is **one command**, `smartInlineFunction.inline`. It looks at what the cursor is
+on, walks outward from the cursor, and takes the first behavior that matches:
 
-| command | what it acts on |
+| the cursor is on… | behavior | result |
+| --- | --- | --- |
+| `Object.fromEntries(...)` | evaluate object | reduce to an object literal |
+| `.map(...)` | evaluate array | reduce to an array literal |
+| a call to a plain function name, e.g. `f(x)` | relocate | inline the function body |
+| any other expression | fold | constant-fold the expression |
+
+If nothing matches, the command reports "nothing to inline here". If the chosen
+behavior can't complete (e.g. the function is too complex to relocate), it reports
+*why* — it does not silently fall back to another behavior.
+
+The cursor position is how the user chooses the behavior. This is also what the ES6
+builtin rule needs: a nested `.map` is a *child* of the outer call, so walking outward
+from a cursor on the outer call never reaches it.
+
+### Where the code lives
+
+| file | role |
 | --- | --- |
-| `smartInlineFunction.inline` | a user-defined function call — relocate it |
-| `smartInlineFunction.literal-inline` | an expression — fold it |
-| `smartInlineFunction.literal-inline-array` | a `.map(...)` call — evaluate it |
-| `smartInlineFunction.literal-inline-object` | an `Object.fromEntries(...)` call — evaluate it |
+| `src/inlineDispatch.ts` | `classifyInlineTarget` — picks the behavior from the cursor |
+| `src/commandRunners.ts` | `runInline` — dispatches to a behavior; the per-behavior runners |
+| `src/commandHandlers.ts` | `handleSmartInline` — the command; applies the edit. Takes an injected `VscodeApi` so it is testable |
+| `src/inlining*.ts` | the relocation engine and collapse pass |
+| `src/functionResolution.ts` | finds a called function's declaration |
+| `tests/spec/` | behavioral specs for the relocation engine (see Testing) |
+| `tests/inline.integration.test.ts` | tests the command's dispatch |
 
-The *semantic distinction* between these is real and worth keeping. What is **not**
-essential is that the user pick it by choosing a command. See "Command unification"
-below: the intent each command encodes is recoverable from **which node the cursor
-sits on**, so the four collapse into one `smartInlineFunction.inline` that dispatches
-by context — and doing so actually *preserves* the ES6-builtin rule rather than
-fighting it.
+## Design rules
 
----
+These constrain all future work.
 
-## Locked decisions
+- **Keep everything in `packages/vscode-extension`.** No separate language-server
+  package until the tool actually works — it would tax every change for no benefit.
+- **No `vscode` imports outside the handler layer.** `commandHandlers.ts` takes an
+  injected `VscodeApi`; keep the rest of `src/` free of `vscode` so it stays
+  unit-testable.
 
-| decision | choice |
-| --- | --- |
-| Resolution foundation | `ts.LanguageService` over a real `Program` |
-| Where the core lives | `packages/vscode-extension`, one package. No LSP extraction — see below |
-| Target scope | arbitrary TypeScript, not a curated corpus |
-| Multi-statement output | hoist into caller scope when possible; IIFE only as fallback |
-| Parameter binding | substitute literals and bare identifiers; `const p = arg;` prologue for anything else |
-| Unresolvable references | import what's importable; refuse on mutable module state; otherwise emit and warn |
-| Collapse scope | statically-known arrays **and** fixed numeric ranges, with an unroll cap |
-| Collapse failure | leave the construct untouched; never emit a half-collapsed form |
+### References that don't resolve at the call site
 
----
+When a relocated body uses a name that isn't in scope at the call site, classify it —
+first match wins:
 
-## Known-wrong today
+1. **Mutable module state (`let` / `var` at module level) → refuse.** Copying forks the
+   state; importing can't support writes. Abort and name the binding.
+2. **Importable (exported by a module or package) → add the import** to the caller,
+   rewriting relative paths relative to the caller's directory. It's fine if the import
+   is unresolved until `npm install`.
+3. **Anything else → emit anyway, and warn**, listing what is now unresolved. Always
+   produce output rather than refuse.
 
-Grouped by how the failure shows up. Everything below is either covered by a spec in
-`tests/spec/cases/` or queued to be.
+(Copying a non-exported module-local declaration into the caller is out of scope for
+now — it can drag in a large dependency cone.)
 
-**Baseline: green.** It was 7 red when this document was written — property-access
-arguments, element-access arguments, both destructuring cases, if/else collapse, switch
-collapse, and `Object.entries(obj).map(cb)`. The first four and the last are fixed; the
-two collapse cases are now `known: broken` specs, which is honest — neither has ever
-worked. The package itself does **not** typecheck (43 pre-existing `tsc` errors, mostly
-`noUncheckedIndexedAccess`) — **now fixed**, and `tests/` is covered too. `pnpm
-typecheck` runs `tsconfig.test.json` over `src` and `tests` together and is clean, so
-it can be used as a gate. Spec fixtures under `tests/spec/cases` are excluded from both
-typecheck and lint: they are inputs to the tool, and several are deliberately
-ill-typed.
+## Current limitations
 
-### Fixed since this document was written
+What doesn't work yet. Each should get a behavioral spec in `tests/spec/` when fixed.
 
-- ~~**Any body containing a nested function or arrow throws.**~~ **Fixed** —
-  `nullTransformationContext` now supplies `factory: ts.factory`. This had blocked every
-  callback-taking body: `.map`, `.filter`, `.reduce`.
-- ~~**Property keys were substituted like variables.**~~ **Fixed** — `obj.a` with a
-  parameter named `a` no longer rewrites the key.
-- ~~**Any fold producing a negative number crashed.**~~ **Fixed** —
-  `factory.createNumericLiteral` throws a TypeScript Debug Failure on a negative value,
-  because the AST has no negative numeric literal, only unary minus over a positive
-  one. This killed every subtraction crossing zero, every `-a`, and every multiply or
-  divide by a negative constant. Both fold sites now route through a helper. Guarded by
-  `folds-to-negative-number` and `negates-a-parameter`.
+**Relocation emits wrong code:**
+- Arguments are duplicated instead of bound, so an effectful argument runs more than once.
+- Extra arguments (more than parameters) are dropped, losing their effects.
+- No hygiene: substitution is a blind name match, so shadowing bindings get clobbered
+  and argument names can be captured.
+- Relative imports in the callee are dropped, leaving dangling references.
+- `==` / `!=` fold with `===` / `!==` semantics.
+- Cross-file relocation prints caller-owned nodes against the wrong source file.
+- Import insertion is textual: fragile dedupe, wrong offsets, ignores leading
+  directives and headers.
 
-Both fixes carried a regression that the specs caught, worth recording as a pattern:
-rebuilding a member access with `factory.create…` instead of `factory.update…` produces
-a fresh node with no `questionDotToken`, silently turning `o?.b` into `o.b`. The
-`update…` helpers delegate to the chain variants; the `create…` ones cannot. Guarded by
-`optional-chain-dropped` and `optional-chain-element-dropped`.
+**Resolution is limited:**
+- Aliased imports (`import { a as b }`) don't resolve.
+- `.js`-suffixed specifiers, tsconfig `paths`, `exports` maps, and pnpm workspace
+  symlinks don't resolve.
+- Only top-level declarations are visible — nested functions and class/object methods
+  aren't.
+- Overloads pick the last declaration, not the resolved one.
+- Method (`obj.f()`), namespace (`ns.f()`), and constructor (`new F()`) calls aren't
+  relocated. They route to fold, which reprints them unchanged (see the no-op item in
+  Phase 6).
 
-- ~~**`export default function` declarations are invisible.**~~ **Discovered working** —
-  the same-file resolver finds them. Guarded by `export-default-function`.
-- ~~**`f?.()` is rejected at the identifier check.**~~ **Discovered working** — for a
-  bare-identifier optional call the callee IS an `Identifier`, so the check passes and
-  the body is inlined (the `?.` is dropped, which is fine when `f` is always defined).
-  Guarded by `optional-call`. The claim was only correct for `obj.f?.()` where the
-  callee is a `PropertyAccessExpression`.
+**Relocation refuses too much:**
+- Any multi-statement body is "too complex" — as are early returns, `throw`, loops,
+  `try` / `catch`, and local `const`s.
+- Unsupported parameter shapes: rest params, nested destructuring, defaults inside
+  patterns, computed names, `this`.
+- Explicit `undefined` skips a parameter default (`f(undefined)` with `(a = 5)` yields
+  `undefined`).
 
-### Silently produces wrong code
+**Collapse barely fires:**
+- if/else and switch collapse never fire (the condition is rewritten before it can
+  reduce).
+- Only literal `true` / `false` count — truthiness (`if (n)` with `n = 0`) doesn't.
+- Most operators never fold: `&&`, `||`, `??`, `%`, `**`, bitwise, `typeof`,
+  `instanceof`, `in`.
+- `null`, `undefined`, bigint, and negative numbers aren't treated as simple literals.
+- Switch fall-through, `break`-based switches, and multi-statement clauses fail.
 
-- **Arguments are duplicated, not bound.** `const dbl = (a) => a + a; dbl(next())`
-  expands to `next() + next()`, calling twice. Under destructuring it's worse: every
-  field re-evaluates the whole argument expression.
-- **Extra arguments are deleted.** The binding loop walks `fnDecl.parameters`, never
-  `callExpr.arguments`. `f(sideEffect())` where `f = () => 1` expands to `1`.
-- **No hygiene.** Substitution is a blind name match over the entire body, so a
-  binding that shadows a parameter gets clobbered, and an argument mentioning a name
-  the body also uses gets captured.
-- **Relative imports are dropped.** `inliningImports.ts` skips every specifier starting
-  with `"."`, so relocating a body that uses a `./helpers` symbol emits a dangling
-  identifier with no warning at all.
-- **`==` and `!=` are folded as `===` and `!==`.** `isOne("1")` where
-  `isOne = (v) => v == 1` folds to `false`; at runtime it is `true`.
-- **Cross-file printing uses the wrong `SourceFile`.** `printNode` is handed the
-  callee's file but `finalExpr` contains caller-owned argument nodes.
-- **Import insertion is textual and fragile.** Dedupe is a substring test against the
-  whole document (so an import mentioned inside a comment counts as present), and the
-  insert offset is `lastImport.getEnd()` — before the newline — producing
-  `import a from "a";import b from "b";`. With no existing imports it inserts at
-  offset 0, ahead of any `"use client"` directive or license header.
+**Packaging:**
+- `publisher` is the placeholder `"your-name-or-org"`.
+- The README advertises keybindings that `package.json` doesn't contribute.
+- `schema.json` (534 KB) and `vscode-test` are unused.
+- `README.md`, `README.old.md`, and `TODO.md` tell overlapping, inconsistent stories.
 
-### Fails loudly, but shouldn't
+## What we want next
 
-- **Aliased imports never resolve.** `findImportForIdentifier` computes the real
-  imported name and then discards it, so `import { runMe as go }` searches the target
-  file for `go`.
-- **`.js`-suffixed ESM specifiers never resolve** — the exact style `template-fns` and
-  `language-server` use on themselves. So do tsconfig `paths`, `exports` maps, and
-  workspace `@scope/pkg` imports through pnpm symlinks.
-- **Only top-level declarations are visible.** Nested functions, class methods, and
-  object-literal methods are all invisible. (`export default function` was thought to be
-  in this group but is handled correctly — see "Fixed since this document was written".)
-- **Overloads pick the last declaration**, not the resolved one.
-- **Method, namespace, and constructor calls are rejected.** `obj.f()` and `ns.f()`
-  fail the identifier check (callee is a `PropertyAccessExpression`). `new F()` is a
-  `NewExpression` and is not found by the call-finder at all. `(f)()` fails the
-  identifier check (callee is a `ParenthesizedExpression`). `f?.()` is not in this
-  group — see "Fixed since this document was written".
-- **Any multi-statement body is "too complex."** So are early returns, `throw`, loops,
-  `try/catch`, and local `const`s.
-- **If/else and switch collapse never fire, for any input.** Constant folding consults
-  an environment keyed by *parameter* name, but substitution has already rewritten the
-  parameter to the caller's own identifier, which that environment knows nothing about.
-  So the condition never reduces to a literal — and because a non-static condition
-  aborts the whole expansion rather than just leaving the `if` alone, every function
-  with an `if` or `switch` body is refused as "too complex."
-- **Caller-side constant propagation is therefore mostly unreachable.** Folding only
-  fires when the argument is written as a literal *at the call site*. This is why
-  `const` being treated as deep immutability has not bitten yet — see
-  `tests/spec/cases/mutated-const-array-not-folded`, which guards the accident.
-- **Truthiness doesn't count.** `if (n)` with `n = 0` bails, because only literal
-  `true` / `false` are recognized.
-- **Most operators never fold** — `&&`, `||`, `??`, `%`, `**`, bitwise, `typeof`,
-  `instanceof`, `in` — so the most common guard shape in real code, `if (a && b)`,
-  can never reduce.
-- **`null`, `undefined`, bigint, and negative numbers aren't simple literals** (`-1`
-  parses as a `PrefixUnaryExpression`), so they can't be switch discriminants or cases.
-- **Switch fall-through fails** (`case 1: case 2: return x`), as do `break`-based
-  switches and any clause with more than one statement.
-- **Rest params, nested destructuring, defaults inside patterns, computed property
-  names, and `this` params** are all unsupported.
-- **Explicit `undefined` skips the default.** `f(undefined)` where `f = (a = 5) => a`
-  yields `undefined`.
+Ordered roughly by dependency. Phase 1 unlocks much of the rest.
 
-### Hygiene / packaging
+### Phase 1 — Resolve through the TypeScript checker
+Build a `ts.Program` / `ts.LanguageService` from the workspace tsconfig; cache it and
+invalidate on edit. Replace `functionResolution.ts` with `getDefinitionAtPosition`
+plus the type checker. This fixes, for free: aliased imports, `.js` specifiers,
+tsconfig `paths` / `exports`, re-exports, workspace symlinks, nested declarations, and
+overload selection (via `getResolvedSignature`).
 
-- ~~`activationEvents` uses the pre-1.74 `onCommand:` form.~~ **Fixed** in the command
-  merge — now `[]`, auto-activated from `contributes.commands`.
-- `publisher` is the literal placeholder `"your-name-or-org"`.
-- `README.md` advertises `ctrl+opt+cmd+click`, `ctrl+opt+cmd+.`, and
-  `ctrl+opt+cmd+space`; `package.json` contributes zero keybindings, menus, or config.
-- `schema.json` is a 534 KB table dump referenced by nothing.
-- `vscode-test@1.6.1` is deprecated and unused.
-- The extension is on jest; the rest of the monorepo is on vitest.
-- `commandRunners.ts` has a stray mid-file `import` statement.
-- `README.md` is a brainstorm, `README.old.md` is the actual feature documentation.
+### Phase 2 — Make relocation correct
+No new capability; just stop emitting wrong code.
+- Bind parameters: substitute literals and bare identifiers directly; emit a
+  `const p = arg;` prologue for anything else, preserving evaluation count and order.
+- Alpha-rename callee-local bindings that would collide with or capture names at the
+  call site.
+- Evaluate extra arguments (hoist into the prologue) instead of dropping them.
+- Carry over the body's unresolved names using the rules in "References that don't
+  resolve", including rewriting relative import paths.
+- Rewrite import insertion: dedupe against parsed imports, insert after the last
+  import, respect directives / shebangs / headers.
+- Fix `==` / `!=` folding and the wrong-source-file printing.
 
----
-
-## Phases
-
-### Phase 0 — Test harness
-
-Nothing else is safe to attempt until a regression is detectable, and Phase 1 is a
-rewrite of the resolution layer.
-
-1. ~~**Behavioral spec harness.**~~ **Done** — `tests/spec/`. Each spec is a runnable
-   fixture; the runner expands the marked call, then runs the program before and after
-   and compares the effect trace, the returned/threw disposition, and a structural
-   encoding of the result. See `tests/spec/README.md`.
-2. ~~**Known-broken specs are executable.**~~ **Done** — `"known": "broken"` inverts the
-   assertion, so the bug list runs green while open and fails loudly the moment a fix
-   lands.
-3. ~~**jest → vitest**~~ **Done** — `vitest.config.ts`; `runSpec.ts` was
-   framework-agnostic, so only `spec.test.ts` changed.
-4. ~~**Repair the red baseline.**~~ **Done** — the suite is green. Property-access and
-   element-access arguments and both destructuring cases were genuinely fixed;
-   if/else and switch collapse were ported to `known: broken` specs, which is the
-   honest outcome since neither has ever worked.
-5. ~~**Grow the corpus**~~ **Done** — 38 specs exist, covering every item in
-   "Known-wrong today" that is testable with behavioral specs. Three gaps remain
-   by design: (a) import insertion fragility needs unit tests not behavioral specs
-   (the spec runner uses an idealised applier — see `tests/spec/README.md`);
-   (b) tsconfig `paths` / `exports` maps / pnpm workspace symlinks require
-   infrastructure the sandbox can't provide; (c) class methods and object-literal
-   methods can't be called without method-call syntax, which is already refused.
-
-**Deliberately not in Phase 0: golden-text snapshots.** They belong after Phase 5,
-not here. Two reasons, and the second is the one that matters:
-
-- Phase 2 and Phase 3 rewrite the output *shape* — `const p = arg;` prologues,
-  alpha-renamed bindings, hoisted statements, IIFE wrappers. Every snapshot written
-  today is invalidated by design.
-- More seriously, a snapshot taken now records **current wrong output as expected**.
-  `next() + next()` becomes a golden file. When Phase 2 fixes the duplication, the
-  diff reads as a regression, and the natural reflex — re-bless the snapshot — undoes
-  the fix. A snapshot cannot tell "this changed" from "this got better"; only the
-  behavioral spec can, and it already does.
-
-Snapshots answer "is the output *readable*", which is Phase 5's question. Write them
-when formatting is the thing being worked on.
-
-### Phase 1 — LanguageService foundation
-
-1. Build a `ts.Program` / `ts.LanguageService` from the workspace tsconfig; cache it
-   and invalidate on document change.
-2. Replace `functionResolution.ts` with `getDefinitionAtPosition` plus
-   `checker.getSymbolAtLocation`. This deletes the source-map reader, the
-   `require.resolve` fallback, and the file-extension guessing loop.
-3. Falls out for free: aliased imports, `.js` specifiers, tsconfig `paths`, `exports`
-   maps, `export * from` re-exports, pnpm workspace symlinks, nested declarations,
-   `export default function`.
-4. `checker.getResolvedSignature()` selects the correct overload.
-5. Keep everything in `packages/vscode-extension` — no new package. Keep `src/` free
-   of direct `vscode` imports outside the handler layer, which is already true and
-   costs nothing to maintain.
-
-### Phase 2 — Relocation correctness
-
-This phase is entirely about not emitting wrong code. No new capability.
-
-1. ~~**Give `visitEachChild` a real transformation context.**~~ **Done.**
-2. **Parameter binding.** Substitute literals and bare identifiers directly; emit a
-   `const p = arg;` prologue for calls, member chains, object literals, and anything
-   else. Preserves evaluation count and order without noisy output in the common case.
-3. **Alpha-renaming pass.** Rename callee-local bindings that would collide with
-   anything visible at the call site, and rename to avoid capturing names that appear
-   in substituted arguments.
-4. **Stop dropping extra arguments.** Arguments with no matching parameter must still
-   be evaluated — hoist them into the prologue.
-5. **Free-variable triage.** Collect every identifier in the relocated body that
-   doesn't resolve at the call site and route it through the precedence rules in
-   "Handling unresolvable references" below. Includes carrying over relative imports,
-   rewriting each specifier to be correct relative to the *caller's* directory.
-6. **Rewrite import insertion.** Structural dedupe against parsed `ImportDeclaration`
-   nodes rather than a substring test; insert after the last import's trailing
-   newline; respect leading directives, shebangs, and license headers.
-7. Fix `==` / `!=` folding.
-8. Fix `printNode` receiving the wrong `SourceFile` for caller-owned nodes.
-9. **Decouple folding from parameter names.** Constant propagation keys on the
-   parameter, which substitution has already erased, so it fires almost never.
-   Whatever replaces it must respect the escape-analysis constraint that
-   `mutated-const-array-not-folded` guards rather than reintroducing that bug.
-
-### Phase 3 — Output shape
-
-1. **Hoist by default.** When the call sits in a statement position — `const x = f(a)`
-   or a bare `f(a);` — lift the body's statements into the caller's scope and replace
-   the call with the final return expression.
-2. **IIFE as fallback.** When the call is buried inside a larger expression, or has
-   early returns that can't be flattened, wrap instead. Use an arrow IIFE so `this` is
-   preserved; use `await (async () => { ... })()` for async bodies.
-3. **Async gating.** An `await` relocated into a synchronous caller is an error —
-   offer to make the caller `async` rather than silently producing invalid code.
-4. Support the parameter shapes currently rejected: rest params, nested destructuring,
-   defaults inside patterns, computed property names, `this` params.
-5. Honor parameter defaults for an explicitly passed `undefined`.
-6. Support method, namespace, optional-chained, and constructor calls — mostly free
-   once Phase 1 lands.
+### Phase 3 — Output shape and more call kinds
+- **Hoist by default:** in a statement position (`const x = f(a)` or `f(a);`), lift the
+  body's statements into the caller and replace the call with the return expression.
+- **IIFE as fallback:** when the call is inside a larger expression or has early
+  returns, wrap in an arrow IIFE (preserves `this`); use `await (async () => {…})()`
+  for async bodies.
+- **Async gating:** relocating an `await` into a sync caller is an error — offer to
+  make the caller `async`.
+- Support method, namespace, optional-chained, and constructor calls (mostly free after
+  Phase 1).
+- Support the rejected parameter shapes; honor a default for explicit `undefined`.
 
 ### Phase 4 — Collapse pass
-
-Runs over already-relocated code. Every item here is all-or-nothing per construct.
-
-1. **If/else → ternary**, only when every condition resolves statically. When a
-   condition doesn't, leave the entire `if` in place — do not partially rewrite it.
-2. **Truthiness**, not just literal `true` / `false`.
-3. **Missing operators**: `&&`, `||`, `??`, `%`, `**`, bitwise, `typeof`,
-   `instanceof`, `in`.
-4. **Widen the literal set** to `null`, `undefined`, bigint, and negative numbers.
-5. **Switch**: fall-through clauses, `break`-based forms, multi-statement clauses.
-6. **Loop unrolling**, the north-star case — a hand-written `map` built on a `for`
-   loop should collapse:
-   - over an array whose elements are all statically known at the call site, or
-   - over a fixed numeric range `for (let i = 0; i < N; i++)` with constant `N`,
-      emitting unrolled statements even when the values aren't known.
-   - Requires: derivable bounds, no `break` / `continue` / early return, and a
-      configurable **unroll cap** above which the loop is left alone.
-7. **Evaluator hardening**: a fuel budget so a divergent loop can't hang the editor;
-   throw containment so `f(null)` residualizes as code that throws at runtime rather
-   than throwing during expansion; and guards for `-0`, `NaN`, `Infinity`, and
-   float-precision artifacts (`0.1 + 0.2` should not become `0.30000000000000004` in
-   your source).
-8. **Fix `literal-inline`**, which per `TODO.md` never inlines the function itself —
-   the `CallExpression` branch of `simplify` rewrites arguments and leaves the callee.
+Runs over relocated code, all-or-nothing per construct.
+- if/else → ternary, only when every condition resolves statically.
+- Recognize truthiness, not just literal `true` / `false`.
+- Add operators: `&&`, `||`, `??`, `%`, `**`, bitwise, `typeof`, `instanceof`, `in`.
+- Widen literals to `null`, `undefined`, bigint, negative numbers.
+- Switch: fall-through, `break`-based, multi-statement clauses.
+- **Loop unrolling** (the north-star): a hand-written `map` / `for` collapses when the
+  array elements or a fixed numeric range are statically known. Requires derivable
+  bounds, no `break` / `continue` / early return, and a configurable **unroll cap**.
+- Evaluator hardening: a fuel budget so a divergent loop can't hang the editor; make
+  `f(null)` residualize as code that throws at runtime rather than throwing during
+  expansion; guard `-0`, `NaN`, `Infinity`, and float artifacts (`0.1 + 0.2`).
 
 ### Phase 5 — Output quality
-
-1. Preserve comments and formatting. Full AST re-printing flattens everything onto one
-   line today; consider splicing original text for untouched subtrees instead.
-2. Run the result through the project's Prettier and ESLint config.
-3. Preserve generic instantiation and `as const`, so relocation doesn't introduce type
-   errors even when runtime behavior is identical.
-4. **Golden-text snapshots**, deferred from Phase 0. Once formatting is deliberate,
-   snapshot the expanded text alongside the behavioral check — the spec proves the
-   output is correct, the snapshot proves it is readable.
+- Preserve comments and formatting instead of flattening everything onto one line.
+- Run the result through the project's Prettier and ESLint.
+- Preserve generics and `as const` so relocation doesn't introduce type errors.
+- Add golden-text snapshots once formatting is deliberate (they answer "is it
+  readable" — the behavioral specs already answer "is it correct").
 
 ### Phase 6 — UX
+- Ship the keybindings the README advertises.
+- A preview / diff pane showing the change and any warnings before applying.
+- **Report which behavior ran** ("Inlined function body", "Evaluated `.map`").
+  `runInline`'s result already carries a `behavior` tag for this.
+- **Detect no-ops:** when a behavior's output equals its input (e.g. folding a method
+  call), say "nothing to inline here" instead of applying a silent no-op edit.
+- Diagnostics that name the exact blocking node, replacing the generic "too complex".
+- Fix `publisher`; delete `schema.json` and `vscode-test`; reconcile the READMEs and
+  `TODO.md` into one story.
 
-1. Ship the keybindings the README already advertises.
-2. Preview/diff pane with attached warnings before applying.
-3. Diagnostics naming the exact blocking node, replacing
-   `"This function is too complex to inline safely."`
-4. Fix `publisher`; delete `schema.json` and `vscode-test`. (`activationEvents` fixed
-   in the command merge.)
-5. Reconcile `README.md` / `README.old.md` / `TODO.md` / this file into one story.
-6. ~~**Command unification** — collapse the four commands into a single
-   `smartInlineFunction.inline` that dispatches by context.~~ **Done** — see the
-   dedicated section below.
+### Maybe later
+- **Power-user overrides:** if cursor placement proves too coarse (e.g. a user wants to
+  fold `f(x)`'s arguments rather than relocate it), add hidden per-behavior commands or
+  a command argument like `{ mode: "fold" }`. Don't build this until there's demand.
 
-### Not on the roadmap: LSP extraction
+## Testing
 
-Everything stays in `packages/vscode-extension` until the tool actually works. A second
-package buys nothing today and taxes every change with a build step and a version
-boundary, and `packages/language-server` stays the `export {}` stub it is.
+Two layers, kept separate:
 
-The one piece of discipline worth keeping: **no `import * as vscode` outside the
-handler layer.** `commandHandlers.ts` already takes an injected `VscodeApi` interface,
-so the seam exists — the rule is just not to breach it. That costs nothing now and is
-the only part that would be expensive to retrofit later. Revisit only if a second
-editor is genuinely wanted.
+- **`tests/spec/` — behavioral specs for the relocation engine.** Each spec is a
+  runnable fixture with the cursor marked on one call; the runner expands it, runs the
+  program before and after, and checks the effect trace, the thrown/returned
+  disposition, and the result are identical. This is the core promise: relocation
+  doesn't change meaning. A spec marked `"known": "broken"` asserts the tool *fails*
+  today and shouts when a fix makes it pass — so fixing a bug means deleting its
+  `known: broken` flag. These specs test the engine directly; **do not** route them
+  through the command dispatcher, or a no-op could hide a real relocation bug. See
+  `tests/spec/README.md`.
+- **`tests/inline.integration.test.ts` — the command.** Drives the real handler with a
+  mocked editor and checks the cursor lands on the right behavior.
 
----
-
-## Command unification
-
-**Goal.** The four commands become one: `smartInlineFunction.inline`. The user
-places the cursor and invokes a single command; the tool figures out which behavior
-is wanted from context. `literal-inline`, `literal-inline-array`, and
-`literal-inline-object` are removed as separate commands (kept only, if at all, as
-explicit power-user overrides — see "Escape hatch" below).
-
-**Why this is possible — and why it doesn't break the ES6-builtin rule.** Each
-command keys on a structurally distinct anchor node found by walking *outward* from
-the cursor:
-
-| behavior | anchor the cursor must be on/inside |
-| --- | --- |
-| object | `Object.fromEntries(...)` |
-| array | `.map(...)` |
-| smart-inline | a `CallExpression` with a plain-identifier callee |
-| fold | any other expression |
-
-The intent currently carried by *command choice* is therefore carried by *cursor
-position*. This is exactly what the ES6-builtin rule already asks for: a builtin is
-evaluated only when expansion is invoked **directly on that call**. A `.map` nested
-inside a body being relocated is copied verbatim — because the cursor is on the outer
-call, and `.map` is a *child* of that node, not an ancestor, so the outward walk never
-reaches it. Context-dispatch enforces the rule mechanically instead of relying on the
-user to pick the matching command.
-
-**The one genuine ambiguity.** A plain user-function call `f(x)` is both a
-smart-inline target and a foldable expression. Precedence resolves it: it is
-classified as `smart-inline`, and if relocation isn't available the command reports
-*why* ("too complex" / "could not resolve") rather than silently folding — see the
-"no fold-fallback" decision under Steps. Nothing useful is lost, since `literal-inline`
-on a bare call leaves the callee untouched anyway (Phase 4 item 8). A user who
-specifically wants to fold a call's arguments is escape-hatch territory (below).
-
-**Precedence.** First match wins: object → array → smart-inline → fold. A `none`
-result (nothing actionable) yields a single, honest error instead of four different
-"selection must be inside…" messages.
-
-### Steps
-
-1. ~~**Pure classifier.**~~ **Done** — `src/inlineDispatch.ts` exports
-   `classifyInlineTarget(sourceFile, start, end): InlineIntent`, returning one of
-   `literal-inline-object` / `literal-inline-array` / `smart-inline` /
-   `literal-inline` / `none` by the precedence above. Pure and side-effect free; it
-   only classifies. Covered by `tests/inline-dispatch.test.ts`, including the
-   "cursor on the outer call must not be hijacked by a nested `.map`" case. Now
-   consumed by `runInline` (step 2).
-2. ~~**Dispatching runner.**~~ **Done** — `runInline` in `commandRunners.ts` calls
-   `classifyInlineTarget`, then delegates to `runSmartInline` / `runLiteralInline` /
-   `runLiteralInlineArray` / `runLiteralInlineObject`. It normalizes all four into one
-   result shape (`expression` + `neededImportTexts`, the latter always `[]` except
-   smart-inline) plus a `behavior` tag for diagnostics, so the handler's editor-edit
-   path is a single branch.
-3. ~~**Fallback chain.**~~ **Decided against — no fold-fallback.** The earlier plan was
-   to fall back to `fold` when a `smart-inline` classification failed to resolve or was
-   "too complex." Rejected: folding a call the user pointed at is a no-op reprint (the
-   fold engine leaves callees untouched), so the user sees the call silently reprint
-   with no explanation. Reporting *why* relocation failed ("too complex", "could not
-   resolve") is strictly better UX, and it keeps dispatch honest — the behavioral spec
-   harness can still see a failed relocation as a failure rather than a masked no-op.
-   Cases that genuinely want folding are classified as `literal-inline` up front.
-4. ~~**Rewire `handleSmartInline` to dispatch.**~~ **Done** — it now calls `runInline`.
-   The behavior-changing cases were updated in the consolidated integration test: a
-   bare expression (`1 + 2`) now folds instead of erroring "No function call found"; a
-   const array outside any `.map` now folds instead of erroring "must be inside a
-   `.map`". Inputs with a non-identifier callee (`(f)()`, `obj.f()`) route to fold
-   rather than the old "simple function identifiers" refusal.
-5. ~~**Collapse `package.json`.**~~ **Done** — one contributed command
-   (`smartInlineFunction.inline`, title "Smart Inline"); the three `literal-*` commands
-   and their handlers are gone, `extension.ts` registers only the one, and
-   `activationEvents` is now `[]` (the pre-1.74 `onCommand:` form is retired; VS Code
-   ≥1.74 auto-activates from `contributes.commands`).
-6. **Diagnostics (open).** The merged command needs a "what did I do?" signal — the
-   four behaviors are no longer distinguished by which menu item was clicked.
-   `runInline`'s result already carries a `behavior` tag for exactly this; it is not
-   yet surfaced. A brief status-bar / info message ("Inlined function body",
-   "Evaluated `.map`") closes the loop; wire it through the Phase 6.2 preview pane
-   once that exists.
-
-### Escape hatch (open)
-
-Some users may want to *force* fold-over-relocate on an `f(x)`, or force a specific
-builtin evaluation. Options, cheapest first: (a) drop the overrides entirely and rely
-on cursor placement — this is what shipped; see if anyone misses them; (b) re-add the
-three `literal-*` commands unlisted (invokable via keybinding, hidden from palette /
-menus) as power-user overrides; (c) a command *argument* (`smartInlineFunction.inline`
-with `{ mode: "fold" }`). Decide once the merged command's real-world ambiguity rate is
-observable — do not build the escape hatch preemptively.
-
-### The behavioral-spec boundary
-
-`tests/spec/` continues to drive `runSmartInline` directly, **not** `runInline`. That
-harness tests the *relocation engine* — the `smart-inline` dispatch target — and the
-merge does not change the engine. Routing it through `runInline` would be actively
-harmful: a `known: broken` relocation that the engine refuses would, under a
-fold-fallback, "succeed" as a no-op reprint and flip the spec to green, masking the
-very bug it tracks. Even without a fallback, the specs asserting that non-identifier
-callees are *refused* (`refuses-method-call`, `constructor-call`, `namespace-call`,
-`parenthesized-call`) describe an engine property that the command layer now handles by
-routing to fold — a command-level concern, covered by `inline.integration.test.ts`.
-Keep the two layers' tests separate: engine correctness in `tests/spec/`, dispatch
-behavior in the integration test.
-
-### What's landed
-
-Steps 1, 2, 4, 5 are done and step 3 is resolved; the command is merged and shipping.
-The four `.integration.test.ts` files were consolidated into `inline.integration.test.ts`,
-which specs the single command's dispatch, per-behavior failures, and the inputs whose
-behavior changed under the merge. Remaining: step 6 (diagnostics) and the escape-hatch
-decision, both deferred until the merged command has real-world use.
-
----
-
-## Handling unresolvable references
-
-Every identifier in the relocated body that doesn't resolve at the call site is
-classified. The categories overlap, so they are checked **in this order** and the
-first match wins.
-
-**1. Mutable module state → refuse.** The body reads or writes a module-level `let` or
-`var`. This genuinely cannot be relocated: copying the declaration forks the state, and
-importing it can't support writes. Abort the whole expansion and name the offending
-binding in the diagnostic. This is the case originally described as "mutates global
-variables that the parent function doesn't have access to," and it is the only
-hard failure in the list.
-
-**2. Importable → add the import.** The symbol is exported by an npm package or another
-module. Add the import to the caller, rewriting relative specifiers relative to the
-caller's directory. It is explicitly fine for the import to be unresolved until the
-user runs `npm install`.
-
-**3. Everything else → emit, and warn.** Emit the expansion with the reference dangling
-and surface a warning listing exactly what is now unresolved. The tool should always
-produce output rather than refuse.
-
-The main occupant of category 3 is a **non-exported module-local** — a module-level
-`const HELPERS = ...` or an unexported sibling helper. Copying those declarations into
-the caller transitively would make far more functions expandable, but it can drag in a
-large dependency cone, so it's **out of scope for v1**. Revisit once the fixture corpus
-can prove a transitive copy doesn't run away.
-
----
+`pnpm typecheck` (over `src` and `tests`) and `pnpm test` should both stay green. Spec
+fixtures under `tests/spec/cases` are excluded from typecheck and lint — several are
+intentionally ill-typed inputs to the tool.
 
 ## Open questions
 
-**What is the unroll cap, and is it configurable?** Both a statement-count and an
-iteration-count limit probably need to exist.
-
-**Does `.mts` / `.cts` / plain JavaScript matter?** The extension currently activates
-only for `typescript` and `typescriptreact`.
-
-**How are warnings surfaced?** Category 3 above needs somewhere to put them.
-`showWarningMessage` is the cheap answer; the Phase 6 preview pane is the good one,
-which may argue for pulling that item earlier.
+- **Unroll cap:** what limit, and configurable how? Probably both a statement-count and
+  an iteration-count.
+- **Other file types:** should `.mts` / `.cts` / plain JS be supported? The extension
+  activates only for `typescript` and `typescriptreact` today.
+- **Surfacing warnings:** the "emit and warn" case needs somewhere to put warnings —
+  `showWarningMessage` now, the preview pane later.
