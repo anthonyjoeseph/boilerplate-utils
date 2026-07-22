@@ -15,7 +15,10 @@ import type { JsonValue } from "./json.js";
  * props object. Here it's nested under `data` so `stream` has somewhere to
  * live that can't collide with a loader field.
  */
-export interface StreamingPageProps<Data extends JsonValue | undefined, Chunk extends JsonValue> {
+export interface StreamingPageProps<
+  Data extends JsonValue | undefined,
+  Chunk extends JsonValue
+> {
   /**
    * The loader's result. Resolved before the shell is flushed, so it is
    * server-rendered and serialized into the document exactly like
@@ -94,7 +97,9 @@ export const PageStreamBootstrap = (): ReactElement => (
  * the stream completes). Push scripts are written into the gap between the
  * two — so render this last, as the last thing in your App's server output.
  */
-export const PageStreamAnchor = (): ReactElement => <template id={PAGE_STREAM_ANCHOR_ID} />;
+export const PageStreamAnchor = (): ReactElement => (
+  <template id={PAGE_STREAM_ANCHOR_ID} />
+);
 
 /**
  * Serializes one chunk into the `<script>` tag the server writes for it.
@@ -127,9 +132,14 @@ export const pageStreamErrorScript = (message: string): string =>
  * arriving afterward feed it directly. Completes or errors immediately if the
  * server had already finished by the time this runs.
  */
-export const readPageStream = <Chunk extends JsonValue>(): Observable<Chunk> => {
+export const readPageStream = <
+  Chunk extends JsonValue
+>(): Observable<Chunk> => {
   const subject = new Subject<Chunk>();
-  const globalWindow = window as unknown as Record<string, PageStreamState<Chunk> | undefined>;
+  const globalWindow = window as unknown as Record<
+    string,
+    PageStreamState<Chunk> | undefined
+  >;
   const state = globalWindow[PAGE_STREAM_GLOBAL];
 
   if (!state) {
@@ -168,7 +178,9 @@ export const hydrateStreamingPage = async <
   Data extends JsonValue | undefined,
   Chunk extends JsonValue
 >(
-  loadApp: () => Promise<{ default: ComponentType<StreamingPageProps<Data, Chunk>> }>
+  loadApp: () => Promise<{
+    default: ComponentType<StreamingPageProps<Data, Chunk>>;
+  }>
 ): Promise<void> => {
   const [{ hydrateRoot }, React, { default: App }] = await Promise.all([
     import("react-dom/client"),
@@ -178,7 +190,9 @@ export const hydrateStreamingPage = async <
 
   const root = document.getElementById(PAGE_ROOT_ID);
   if (!root) {
-    throw new Error(`hydrateStreamingPage: no element with id="${PAGE_ROOT_ID}" found in the document`);
+    throw new Error(
+      `hydrateStreamingPage: no element with id="${PAGE_ROOT_ID}" found in the document`
+    );
   }
 
   const data = readPageData<Data>();

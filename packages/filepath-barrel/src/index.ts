@@ -76,8 +76,12 @@ function main() {
   // Barrel file: import * as id from "rel"; export { id as "key", ... }
   const absBarrel = path.resolve(barrelFile);
   fs.mkdirSync(path.dirname(absBarrel), { recursive: true });
-  const imports = routes.map(({ rel, id }) => `import * as ${id} from "${rel}";`).join("\n");
-  const exportList = routes.map(({ key, id }) => `${id} as "${key}"`).join(", ");
+  const imports = routes
+    .map(({ rel, id }) => `import * as ${id} from "${rel}";`)
+    .join("\n");
+  const exportList = routes
+    .map(({ key, id }) => `${id} as "${key}"`)
+    .join(", ");
   fs.writeFileSync(absBarrel, `${imports}\n\nexport { ${exportList} };\n`);
   console.log(`Written: ${absBarrel}`);
 

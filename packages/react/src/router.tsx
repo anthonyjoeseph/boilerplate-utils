@@ -6,7 +6,9 @@ export interface PushRouteProps<Path> {
   pushRoute: (next: Path) => void;
 }
 
-export type RouteComponent<Match, Path> = ComponentType<Match & PushRouteProps<Path>>;
+export type RouteComponent<Match, Path> = ComponentType<
+  Match & PushRouteProps<Path>
+>;
 
 export interface ClientRouterProps<Path extends { path: string }> {
   /** Turns a URL (pathname + search) into the route ADT. The `parse` half of a `pathCodec(...)`. */
@@ -15,7 +17,9 @@ export interface ClientRouterProps<Path extends { path: string }> {
   format: (struct: Path) => string;
   /** One component per route, keyed by its `path` discriminant. Each receives its own matched
    * variant's fields (`params`/`tail`, if any) plus `pushRoute`. */
-  routes: { [K in Path["path"]]: RouteComponent<Extract<Path, { path: K }>, Path> };
+  routes: {
+    [K in Path["path"]]: RouteComponent<Extract<Path, { path: K }>, Path>;
+  };
   /**
    * The URL to render on mount. `ClientRouter` never reads `window.location` itself — pass
    * `window.location.pathname + window.location.search` (or whatever the host environment

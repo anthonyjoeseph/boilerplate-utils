@@ -135,10 +135,7 @@ export const discriminatedUnion =
     }[keyof Items]
   > =>
   (props) =>
-    React.createElement(
-      options[(props as any)[discriminator]] as any,
-      props
-    );
+    React.createElement(options[(props as any)[discriminator]] as any, props);
 
 export const optional =
   <Parent extends JSXElementConstructor<any>>(

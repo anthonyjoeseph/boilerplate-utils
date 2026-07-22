@@ -26,12 +26,16 @@ export default function App({ data, stream }: StreamingPageProps<Data, Chunk>) {
   }, [stream]);
 
   return (
-    <div style={{ fontFamily: "sans-serif", maxWidth: 600, margin: "2rem auto" }}>
+    <div
+      style={{ fontFamily: "sans-serif", maxWidth: 600, margin: "2rem auto" }}
+    >
       <h1>Streaming ticker</h1>
       <p>
-        Page rendered at <strong>{new Date(data.startedAt).toLocaleTimeString()}</strong>. Ten ticks
-        stream in over the next ten seconds, one per second, each as its own inline{" "}
-        <code>&lt;script&gt;</code> that pushes into an rxjs stream feeding this component.
+        Page rendered at{" "}
+        <strong>{new Date(data.startedAt).toLocaleTimeString()}</strong>. Ten
+        ticks stream in over the next ten seconds, one per second, each as its
+        own inline <code>&lt;script&gt;</code> that pushes into an rxjs stream
+        feeding this component.
       </p>
       <ul>
         {ticks.map((tick) => (

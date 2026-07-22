@@ -14,6 +14,8 @@
   "dependencies": {
     "@boilerplate-utils/react": "workspace:*",
     "@boilerplate-utils/shared": "workspace:*",
+    "@boilerplate-utils/template-fns": "workspace:*",
+    "zod": "^4.4.3",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

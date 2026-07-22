@@ -29,14 +29,14 @@ describe("parse – dynamic params", () => {
   it("extracts named params", () => {
     expect(parse("/one/hello/two/world/")).toEqual({
       path: "/one/[var]/two/[var2]/",
-      params: { var: "hello", var2: "world" },
+      params: { var: "hello", var2: "world" }
     });
   });
 
   it("matches without trailing slash", () => {
     expect(parse("/one/hello/two/world")).toEqual({
       path: "/one/[var]/two/[var2]/",
-      params: { var: "hello", var2: "world" },
+      params: { var: "hello", var2: "world" }
     });
   });
 
@@ -53,7 +53,7 @@ describe("parse – required catch-all ([...slug])", () => {
   it("matches multiple trailing segments", () => {
     expect(parse("/two/a/b/c")).toEqual({
       path: "/two/[...tail]",
-      tail: ["a", "b", "c"],
+      tail: ["a", "b", "c"]
     });
   });
 
@@ -66,7 +66,7 @@ describe("parse – required catch-all ([...slug])", () => {
     expect(parse("/one/foo/two/bar/x/y")).toEqual({
       path: "/one/[var]/two/[var2]/[...tail]",
       params: { var: "foo", var2: "bar" },
-      tail: ["x", "y"],
+      tail: ["x", "y"]
     });
   });
 });
@@ -83,14 +83,14 @@ describe("parse – optional catch-all ([[...slug]])", () => {
   it("matches one segment", () => {
     expect(parse("/optional/a")).toEqual({
       path: "/optional/[[...tail]]",
-      tail: ["a"],
+      tail: ["a"]
     });
   });
 
   it("matches multiple segments", () => {
     expect(parse("/optional/a/b/c")).toEqual({
       path: "/optional/[[...tail]]",
-      tail: ["a", "b", "c"],
+      tail: ["a", "b", "c"]
     });
   });
 });
@@ -100,7 +100,7 @@ describe("parse – query strings are ignored", () => {
     expect(parse("/two/?foo=bar")).toEqual({ path: "/two/" });
     expect(parse("/two/a?foo=bar")).toEqual({
       path: "/two/[...tail]",
-      tail: ["a"],
+      tail: ["a"]
     });
   });
 });
@@ -116,14 +116,19 @@ describe("format – static routes", () => {
 describe("format – dynamic params", () => {
   it("interpolates params", () => {
     expect(
-      format({ path: "/one/[var]/two/[var2]/", params: { var: "a", var2: "b" } })
+      format({
+        path: "/one/[var]/two/[var2]/",
+        params: { var: "a", var2: "b" }
+      })
     ).toBe("/one/a/two/b");
   });
 });
 
 describe("format – required catch-all", () => {
   it("appends tail segments", () => {
-    expect(format({ path: "/two/[...tail]", tail: ["x", "y"] })).toBe("/two/x/y");
+    expect(format({ path: "/two/[...tail]", tail: ["x", "y"] })).toBe(
+      "/two/x/y"
+    );
   });
 
   it("appends tail with params", () => {
@@ -131,7 +136,7 @@ describe("format – required catch-all", () => {
       format({
         path: "/one/[var]/two/[var2]/[...tail]",
         params: { var: "a", var2: "b" },
-        tail: ["x", "y"],
+        tail: ["x", "y"]
       })
     ).toBe("/one/a/two/b/x/y");
   });
@@ -149,9 +154,9 @@ describe("format – optional catch-all", () => {
   });
 
   it("appends tail segments when provided", () => {
-    expect(
-      format({ path: "/optional/[[...tail]]", tail: ["a", "b"] })
-    ).toBe("/optional/a/b");
+    expect(format({ path: "/optional/[[...tail]]", tail: ["a", "b"] })).toBe(
+      "/optional/a/b"
+    );
   });
 });
 
@@ -171,7 +176,7 @@ describe("parse → format roundtrip", () => {
     "/one/foo/two/bar",
     "/one/foo/two/bar/x/y",
     "/optional",
-    "/optional/a/b",
+    "/optional/a/b"
   ];
 
   for (const url of cases) {

@@ -5,14 +5,13 @@
 
 // ── Type helpers ──────────────────────────────────────────────────────────────
 
-type SegmentParam<Seg extends string> =
-  Seg extends `[[...${string}]]`
+type SegmentParam<Seg extends string> = Seg extends `[[...${string}]]`
+  ? never
+  : Seg extends `[...${string}]`
     ? never
-    : Seg extends `[...${string}]`
-      ? never
-      : Seg extends `[${infer P}]`
-        ? P
-        : never;
+    : Seg extends `[${infer P}]`
+      ? P
+      : never;
 
 // Collect all [param] names from a path string
 type PathParams<Path extends string> =
@@ -94,7 +93,7 @@ function buildMatcher(path: string): MatcherInfo {
     regex: new RegExp(`^${regexStr}$`),
     paramNames,
     catchAllName,
-    isOptional,
+    isOptional
   };
 }
 
@@ -133,7 +132,13 @@ export function pathCodec<Keys extends string[]>(...paths: Keys) {
 
   function parse(url: string): Path {
     const pathname = url.split("?")[0] ?? url;
-    for (const { path, regex, paramNames, catchAllName, isOptional } of matchers) {
+    for (const {
+      path,
+      regex,
+      paramNames,
+      catchAllName,
+      isOptional
+    } of matchers) {
       const match = pathname.match(regex);
       if (!match) continue;
       const groups = match.groups ?? {};
@@ -144,9 +149,12 @@ export function pathCodec<Keys extends string[]>(...paths: Keys) {
 
       if (catchAllName !== null) {
         const raw = groups[catchAllName];
-        const tail = raw !== undefined && raw !== "" ? raw.split("/") : undefined;
-        if (hasParams && tail !== undefined) return { path, params, tail } as Path;
-        if (hasParams) return { path, params, ...(isOptional ? {} : { tail: [] }) } as Path;
+        const tail =
+          raw !== undefined && raw !== "" ? raw.split("/") : undefined;
+        if (hasParams && tail !== undefined)
+          return { path, params, tail } as Path;
+        if (hasParams)
+          return { path, params, ...(isOptional ? {} : { tail: [] }) } as Path;
         if (tail !== undefined) return { path, tail } as Path;
         return { path } as Path; // optional catch-all matched zero segments
       }
@@ -163,7 +171,8 @@ export function pathCodec<Keys extends string[]>(...paths: Keys) {
       "params" in struct
         ? (struct.params as Record<string, string>)
         : undefined;
-    const tail = "tail" in struct ? (struct.tail as string[] | undefined) : undefined;
+    const tail =
+      "tail" in struct ? (struct.tail as string[] | undefined) : undefined;
     return formatPath(struct.path, params, tail);
   }
 

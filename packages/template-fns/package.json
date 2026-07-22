@@ -24,8 +24,15 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "dependencies": {},
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
   "devDependencies": {
+    "react": "catalog:",
+    "@types/react": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

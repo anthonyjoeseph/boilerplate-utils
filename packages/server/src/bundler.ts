@@ -65,7 +65,10 @@ export interface PageDependencies {
 const sourceAdapter = (outFile: string): BundlerAdapter => ({
   mode: "dev",
   resolveEntry: (sourcePath) => {
-    const rel = path.relative(path.dirname(outFile), sourcePath).split(path.sep).join("/");
+    const rel = path
+      .relative(path.dirname(outFile), sourcePath)
+      .split(path.sep)
+      .join("/");
     return { scripts: [rel.startsWith(".") ? rel : `./${rel}`], styles: [] };
   }
 });
@@ -94,11 +97,13 @@ export const generatePages = async <Routes extends AnyRoutes, Deps>(opts: {
 
   for (const [routeKey, handlers] of Object.entries(opts.routes)) {
     const handler = handlers.GET;
-    if (handler?.type !== "static-request" || handler.extension !== "html") continue;
+    if (handler?.type !== "static-request" || handler.extension !== "html")
+      continue;
 
     const outFile = path.join(outDir, routeKey, "index.html");
     const bundler = sourceAdapter(outFile);
-    const dependencies = { ...opts.dependencies, bundler } as Deps & PageDependencies;
+    const dependencies = { ...opts.dependencies, bundler } as Deps &
+      PageDependencies;
 
     const view = await handler.fn(dependencies);
     const buf = Buffer.from(view.buffer, view.byteOffset, view.byteLength);

@@ -17,7 +17,11 @@ import {
 } from "@boilerplate-utils/react";
 import type { JsonValue, StreamingPageProps } from "@boilerplate-utils/react";
 import type { PageDependencies } from "./bundler.js";
-import { dynamicRequest, dynamicStreamingRequest, staticRequest } from "./request.js";
+import {
+  dynamicRequest,
+  dynamicStreamingRequest,
+  staticRequest
+} from "./request.js";
 import type {
   DynamicRequest,
   DynamicStreamingRequest,
@@ -51,10 +55,11 @@ export type AppModule<Props extends JsonValue | undefined> = () => Promise<{
  * the client entry's script tag. The document's only job is to render it
  * somewhere inside `<body>`.
  */
-export type DocumentComponent<Data extends JsonValue | undefined = undefined> = ComponentType<{
-  App: ComponentType;
-  data: Data;
-}>;
+export type DocumentComponent<Data extends JsonValue | undefined = undefined> =
+  ComponentType<{
+    App: ComponentType;
+    data: Data;
+  }>;
 
 /* -------------------------------------------------------------------------- */
 /* resolving `() => import("./X")` back to a file                              */
@@ -66,7 +71,8 @@ export type DocumentComponent<Data extends JsonValue | undefined = undefined> = 
 // `__vite_ssr_dynamic_import__(...)`, esbuild inlines them when bundling
 // vite.config.ts) makes the runtime closure's source unrecoverable. Reading
 // the file directly sidesteps whatever the loader did to the executed code.
-const APP_FIELD_SPECIFIER = /app\s*:\s*\(\s*\)\s*=>\s*import\(\s*["'`]([^"'`]+)["'`]\s*\)/u;
+const APP_FIELD_SPECIFIER =
+  /app\s*:\s*\(\s*\)\s*=>\s*import\(\s*["'`]([^"'`]+)["'`]\s*\)/u;
 
 /**
  * Finds the file that called `staticPage`/`dynamicPage`, by parsing a captured
@@ -89,7 +95,8 @@ const callerFile = (): string => {
   // frame 0 is this function, frame 1 is resolveAppEntry, frame 2 is
   // staticPage/dynamicPage, frame 3 is the route module that called them.
   const frame = stack.split("\n")[4];
-  const match = frame?.match(/\((.*):\d+:\d+\)\s*$/) ?? frame?.match(/at (.*):\d+:\d+\s*$/);
+  const match =
+    frame?.match(/\((.*):\d+:\d+\)\s*$/) ?? frame?.match(/at (.*):\d+:\d+\s*$/);
   const raw = match?.[1];
   if (!raw) {
     throw new Error(
@@ -159,11 +166,12 @@ const renderPage = async <Data extends JsonValue | undefined>(input: {
   bundler: PageDependencies["bundler"];
   data: Data;
 }): Promise<string> => {
-  const [{ renderToString }, React, { default: AppComponent }] = await Promise.all([
-    import("react-dom/server"),
-    import("react"),
-    input.appModule()
-  ]);
+  const [{ renderToString }, React, { default: AppComponent }] =
+    await Promise.all([
+      import("react-dom/server"),
+      import("react"),
+      input.appModule()
+    ]);
 
   const assets = input.bundler.resolveEntry(input.entryPath);
 
@@ -176,7 +184,9 @@ const renderPage = async <Data extends JsonValue | undefined>(input: {
         { id: PAGE_ROOT_ID },
         React.createElement(AppComponent as ComponentType<any>, input.data)
       ),
-      ...assets.styles.map((href) => React.createElement("link", { key: href, rel: "stylesheet", href })),
+      ...assets.styles.map((href) =>
+        React.createElement("link", { key: href, rel: "stylesheet", href })
+      ),
       input.bundler.preambleScript
         ? React.createElement("script", {
             type: "module",
@@ -184,10 +194,15 @@ const renderPage = async <Data extends JsonValue | undefined>(input: {
           })
         : null,
       React.createElement(PageData, { data: input.data }),
-      ...assets.scripts.map((src) => React.createElement("script", { key: src, type: "module", src }))
+      ...assets.scripts.map((src) =>
+        React.createElement("script", { key: src, type: "module", src })
+      )
     ) as ReactElement;
 
-  const documentEl = React.createElement(input.document, { App, data: input.data });
+  const documentEl = React.createElement(input.document, {
+    App,
+    data: input.data
+  });
   const html = renderToString(documentEl);
   assertExactlyOne(html, ROOT_MARKER, `<App /> (element with ${ROOT_MARKER})`);
 
@@ -225,7 +240,10 @@ export const staticPage = <Deps extends object = object>(spec: {
 /* -------------------------------------------------------------------------- */
 
 /** An {@link AppModule} whose default export takes {@link StreamingPageProps}. */
-export type StreamingAppModule<Data extends JsonValue | undefined, Chunk extends JsonValue> = () => Promise<{
+export type StreamingAppModule<
+  Data extends JsonValue | undefined,
+  Chunk extends JsonValue
+> = () => Promise<{
   default: ComponentType<StreamingPageProps<Data, Chunk>>;
 }>;
 
@@ -304,13 +322,16 @@ export const dynamicStreamingPage = <
 
   return dynamicStreamingRequest({
     fn: async ({ params, dependencies }) => {
-      const data = spec.loader ? await spec.loader({ params, dependencies }) : (undefined as Data);
+      const data = spec.loader
+        ? await spec.loader({ params, dependencies })
+        : (undefined as Data);
 
-      const [{ renderToString }, React, { default: AppComponent }] = await Promise.all([
-        import("react-dom/server"),
-        import("react"),
-        spec.app()
-      ]);
+      const [{ renderToString }, React, { default: AppComponent }] =
+        await Promise.all([
+          import("react-dom/server"),
+          import("react"),
+          spec.app()
+        ]);
 
       const assets = dependencies.bundler.resolveEntry(entryPath);
 
@@ -322,7 +343,9 @@ export const dynamicStreamingPage = <
       // scripts each kicking off a promise race against each other, with no
       // way for the second to know the first's async work already finished.
       const entryScript = `(async()=>{${
-        dependencies.bundler.preambleScript ? `${dependencies.bundler.preambleScript()}\n` : ""
+        dependencies.bundler.preambleScript
+          ? `${dependencies.bundler.preambleScript()}\n`
+          : ""
       }${assets.scripts.map((src) => `await import(${JSON.stringify(src)});`).join("")}})();`;
 
       // Same shell shape renderPage builds, plus the stream bootstrap/anchor
@@ -345,20 +368,33 @@ export const dynamicStreamingPage = <
             // synchronous, and the stream doesn't start until after this
             // renders) — this is purely a type-satisfying placeholder for
             // the App's pre-stream render.
-            React.createElement(AppComponent as ComponentType<any>, { data, stream: NEVER })
+            React.createElement(AppComponent as ComponentType<any>, {
+              data,
+              stream: NEVER
+            })
           ),
-          ...assets.styles.map((href) => React.createElement("link", { key: href, rel: "stylesheet", href })),
+          ...assets.styles.map((href) =>
+            React.createElement("link", { key: href, rel: "stylesheet", href })
+          ),
           React.createElement(PageData, { data }),
           React.createElement(PageStreamBootstrap, null),
-          React.createElement("script", { dangerouslySetInnerHTML: { __html: entryScript } }),
+          React.createElement("script", {
+            dangerouslySetInnerHTML: { __html: entryScript }
+          }),
           React.createElement(PageStreamAnchor, null)
         ) as ReactElement;
 
       const documentEl = React.createElement(spec.document, { App, data });
       const html = renderToString(documentEl);
-      assertExactlyOne(html, ROOT_MARKER, `<App /> (element with ${ROOT_MARKER})`);
+      assertExactlyOne(
+        html,
+        ROOT_MARKER,
+        `<App /> (element with ${ROOT_MARKER})`
+      );
 
-      const anchorMarkup = renderToString(React.createElement("template", { id: PAGE_STREAM_ANCHOR_ID }));
+      const anchorMarkup = renderToString(
+        React.createElement("template", { id: PAGE_STREAM_ANCHOR_ID })
+      );
       assertExactlyOne(html, anchorMarkup, "<PageStreamAnchor />");
 
       const anchorEnd = html.indexOf(anchorMarkup) + anchorMarkup.length;
@@ -368,21 +404,27 @@ export const dynamicStreamingPage = <
       const body = new PassThrough();
       body.write(shell);
 
-      const subscription = spec.stream({ params, dependencies, data }).subscribe({
-        next: (chunk) => {
-          body.write(pageStreamChunkScript(chunk));
-        },
-        error: (err: unknown) => {
-          body.write(pageStreamErrorScript(err instanceof Error ? err.message : String(err)));
-          body.write(tail);
-          body.end();
-        },
-        complete: () => {
-          body.write(pageStreamCompleteScript());
-          body.write(tail);
-          body.end();
-        }
-      });
+      const subscription = spec
+        .stream({ params, dependencies, data })
+        .subscribe({
+          next: (chunk) => {
+            body.write(pageStreamChunkScript(chunk));
+          },
+          error: (err: unknown) => {
+            body.write(
+              pageStreamErrorScript(
+                err instanceof Error ? err.message : String(err)
+              )
+            );
+            body.write(tail);
+            body.end();
+          },
+          complete: () => {
+            body.write(pageStreamCompleteScript());
+            body.write(tail);
+            body.end();
+          }
+        });
 
       // Tied to `body`'s own lifecycle, not Express's `res` — the streaming
       // request handler destroys `body` when the client disconnects, which
@@ -410,7 +452,10 @@ export const dynamicPage = <
   Data extends JsonValue | undefined = undefined,
   Deps extends object = object
 >(spec: {
-  loader?: (input: { params: Params; dependencies: Deps & PageDependencies }) => Promise<Data>;
+  loader?: (input: {
+    params: Params;
+    dependencies: Deps & PageDependencies;
+  }) => Promise<Data>;
   app: AppModule<Data>;
   document: DocumentComponent<Data>;
 }): DynamicRequest<Params, unknown, string, Deps & PageDependencies> => {
@@ -430,7 +475,10 @@ export const dynamicPage = <
         data
       });
 
-      return { body: html, headers: { "Content-Type": "text/html; charset=utf-8" } };
+      return {
+        body: html,
+        headers: { "Content-Type": "text/html; charset=utf-8" }
+      };
     }
   });
 };

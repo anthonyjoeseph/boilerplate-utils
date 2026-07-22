@@ -8,7 +8,9 @@ export type Props = {
 
 export default function App({ name, email, company }: Props) {
   return (
-    <div style={{ fontFamily: "sans-serif", maxWidth: 600, margin: "2rem auto" }}>
+    <div
+      style={{ fontFamily: "sans-serif", maxWidth: 600, margin: "2rem auto" }}
+    >
       <h1>{name}</h1>
       <p>
         <strong>Email:</strong> {email}

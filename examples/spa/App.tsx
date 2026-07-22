@@ -3,6 +3,7 @@ import { AboutPage } from "./AboutPage";
 import { HomePage } from "./HomePage";
 import { NotFoundPage } from "./NotFoundPage";
 import { parse, format } from "./routes";
+import { SignupPage } from "./SignupPage";
 import { UserPage } from "./UserPage";
 
 export const App = ({ initialPath }: { initialPath: string }) => (
@@ -13,6 +14,7 @@ export const App = ({ initialPath }: { initialPath: string }) => (
     routes={{
       home: HomePage,
       about: AboutPage,
+      signup: SignupPage,
       "user/[userId]": UserPage,
       NotFound: NotFoundPage
     }}

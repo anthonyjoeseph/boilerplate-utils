@@ -1,6 +1,9 @@
 import react from "@vitejs/plugin-react";
 import { pathCodec } from "@boilerplate-utils/shared";
-import { viteBuildInput, vitePagesPlugin } from "@boilerplate-utils/server/vite";
+import {
+  viteBuildInput,
+  vitePagesPlugin
+} from "@boilerplate-utils/server/vite";
 import { defineConfig } from "vite";
 
 // Route keys are listed here rather than derived from `import * as R from
@@ -17,7 +20,13 @@ export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     ...(command === "serve"
-      ? [vitePagesPlugin({ routesEntry: "./routes/index.ts", parse, dependencies: {} })]
+      ? [
+          vitePagesPlugin({
+            routesEntry: "./routes/index.ts",
+            parse,
+            dependencies: {}
+          })
+        ]
       : [])
   ],
   ...(command === "build" ? viteBuildInput({}) : {})

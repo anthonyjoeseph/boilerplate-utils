@@ -4,7 +4,10 @@ import express from "express";
 import type { Plugin, UserConfig } from "vite";
 import type { RequestHandler } from "express";
 import type { MethodHandlers } from "./request-handler.js";
-import { pipeStreamingResponse, requestHandlerForRoutes } from "./request-handler.js";
+import {
+  pipeStreamingResponse,
+  requestHandlerForRoutes
+} from "./request-handler.js";
 import type { BundlerAdapter, PageDependencies } from "./bundler.js";
 
 type AnyRoutes = Record<string, MethodHandlers<any, any>>;
@@ -34,7 +37,8 @@ export const viteAdapter = (opts: {
 }): BundlerAdapter => {
   const root = opts.root ?? process.cwd();
   const base = opts.base ?? "/";
-  const toKey = (absPath: string) => path.relative(root, absPath).split(path.sep).join("/");
+  const toKey = (absPath: string) =>
+    path.relative(root, absPath).split(path.sep).join("/");
 
   if (opts.mode === "dev") {
     return {
@@ -72,7 +76,9 @@ export const viteAdapter = (opts: {
       const key = toKey(sourcePath);
       const entry = manifest[key];
       if (!entry) {
-        throw new Error(`viteAdapter: no manifest entry for "${key}" in ${opts.manifestPath}`);
+        throw new Error(
+          `viteAdapter: no manifest entry for "${key}" in ${opts.manifestPath}`
+        );
       }
       return {
         scripts: [`${base}${entry.file}`],
@@ -93,7 +99,9 @@ export const viteAdapter = (opts: {
  * therefore without re-importing route modules, loaders and all) just to
  * configure the build.
  */
-const discoverGeneratedFiles = (generatedDir: string): Record<string, string> => {
+const discoverGeneratedFiles = (
+  generatedDir: string
+): Record<string, string> => {
   const files: Record<string, string> = {};
   const walk = (dir: string): void => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -103,7 +111,10 @@ const discoverGeneratedFiles = (generatedDir: string): Record<string, string> =>
         continue;
       }
       if (entry.name !== "index.html") continue;
-      const rel = path.relative(generatedDir, path.dirname(full)).split(path.sep).join("/");
+      const rel = path
+        .relative(generatedDir, path.dirname(full))
+        .split(path.sep)
+        .join("/");
       files[rel === "" ? "index" : rel] = full;
     }
   };
@@ -135,7 +146,9 @@ export const viteBuildInput = (opts: {
     build: {
       outDir: path.resolve(opts.outDir ?? "dist"),
       emptyOutDir: true,
-      rollupOptions: { input: opts.files ?? discoverGeneratedFiles(generatedDir) }
+      rollupOptions: {
+        input: opts.files ?? discoverGeneratedFiles(generatedDir)
+      }
     }
   };
 };
@@ -171,10 +184,9 @@ export const vitePagesPlugin = (opts: {
           return;
         }
 
-        const routesModule = (await server.ssrLoadModule(opts.routesEntry)) as Record<
-          string,
-          MethodHandlers | undefined
-        >;
+        const routesModule = (await server.ssrLoadModule(
+          opts.routesEntry
+        )) as Record<string, MethodHandlers | undefined>;
         const handler = routesModule[parsed.path]?.GET;
         if (!handler) {
           next();
@@ -182,8 +194,14 @@ export const vitePagesPlugin = (opts: {
         }
 
         const bundler = viteAdapter({ mode: "dev", root: server.config.root });
-        const dependencies = { ...opts.dependencies, bundler } as PageDependencies;
-        const params = ("params" in parsed ? parsed.params : {}) as Record<string, string>;
+        const dependencies = {
+          ...opts.dependencies,
+          bundler
+        } as PageDependencies;
+        const params = ("params" in parsed ? parsed.params : {}) as Record<
+          string,
+          string
+        >;
 
         if (handler.type === "dynamic-streaming-request") {
           // Not run through `transformIndexHtml`: that expects a complete
@@ -194,7 +212,11 @@ export const vitePagesPlugin = (opts: {
           // like this — the react-refresh preamble and `/@vite/client` — is
           // already added by hand via `bundler.preambleScript()` /
           // `resolveEntry()`, the same as every other page type here.
-          const result = await handler.fn({ params, dependencies, requestStream: req });
+          const result = await handler.fn({
+            params,
+            dependencies,
+            requestStream: req
+          });
           pipeStreamingResponse(res, result);
           return;
         }
@@ -202,7 +224,11 @@ export const vitePagesPlugin = (opts: {
         let html: string;
         if (handler.type === "static-request") {
           const view = await handler.fn(dependencies);
-          html = Buffer.from(view.buffer, view.byteOffset, view.byteLength).toString("utf-8");
+          html = Buffer.from(
+            view.buffer,
+            view.byteOffset,
+            view.byteLength
+          ).toString("utf-8");
         } else {
           const result = await handler.fn({ params, dependencies }, undefined);
           html = String(result.body);
@@ -221,7 +247,10 @@ export const vitePagesPlugin = (opts: {
 /* -------------------------------------------------------------------------- */
 
 /** Static files out of `outDir` first, then dynamic pages through the route handler. */
-export const serveBuiltRoutes = <Routes extends AnyRoutes, Deps extends object>(opts: {
+export const serveBuiltRoutes = <
+  Routes extends AnyRoutes,
+  Deps extends object
+>(opts: {
   routes: Routes;
   parse: ParseFn;
   dependencies: Deps;
@@ -234,7 +263,8 @@ export const serveBuiltRoutes = <Routes extends AnyRoutes, Deps extends object>(
     manifestPath: path.join(opts.outDir, ".vite", "manifest.json"),
     root: opts.sourceRoot ?? process.cwd()
   });
-  const dependencies = { ...opts.dependencies, bundler } as Deps & PageDependencies;
+  const dependencies = { ...opts.dependencies, bundler } as Deps &
+    PageDependencies;
 
   const routeHandler = requestHandlerForRoutes(
     opts.parse as (...args: any) => any,

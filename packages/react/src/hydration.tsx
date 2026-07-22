@@ -22,14 +22,18 @@ export const PageData = <Data extends JsonValue | undefined>({
       id={PAGE_DATA_ID}
       type="application/json"
       // `<` must be escaped so a literal "</script>" in the data can't close the tag early.
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</gu, "\\u003c") }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/</gu, "\\u003c")
+      }}
     />
   );
 
 /** Client-side counterpart to {@link PageData}. */
 export const readPageData = <Data extends JsonValue | undefined>(): Data => {
   const el = document.getElementById(PAGE_DATA_ID);
-  return el?.textContent ? (JSON.parse(el.textContent) as Data) : (undefined as Data);
+  return el?.textContent
+    ? (JSON.parse(el.textContent) as Data)
+    : (undefined as Data);
 };
 
 /**
@@ -56,7 +60,9 @@ export const hydratePage = async <Props extends JsonValue | undefined>(
 
   const root = document.getElementById(PAGE_ROOT_ID);
   if (!root) {
-    throw new Error(`hydratePage: no element with id="${PAGE_ROOT_ID}" found in the document`);
+    throw new Error(
+      `hydratePage: no element with id="${PAGE_ROOT_ID}" found in the document`
+    );
   }
 
   const data = readPageData<Props>();

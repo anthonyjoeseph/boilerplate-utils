@@ -5,7 +5,12 @@ export const HomePage = ({ pushRoute }: PushRouteProps<Route>) => (
   <div>
     <h1>Home</h1>
     <button onClick={() => pushRoute({ path: "about" })}>About</button>
-    <button onClick={() => pushRoute({ path: "user/[userId]", params: { userId: "42" } })}>
+    <button onClick={() => pushRoute({ path: "signup" })}>Sign up</button>
+    <button
+      onClick={() =>
+        pushRoute({ path: "user/[userId]", params: { userId: "42" } })
+      }
+    >
       User 42
     </button>
   </div>

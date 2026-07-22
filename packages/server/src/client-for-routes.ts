@@ -4,25 +4,35 @@ import type { MethodHandlers } from "./request-handler.js";
 // `unknown extends T` is only true when T is exactly `unknown`
 type IsUnknown<T> = unknown extends T ? true : false;
 
-type ClientFn<Params, ReqBody, ResBody> = IsUnknown<Params> extends true
-  ? IsUnknown<ReqBody> extends true
-    ? () => Promise<ResBody>
-    : (body: ReqBody) => Promise<ResBody>
-  : IsUnknown<ReqBody> extends true
-    ? (params: Params) => Promise<ResBody>
-    : (params: Params, body: ReqBody) => Promise<ResBody>;
+type ClientFn<Params, ReqBody, ResBody> =
+  IsUnknown<Params> extends true
+    ? IsUnknown<ReqBody> extends true
+      ? () => Promise<ResBody>
+      : (body: ReqBody) => Promise<ResBody>
+    : IsUnknown<ReqBody> extends true
+      ? (params: Params) => Promise<ResBody>
+      : (params: Params, body: ReqBody) => Promise<ResBody>;
 
 type RouteClient<H extends MethodHandlers<any, any>> = {
-  [M in keyof H as NonNullable<H[M]> extends DynamicRequest<any, any, any> | StaticRequest
-    ? M
-    : never]: NonNullable<H[M]> extends DynamicRequest<infer Params, infer ReqBody, infer ResBody>
+  [
+    M in keyof H as NonNullable<H[M]> extends
+      DynamicRequest<any, any, any> | StaticRequest
+      ? M
+      : never
+  ]: NonNullable<H[M]> extends DynamicRequest<
+    infer Params,
+    infer ReqBody,
+    infer ResBody
+  >
     ? ClientFn<Params, ReqBody, ResBody>
     : NonNullable<H[M]> extends StaticRequest<any, infer ClientResponse>
       ? () => Promise<ClientResponse>
       : never;
 };
 
-export type ClientForRoutes<Routes extends Record<string, MethodHandlers<any, any>>> = {
+export type ClientForRoutes<
+  Routes extends Record<string, MethodHandlers<any, any>>
+> = {
   [K in keyof Routes & string]: RouteClient<Routes[K]>;
 };
 
@@ -42,11 +52,16 @@ function buildUrl(
 
 const HAS_PARAMS = /\[.+?\]/;
 
-export const clientForRoutes = <Routes extends Record<string, MethodHandlers<any, any>>>(
+export const clientForRoutes = <
+  Routes extends Record<string, MethodHandlers<any, any>>
+>(
   baseUrl: string,
   routes: Routes
 ): ClientForRoutes<Routes> => {
-  const client: Record<string, Record<string, (...args: any[]) => Promise<unknown>>> = {};
+  const client: Record<
+    string,
+    Record<string, (...args: any[]) => Promise<unknown>>
+  > = {};
 
   for (const [routeKey, handlers] of Object.entries(routes)) {
     client[routeKey] = {};
@@ -59,8 +74,10 @@ export const clientForRoutes = <Routes extends Record<string, MethodHandlers<any
         const { parseResponseBody } = handler;
         client[routeKey][method] = () =>
           fetch(url, { method })
-            .then(r => r.arrayBuffer())
-            .then(buf => parseResponseBody ? parseResponseBody.parse(buf) : buf);
+            .then((r) => r.arrayBuffer())
+            .then((buf) =>
+              parseResponseBody ? parseResponseBody.parse(buf) : buf
+            );
         continue;
       }
 
@@ -83,8 +100,8 @@ export const clientForRoutes = <Routes extends Record<string, MethodHandlers<any
           method,
           ...(body !== undefined && {
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          }),
+            body: JSON.stringify(body)
+          })
         });
 
         const contentType = response.headers.get("content-type") ?? "";

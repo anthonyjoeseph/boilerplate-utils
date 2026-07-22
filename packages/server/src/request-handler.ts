@@ -1,7 +1,11 @@
 import type { ServerResponse } from "node:http";
 import type { Readable } from "node:stream";
 import type { RequestHandler } from "express";
-import type { DynamicStreamingRequest, HttpResponse, RequestObj } from "./request.js";
+import type {
+  DynamicStreamingRequest,
+  HttpResponse,
+  RequestObj
+} from "./request.js";
 type AnyHandler<T, Dependencies> =
   | RequestObj<T, any, any, Dependencies, any>
   | DynamicStreamingRequest<T, Dependencies>;
@@ -49,7 +53,10 @@ export const pipeStreamingResponse = (
   });
 };
 
-export interface MethodHandlers<T = Record<string | number, string>, Dependencies = unknown> {
+export interface MethodHandlers<
+  T = Record<string | number, string>,
+  Dependencies = unknown
+> {
   GET?: AnyHandler<T, Dependencies>;
   POST?: AnyHandler<T, Dependencies>;
   PUT?: AnyHandler<T, Dependencies>;
@@ -61,7 +68,10 @@ export interface MethodHandlers<T = Record<string | number, string>, Dependencie
   TRACE?: AnyHandler<T, Dependencies>;
 }
 
-export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, Dependencies>(
+export const requestHandlerForRoutes = <
+  ParseFn extends (...args: any) => any,
+  Dependencies
+>(
   parseFn: ParseFn,
   routes: {
     [
@@ -100,7 +110,11 @@ export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, D
 
     if (handler?.type === "dynamic-streaming-request") {
       void (async () => {
-        const result = await handler.fn({ params, dependencies, requestStream: req });
+        const result = await handler.fn({
+          params,
+          dependencies,
+          requestStream: req
+        });
         pipeStreamingResponse(res, result);
       })().catch(next);
       return;
@@ -122,10 +136,12 @@ export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, D
     }
 
     void (async () => {
-      const { statusCode = 200, statusMessage, headers, body } = await handler.fn(
-        { params, dependencies },
-        requestBody
-      );
+      const {
+        statusCode = 200,
+        statusMessage,
+        headers,
+        body
+      } = await handler.fn({ params, dependencies }, requestBody);
 
       res.status(statusCode);
       if (statusMessage) res.statusMessage = statusMessage;
