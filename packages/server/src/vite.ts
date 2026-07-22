@@ -81,26 +81,58 @@ export const viteAdapter = (opts: {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * Recursively finds every `index.html` under `generatedDir`, keyed by its
+ * path relative to that dir. Lets `viteBuildInput` read back whatever a prior
+ * `generate` run wrote to disk, without re-running `generatePages` (and
+ * therefore without re-importing route modules, loaders and all) just to
+ * configure the build.
+ */
+const discoverGeneratedFiles = (generatedDir: string): Record<string, string> => {
+  const files: Record<string, string> = {};
+  const walk = (dir: string): void => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (entry.name !== "index.html") continue;
+      const rel = path.relative(generatedDir, path.dirname(full)).split(path.sep).join("/");
+      files[rel === "" ? "index" : rel] = full;
+    }
+  };
+  if (fs.existsSync(generatedDir)) walk(generatedDir);
+  return files;
+};
+
+/**
  * Points `vite build` at the HTML files {@link generatePages} wrote. `root` is
  * set to the generated dir so output mirrors it — `generated/home/index.html`
  * becomes `dist/home/index.html`, with no post-build rename. Nothing here is
  * virtual: vite reads the exact files you already inspected, and its built-in
  * HTML handling discovers each `<script src>`, code-splits shared chunks
  * across pages, and rewrites the tags to hashed output.
+ *
+ * Pass `files` if you already have the map `generatePages` returned; omit it
+ * to have this discover files on disk instead, which is the usual case — the
+ * `generate` step and the `vite build` step are meant to be separate
+ * commands, so `vite.config.ts` doesn't need to re-run generation itself.
  */
 export const viteBuildInput = (opts: {
-  /** the `files` map returned by `generatePages` */
-  files: Record<string, string>;
+  files?: Record<string, string>;
   generatedDir?: string;
   outDir?: string;
-}): Pick<UserConfig, "root" | "build"> => ({
-  root: path.resolve(opts.generatedDir ?? "generated"),
-  build: {
-    outDir: path.resolve(opts.outDir ?? "dist"),
-    emptyOutDir: true,
-    rollupOptions: { input: opts.files }
-  }
-});
+}): Pick<UserConfig, "root" | "build"> => {
+  const generatedDir = path.resolve(opts.generatedDir ?? "generated");
+  return {
+    root: generatedDir,
+    build: {
+      outDir: path.resolve(opts.outDir ?? "dist"),
+      emptyOutDir: true,
+      rollupOptions: { input: opts.files ?? discoverGeneratedFiles(generatedDir) }
+    }
+  };
+};
 
 /* -------------------------------------------------------------------------- */
 /* dev: render every request in-process through vite's own module graph        */

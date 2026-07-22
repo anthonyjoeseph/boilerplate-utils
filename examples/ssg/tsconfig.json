@@ -10,5 +10,5 @@
     "tsBuildInfoFile": "node_modules/.cache/tsconfig.tsbuildinfo"
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist", "dist-ssg"]
+  "exclude": ["node_modules", "dist", "generated"]
 }

@@ -165,28 +165,3 @@ export const cycler =
       childProps
     );
   };
-
-interface testProps {
-  plain: string;
-  voidFn: (num: number) => void;
-  retFn: (evt: number) => number;
-}
-
-declare const TestComp: (p: testProps) => React.ReactNode;
-
-const TestCycled = cycler(
-  TestComp,
-  (newProps: { addedProp: Prop<(num: number) => void> }, evt) => {
-    return {
-      plain: {
-        init: "1",
-        obs: evt((p) => p.voidFn)
-          .pipe(R.scan((acc) => acc + 1, 1))
-          .pipe(R.map(String))
-      },
-      voidFn: { init: noop }
-    };
-  }
-);
-
-const testEl = TestCycled({});

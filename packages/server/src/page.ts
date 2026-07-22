@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 import path from "node:path";
 import type { ComponentType, ReactElement } from "react";
 import { PAGE_ROOT_ID, PageData } from "@boilerplate-utils/react";
@@ -15,11 +16,12 @@ import type { DynamicRequest, StaticRequest } from "./request.js";
  * root, on both server and client.
  *
  * Written as `() => import("./App")` so TypeScript checks the path exists and
- * autocompletes it. At the `staticPage`/`dynamicPage` call site the function is
- * inspected (see {@link resolveAppEntry}) to recover that literal specifier and
- * resolve it to a real file — that file becomes the client bundle's entry, and
- * *only* that file: a loader can import `pg` freely because nothing about the
- * route module itself is reachable from the client build.
+ * autocompletes it. At the `staticPage`/`dynamicPage` call site, the calling
+ * file's own source is read back off disk (see {@link resolveAppEntry}) to
+ * recover that literal specifier and resolve it to a real file — that file
+ * becomes the client bundle's entry, and *only* that file: a loader can
+ * import `pg` freely because nothing about the route module itself is
+ * reachable from the client build.
  */
 export type AppModule<Props> = () => Promise<{ default: ComponentType<Props> }>;
 
@@ -39,15 +41,25 @@ export type DocumentComponent<Data = undefined> = ComponentType<{
 /* resolving `() => import("./X")` back to a file                              */
 /* -------------------------------------------------------------------------- */
 
-const IMPORT_SPECIFIER = /import\(\s*["'`]([^"'`]+)["'`]\s*\)/u;
+// Matches the first `app: () => import("...")` in a file's *source text*.
+// Deliberately not `appModule.toString()`: any tool that transforms dynamic
+// imports for its own module graph (vite's dev SSR rewrites them to
+// `__vite_ssr_dynamic_import__(...)`, esbuild inlines them when bundling
+// vite.config.ts) makes the runtime closure's source unrecoverable. Reading
+// the file directly sidesteps whatever the loader did to the executed code.
+const APP_FIELD_SPECIFIER = /app\s*:\s*\(\s*\)\s*=>\s*import\(\s*["'`]([^"'`]+)["'`]\s*\)/u;
 
 /**
  * Finds the file that called `staticPage`/`dynamicPage`, by parsing a captured
- * stack trace. Works in Node/tsx/vite-node, which all preserve real file paths
- * in stack frames; it is not expected to survive a minified/bundled build,
- * which is fine — `staticPage`/`dynamicPage` only ever run in those
- * unminified contexts (`generate`, dev SSR, prod SSR reading pre-rendered
- * source), never inside the client bundle itself.
+ * stack trace. Works in Node/tsx/vite-node/vite's SSR module transform, which
+ * all preserve real per-file source paths in stack frames; it is not expected
+ * to survive a minified/bundled build, which is fine — `staticPage`/
+ * `dynamicPage` only ever run in those unminified contexts (`generate`, dev
+ * SSR, prod SSR reading pre-rendered source), never inside the client bundle
+ * itself, and never through vite's *config* loader (which bundles everything
+ * it statically imports into one file — route modules must only ever be
+ * loaded live, e.g. via `server.ssrLoadModule`, not imported into
+ * `vite.config.ts`).
  */
 const callerFile = (): string => {
   const original = Error.stackTraceLimit;
@@ -70,20 +82,22 @@ const callerFile = (): string => {
 };
 
 /**
- * Recovers the absolute path an {@link AppModule} points at, by stringifying
- * the function and regex-matching its import specifier — `() => import("./App")`
- * stringifies to exactly that in V8, so no AST parsing is needed.
+ * Recovers the absolute path an {@link AppModule} points at, by reading the
+ * calling file's own source (not the runtime closure — see
+ * {@link APP_FIELD_SPECIFIER}) and matching its `app: () => import("./App")`
+ * field literally. Supports one `staticPage`/`dynamicPage` call per file.
  */
-const resolveAppEntry = (appModule: AppModule<any>): string => {
-  const source = appModule.toString();
-  const specifier = source.match(IMPORT_SPECIFIER)?.[1];
+const resolveAppEntry = (): string => {
+  const file = callerFile();
+  const source = fs.readFileSync(file, "utf-8");
+  const specifier = source.match(APP_FIELD_SPECIFIER)?.[1];
   if (!specifier) {
     throw new Error(
-      `page(): \`app\` must be written as \`() => import("./Path")\` with a literal ` +
-        `string specifier so it can be resolved statically. Got: ${source}`
+      `page(): could not find \`app: () => import("./Path")\` with a literal string ` +
+        `specifier in ${file}. Only one staticPage/dynamicPage call per file is supported.`
     );
   }
-  return path.resolve(path.dirname(callerFile()), specifier);
+  return path.resolve(path.dirname(file), specifier);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -138,7 +152,7 @@ export const staticPage = <Deps extends object = object>(spec: {
   app: AppModule<Record<string, never>>;
   document: DocumentComponent<Record<string, never>>;
 }): StaticRequest<Deps & PageDependencies, string> => {
-  const entryPath = resolveAppEntry(spec.app);
+  const entryPath = resolveAppEntry();
 
   return staticRequest({
     extension: "html",
@@ -169,7 +183,7 @@ export const dynamicPage = <
   app: AppModule<Data>;
   document: DocumentComponent<Data>;
 }): DynamicRequest<Params, unknown, string, Deps & PageDependencies> => {
-  const entryPath = resolveAppEntry(spec.app);
+  const entryPath = resolveAppEntry();
 
   return dynamicRequest({
     fn: async ({ params, dependencies }) => {

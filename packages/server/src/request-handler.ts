@@ -1,15 +1,15 @@
 import type { RequestHandler } from "express";
 import type { RequestObj } from "./request.js";
 export interface MethodHandlers<T = Record<string | number, string>, Dependencies = unknown> {
-  GET?: RequestObj<T, any, any, Dependencies>;
-  POST?: RequestObj<T, any, any, Dependencies>;
-  PUT?: RequestObj<T, any, any, Dependencies>;
-  DELETE?: RequestObj<T, any, any, Dependencies>;
-  PATCH?: RequestObj<T, any, any, Dependencies>;
-  HEAD?: RequestObj<T, any, any, Dependencies>;
-  OPTIONS?: RequestObj<T, any, any, Dependencies>;
-  CONNECT?: RequestObj<T, any, any, Dependencies>;
-  TRACE?: RequestObj<T, any, any, Dependencies>;
+  GET?: RequestObj<T, any, any, Dependencies, any>;
+  POST?: RequestObj<T, any, any, Dependencies, any>;
+  PUT?: RequestObj<T, any, any, Dependencies, any>;
+  DELETE?: RequestObj<T, any, any, Dependencies, any>;
+  PATCH?: RequestObj<T, any, any, Dependencies, any>;
+  HEAD?: RequestObj<T, any, any, Dependencies, any>;
+  OPTIONS?: RequestObj<T, any, any, Dependencies, any>;
+  CONNECT?: RequestObj<T, any, any, Dependencies, any>;
+  TRACE?: RequestObj<T, any, any, Dependencies, any>;
 }
 
 export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, Dependencies>(

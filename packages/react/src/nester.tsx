@@ -169,25 +169,3 @@ export const u = discriminatedUnion;
 export const o = optional;
 export const p = primitive;
 export const sp = staticPrimitive;
-
-declare const TestCompA: FunctionComponent<{ a?: number; other: string }>;
-declare const TestCompB: FunctionComponent<{ b: string; href: string }>;
-declare const TestCompC: FunctionComponent<{ c: boolean }>;
-
-const TestElement = c(sp("a", { style: { width: 300 } }), [
-  TestCompA,
-  TestCompB
-]);
-
-const TestComponent = component(TestCompA, { a: 3 }, [TestCompB, TestCompC]);
-
-const TestName = name("theTest", TestCompA);
-
-const TestArray = array(TestCompA);
-
-const TestDisc = discriminatedUnion("type", {
-  thing1: TestCompA,
-  thing2: TestCompB
-});
-
-const TestOpt = optional(TestCompA);

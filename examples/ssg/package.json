@@ -7,12 +7,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "generate": "tsx scripts/generate.ts",
+    "build": "pnpm generate && vite build",
     "preview": "vite preview",
-    "generate": "vite-node generate.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@boilerplate-utils/server": "workspace:*",
+    "@boilerplate-utils/shared": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
@@ -20,8 +22,8 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "catalog:",
     "typescript": "catalog:",
-    "vite": "^5.4.21",
-    "vite-node": "^2.1.8"
+    "vite": "^5.4.21"
   }
 }
