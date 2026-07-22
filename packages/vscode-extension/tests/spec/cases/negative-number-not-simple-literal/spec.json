@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "negative numbers parse as PrefixUnaryExpression, not NumericLiteral; isSimpleLiteral returns false, so -1 as a discriminant or case value causes the switch collapse to be refused"
+}

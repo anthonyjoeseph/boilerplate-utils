@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "&&/||/?? are not recognized as foldable operators; the if/else condition `a && b` cannot reduce to a boolean even when both sides are known literals, so the expansion is refused"
+}

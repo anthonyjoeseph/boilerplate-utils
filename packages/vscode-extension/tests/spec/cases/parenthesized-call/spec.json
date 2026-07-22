@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "callee is a ParenthesizedExpression, not a bare Identifier; rejected with 'Only simple function identifiers' even though the inner expression is a plain function reference"
+}

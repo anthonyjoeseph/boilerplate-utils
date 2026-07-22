@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "default values inside destructuring patterns (e.g. { a = 5 }) are not supported; element.initializer is set and the expansion is refused immediately"
+}

@@ -83,6 +83,14 @@ a fresh node with no `questionDotToken`, silently turning `o?.b` into `o.b`. The
 `update…` helpers delegate to the chain variants; the `create…` ones cannot. Guarded by
 `optional-chain-dropped` and `optional-chain-element-dropped`.
 
+- ~~**`export default function` declarations are invisible.**~~ **Discovered working** —
+  the same-file resolver finds them. Guarded by `export-default-function`.
+- ~~**`f?.()` is rejected at the identifier check.**~~ **Discovered working** — for a
+  bare-identifier optional call the callee IS an `Identifier`, so the check passes and
+  the body is inlined (the `?.` is dropped, which is fine when `f` is always defined).
+  Guarded by `optional-call`. The claim was only correct for `obj.f?.()` where the
+  callee is a `PropertyAccessExpression`.
+
 ### Silently produces wrong code
 
 - **Arguments are duplicated, not bound.** `const dbl = (a) => a + a; dbl(next())`
@@ -114,11 +122,15 @@ a fresh node with no `questionDotToken`, silently turning `o?.b` into `o.b`. The
 - **`.js`-suffixed ESM specifiers never resolve** — the exact style `template-fns` and
   `language-server` use on themselves. So do tsconfig `paths`, `exports` maps, and
   workspace `@scope/pkg` imports through pnpm symlinks.
-- **Only top-level declarations are visible.** Nested functions, `export default
-  function`, class methods, and object-literal methods are all invisible.
+- **Only top-level declarations are visible.** Nested functions, class methods, and
+  object-literal methods are all invisible. (`export default function` was thought to be
+  in this group but is handled correctly — see "Fixed since this document was written".)
 - **Overloads pick the last declaration**, not the resolved one.
-- **Method, namespace, optional, and constructor calls are rejected** at the
-  identifier check: `obj.f()`, `ns.f()`, `f?.()`, `new F()`, and even `(f)()`.
+- **Method, namespace, and constructor calls are rejected.** `obj.f()` and `ns.f()`
+  fail the identifier check (callee is a `PropertyAccessExpression`). `new F()` is a
+  `NewExpression` and is not found by the call-finder at all. `(f)()` fails the
+  identifier check (callee is a `ParenthesizedExpression`). `f?.()` is not in this
+  group — see "Fixed since this document was written".
 - **Any multi-statement body is "too complex."** So are early returns, `throw`, loops,
   `try/catch`, and local `const`s.
 - **If/else and switch collapse never fire, for any input.** Constant folding consults
@@ -179,8 +191,13 @@ rewrite of the resolution layer.
    element-access arguments and both destructuring cases were genuinely fixed;
    if/else and switch collapse were ported to `known: broken` specs, which is the
    honest outcome since neither has ever worked.
-5. **Grow the corpus** to cover every item in "Known-wrong today". Fourteen specs
-   exist; the list is longer.
+5. ~~**Grow the corpus**~~ **Done** — 38 specs exist, covering every item in
+   "Known-wrong today" that is testable with behavioral specs. Three gaps remain
+   by design: (a) import insertion fragility needs unit tests not behavioral specs
+   (the spec runner uses an idealised applier — see `tests/spec/README.md`);
+   (b) tsconfig `paths` / `exports` maps / pnpm workspace symlinks require
+   infrastructure the sandbox can't provide; (c) class methods and object-literal
+   methods can't be called without method-call syntax, which is already refused.
 
 **Deliberately not in Phase 0: golden-text snapshots.** They belong after Phase 5,
 not here. Two reasons, and the second is the one that matters:

@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "explicit undefined is treated as a provided argument, skipping the parameter default; f(undefined) where f=(a=5)=>a*2 inlines to undefined*2=NaN instead of 10"
+}

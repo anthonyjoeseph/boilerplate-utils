@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": ".js-suffixed import specifiers are never resolved even when a matching .ts file exists; the resolver refuses with 'Could not resolve function declaration'"
+}
