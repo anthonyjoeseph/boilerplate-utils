@@ -10,7 +10,7 @@ import * as R from "./routes";
 
 const app = express();
 
-const { parse, format } = pathCodec(...(Object.keys(R) as (keyof typeof R)[]));
+const { parse } = pathCodec(...(Object.keys(R) as (keyof typeof R)[]));
 
 const requestHandler = requestHandlerForRoutes(parse, R, {});
 
@@ -26,4 +26,4 @@ app.listen(3000);
 
 const testClient = clientForRoutes("", R);
 
-const f = await testClient.page.GET();
+console.log(await testClient.page.GET());

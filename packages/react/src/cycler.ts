@@ -91,9 +91,14 @@ export const cycler =
       ) as NewProps;
 
       const selectEvent = <Fn extends (a: any) => any>(
-        selector: (props: Props) => Fn
+        selector: (
+          props: Props & { [K in keyof NewProps]: ExtractProp<NewProps[K]> }
+        ) => Fn
       ): Observable<Parameters<Fn>[0]> => {
         // Identify the selected prop eagerly (so we know to wire an emitter)...
+        // The Proxy intercepts every key regardless of the cast below, so this
+        // already supports selecting on NewProps-derived keys at runtime — the
+        // cast just needs to say so, to match `selectEvent`'s declared type.
         let key: PropertyKey = "";
         selector(
           new Proxy(
@@ -104,7 +109,7 @@ export const cycler =
                 return noop;
               }
             }
-          ) as Props
+          ) as Props & { [K in keyof NewProps]: ExtractProp<NewProps[K]> }
         );
         selectedKeys.add(key);
         // ...but set up the filtered stream lazily, per subscription.

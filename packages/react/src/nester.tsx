@@ -23,7 +23,9 @@ export const narrowFn =
     const Keep extends OptionalKeys<Parameters<Fn>[0]>[]
   >(
     fn: Fn,
-    keep: Keep
+    // `Keep` is type-only: it narrows the returned function's props via the
+    // mapped type below, but nothing at runtime needs the array's values.
+    _keep: Keep
   ): ((narrowProps: {
     [
       K in keyof Parameters<Fn>[0] as {} extends Pick<Parameters<Fn>[0], K>
@@ -73,13 +75,6 @@ export const staticPrimitive = <T extends HTMLElementType>(
     }) => React.ReactNode,
     ["children"]
   );
-
-const Clickable = applyPartial(
-  narrowFn(primitive("input"), ["onClick", "value", "children"]),
-  {
-    value: 1
-  }
-);
 
 export const component =
   <
