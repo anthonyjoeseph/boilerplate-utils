@@ -77,10 +77,10 @@ export async function runSmartInline(
   }
 
   try {
-    const functionInfo = await resolveFunctionDefinition(
-      callee.text,
-      sourceFile,
+    const functionInfo = resolveFunctionDefinition(
+      callExpr.getStart(sourceFile),
       fileName,
+      sourceText,
       workspaceRoot
     );
     if (!functionInfo) {

@@ -1,5 +1,4 @@
 import * as ts from "typescript";
-import * as fs from "fs";
 import * as path from "path";
 
 export interface FunctionInfo {
@@ -7,353 +6,154 @@ export interface FunctionInfo {
   node: ts.FunctionLikeDeclaration;
 }
 
-interface ImportInfo {
-  moduleSpecifier: string;
-  isRelative: boolean;
-  /**
-   * The name as exported by the target module, which differs from the local
-   * binding under `import { a as b }`. Resolution still searches for the local
-   * name - see tests/spec/cases/aliased-import.
-   */
-  importedName: string;
-}
+// Shared registry so lib files are parsed only once across all calls.
+// The current file always gets a unique version so the registry never returns a
+// stale AST when the same filename is used with different content (e.g. tests).
+const sharedRegistry = ts.createDocumentRegistry();
+let buildCount = 0;
 
-export async function resolveFunctionDefinition(
-  name: string,
-  currentSourceFile: ts.SourceFile,
-  currentFileName: string,
-  workspaceRoot: string
-): Promise<FunctionInfo | undefined> {
-  // 1. Same file
-  const local = findFunctionInSourceFile(currentSourceFile, name);
-  if (local) {
-    return { sourceFile: currentSourceFile, node: local };
-  }
+function findCompilerOptions(fromDir: string): ts.CompilerOptions {
+  const configPath = ts.findConfigFile(fromDir, ts.sys.fileExists, "tsconfig.json");
 
-  // 2. Imported from other files
-  const importInfo = findImportForIdentifier(currentSourceFile, name);
-  if (!importInfo) {
-    return undefined;
-  }
-
-  if (importInfo.isRelative) {
-    const resolved = resolveRelativeModule(
-      importInfo.moduleSpecifier,
-      currentFileName
-    );
-    if (!resolved) {
-      return undefined;
-    }
-    const text = await tryReadFile(resolved);
-    if (!text) {
-      return undefined;
-    }
-    const sf = ts.createSourceFile(
-      resolved,
-      text,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const fn = findExportedFunctionInSourceFile(sf, name);
-    if (fn) {
-      return { sourceFile: sf, node: fn };
-    }
-    return undefined;
-  } else {
-    // 3. NPM module with potential source maps
-    const resolvedModulePath = tryResolveNodeModule(
-      importInfo.moduleSpecifier,
-      workspaceRoot
-    );
-    if (!resolvedModulePath) {
-      return undefined;
-    }
-
-    // Try sibling .ts first
-    const siblingTs = resolvedModulePath.replace(/\.js(x?)$/, ".ts$1");
-    if (fs.existsSync(siblingTs)) {
-      const text = await tryReadFile(siblingTs);
-      if (text) {
-        const sf = ts.createSourceFile(
-          siblingTs,
-          text,
-          ts.ScriptTarget.Latest,
-          true
-        );
-        const fn = findExportedFunctionInSourceFile(sf, name);
-        if (fn) {
-          return { sourceFile: sf, node: fn };
-        }
-      }
-    }
-
-    // Then try reading source map to get original TS sources
-    const candidate = await tryResolveFromSourceMap(resolvedModulePath, name);
-    if (candidate) {
-      return candidate;
-    }
-  }
-
-  return undefined;
-}
-
-function findFunctionInSourceFile(
-  sourceFile: ts.SourceFile,
-  name: string
-): ts.FunctionLikeDeclaration | undefined {
-  let match: ts.FunctionLikeDeclaration | undefined;
-
-  sourceFile.forEachChild((node) => {
-    if (
-      ts.isFunctionDeclaration(node) &&
-      node.name?.text === name &&
-      node.body
-    ) {
-      match = node;
-      return;
-    }
-    if (ts.isVariableStatement(node)) {
-      for (const decl of node.declarationList.declarations) {
-        if (ts.isIdentifier(decl.name) && decl.initializer) {
-          if (
-            decl.name.text === name &&
-            (ts.isArrowFunction(decl.initializer) ||
-              ts.isFunctionExpression(decl.initializer))
-          ) {
-            match = decl.initializer;
-            return;
-          }
-        }
-      }
-    }
-  });
-
-  return match;
-}
-
-function findExportedFunctionInSourceFile(
-  sourceFile: ts.SourceFile,
-  name: string
-): ts.FunctionLikeDeclaration | undefined {
-  let match: ts.FunctionLikeDeclaration | undefined;
-
-  sourceFile.forEachChild((node) => {
-    if (
-      ts.isFunctionDeclaration(node) &&
-      node.name?.text === name &&
-      node.body
-    ) {
-      // either `export function` or exported via separate export list
-      const hasExportModifier = !!node.modifiers?.some(
-        (m) => m.kind === ts.SyntaxKind.ExportKeyword
+  if (configPath) {
+    const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+    if (!configFile.error) {
+      const parsed = ts.parseJsonConfigFileContent(
+        configFile.config,
+        ts.sys,
+        path.dirname(configPath)
       );
-      if (hasExportModifier || isExportedViaExportList(sourceFile, name)) {
-        match = node;
-        return;
+      if (!parsed.errors.length) {
+        return parsed.options;
       }
     }
+  }
 
-    if (ts.isVariableStatement(node)) {
-      const hasExportModifier = !!node.modifiers?.some(
-        (m) => m.kind === ts.SyntaxKind.ExportKeyword
-      );
-      for (const decl of node.declarationList.declarations) {
-        if (ts.isIdentifier(decl.name) && decl.initializer) {
-          if (
-            decl.name.text === name &&
-            (ts.isArrowFunction(decl.initializer) ||
-              ts.isFunctionExpression(decl.initializer))
-          ) {
-            if (
-              hasExportModifier ||
-              isExportedViaExportList(sourceFile, name)
-            ) {
-              match = decl.initializer;
-              return;
-            }
-          }
-        }
-      }
-    }
-  });
-
-  return match;
+  // Synthetic defaults: Bundler resolution handles .js→.ts and pnpm symlinks.
+  return {
+    target: ts.ScriptTarget.Latest,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    allowImportingTsExtensions: true,
+    noEmit: true,
+    esModuleInterop: true,
+    allowSyntheticDefaultImports: true,
+    strict: false
+  };
 }
 
-function isExportedViaExportList(
-  sourceFile: ts.SourceFile,
-  name: string
-): boolean {
-  let exported = false;
-  sourceFile.forEachChild((node) => {
-    if (
-      ts.isExportDeclaration(node) &&
-      node.exportClause &&
-      ts.isNamedExports(node.exportClause)
-    ) {
-      for (const spec of node.exportClause.elements) {
-        if (spec.name.text === name) {
-          exported = true;
-          return;
-        }
+function buildLanguageService(
+  fileName: string,
+  sourceText: string,
+  compilerOptions: ts.CompilerOptions
+): ts.LanguageService {
+  // Unique per call so the registry never reuses a stale AST for the current file.
+  const fileVersion = String(++buildCount);
+  const host: ts.LanguageServiceHost = {
+    getScriptFileNames: () => [fileName],
+    getScriptVersion: (file) => (file === fileName ? fileVersion : "0"),
+    getScriptSnapshot: (file) => {
+      if (file === fileName) {
+        return ts.ScriptSnapshot.fromString(sourceText);
       }
-    }
-  });
-  return exported;
+      const text = ts.sys.readFile(file);
+      return text !== undefined ? ts.ScriptSnapshot.fromString(text) : undefined;
+    },
+    getCurrentDirectory: () => path.dirname(fileName),
+    getCompilationSettings: () => compilerOptions,
+    getDefaultLibFileName: (opts) => ts.getDefaultLibFilePath(opts),
+    fileExists: (file) => (file === fileName ? true : ts.sys.fileExists(file)),
+    readFile: (file) => (file === fileName ? sourceText : ts.sys.readFile(file)),
+    readDirectory: ts.sys.readDirectory.bind(ts.sys),
+    directoryExists: ts.sys.directoryExists.bind(ts.sys),
+    getDirectories: ts.sys.getDirectories.bind(ts.sys)
+  };
+
+  return ts.createLanguageService(host, sharedRegistry);
 }
 
-function findImportForIdentifier(
-  sourceFile: ts.SourceFile,
-  name: string
-): ImportInfo | undefined {
-  for (const stmt of sourceFile.statements) {
-    if (
-      !ts.isImportDeclaration(stmt) ||
-      !stmt.importClause ||
-      !stmt.moduleSpecifier
-    )
-      continue;
-    const moduleSpecifier = (stmt.moduleSpecifier as ts.StringLiteral).text;
+function findCallExpressionAtStart(
+  sf: ts.SourceFile,
+  start: number
+): ts.CallExpression | undefined {
+  function visit(node: ts.Node): ts.CallExpression | undefined {
+    if (ts.isCallExpression(node) && node.getStart(sf) === start) return node;
+    return ts.forEachChild(node, visit);
+  }
+  return visit(sf);
+}
 
-    // import runMe from "./foo";
-    if (stmt.importClause.name && stmt.importClause.name.text === name) {
-      return {
-        moduleSpecifier,
-        isRelative: moduleSpecifier.startsWith("."),
-        importedName: "default"
-      };
-    }
-
-    // import { runMe } from "./foo";
-    if (
-      stmt.importClause.namedBindings &&
-      ts.isNamedImports(stmt.importClause.namedBindings)
-    ) {
-      for (const element of stmt.importClause.namedBindings.elements) {
-        const importedName = (element.propertyName ?? element.name).text;
-        const localName = element.name.text;
-        if (localName === name) {
-          return {
-            moduleSpecifier,
-            isRelative: moduleSpecifier.startsWith("."),
-            importedName
-          };
-        }
-      }
-    }
-
-    // import * as ns from "./foo"; -> ns.runMe (not supported)
+function extractFunctionLike(
+  decl: ts.SignatureDeclaration
+): ts.FunctionLikeDeclaration | undefined {
+  if (ts.isFunctionLike(decl)) {
+    const fn = decl as ts.FunctionLikeDeclaration;
+    return fn.body ? fn : undefined;
   }
   return undefined;
 }
 
-function resolveRelativeModule(
-  moduleSpecifier: string,
-  fromFile: string
-): string | undefined {
-  const base = path.dirname(fromFile);
-  const full = path.resolve(base, moduleSpecifier);
+/**
+ * Resolve the function definition for the call expression starting at
+ * `callExprStart` in `fileName` / `sourceText`.
+ *
+ * Uses a `ts.LanguageService` built from the nearest tsconfig (or synthetic
+ * defaults) so aliased imports, .js-suffixed specifiers, tsconfig paths, and
+ * pnpm workspace symlinks all resolve correctly.
+ */
+export function resolveFunctionDefinition(
+  callExprStart: number,
+  fileName: string,
+  sourceText: string,
+  _workspaceRoot: string
+): FunctionInfo | undefined {
+  const compilerOptions = findCompilerOptions(path.dirname(fileName));
+  const ls = buildLanguageService(fileName, sourceText, compilerOptions);
+  const program = ls.getProgram();
+  if (!program) return undefined;
 
-  const candidates = [
-    full,
-    full + ".ts",
-    full + ".tsx",
-    path.join(full, "index.ts"),
-    path.join(full, "index.tsx")
-  ];
+  // TypeScript normalizes paths; try both forms.
+  const normalizedFileName = ts.sys.resolvePath(fileName);
+  const callerSf =
+    program.getSourceFile(normalizedFileName) ??
+    program.getSourceFile(fileName);
+  if (!callerSf) return undefined;
 
-  for (const c of candidates) {
-    if (fs.existsSync(c) && fs.statSync(c).isFile()) {
-      return c;
-    }
-  }
+  const callExpr = findCallExpressionAtStart(callerSf, callExprStart);
+  if (!callExpr) return undefined;
 
-  return undefined;
-}
+  const checker = program.getTypeChecker();
 
-function tryResolveNodeModule(
-  moduleSpecifier: string,
-  workspaceRoot: string
-): string | undefined {
+  // Use the type checker to get the resolved signature — handles overloads
+  // and cross-file resolution in one step.
+  let sig: ts.Signature | undefined;
   try {
-    const resolved = require.resolve(moduleSpecifier, {
-      paths: [workspaceRoot]
-    });
-    return resolved;
+    sig = checker.getResolvedSignature(callExpr);
   } catch {
     return undefined;
   }
-}
+  if (!sig) return undefined;
 
-async function tryReadFile(filePath: string): Promise<string | undefined> {
-  try {
-    return await fs.promises.readFile(filePath, "utf8");
-  } catch {
-    return undefined;
-  }
-}
+  const decl = sig.declaration;
+  if (!decl || ts.isJSDocSignature(decl)) return undefined;
 
-async function tryResolveFromSourceMap(
-  jsFilePath: string,
-  functionName: string
-): Promise<FunctionInfo | undefined> {
-  const dir = path.dirname(jsFilePath);
-  let mapPath = jsFilePath + ".map";
-
-  if (!fs.existsSync(mapPath)) {
-    // Try reading //# sourceMappingURL from file
-    let jsText: string;
-    try {
-      jsText = await fs.promises.readFile(jsFilePath, "utf8");
-    } catch {
-      return undefined;
-    }
-
-    const match = jsText.match(/\/\/# sourceMappingURL=(.+)$/m);
-    if (!match) {
-      return undefined;
-    }
-    const sourceMappingUrl = match[1];
-    if (!sourceMappingUrl) {
-      return undefined;
-    }
-    mapPath = path.resolve(dir, sourceMappingUrl);
-    if (!fs.existsSync(mapPath)) {
-      return undefined;
-    }
+  // Happy path: declaration has a body.
+  const directFn = extractFunctionLike(decl);
+  if (directFn) {
+    return { sourceFile: directFn.getSourceFile(), node: directFn };
   }
 
-  let raw: string;
-  try {
-    raw = await fs.promises.readFile(mapPath, "utf8");
-  } catch {
-    return undefined;
-  }
+  // Overload without body: search the callee symbol's declarations for the
+  // implementation (the one that actually has a body).
+  const calleeSymbol = checker.getSymbolAtLocation(callExpr.expression);
+  if (!calleeSymbol) return undefined;
 
-  let json: unknown;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    return undefined;
-  }
-
-  const sources: string[] | undefined = (json as { sources?: string[] })
-    .sources;
-  if (!Array.isArray(sources)) {
-    return undefined;
-  }
-
-  for (const srcRel of sources) {
-    const srcPath = path.resolve(path.dirname(mapPath), srcRel);
-    if (!srcPath.endsWith(".ts") && !srcPath.endsWith(".tsx")) {
-      continue;
-    }
-    const text = await tryReadFile(srcPath);
-    if (!text) continue;
-    const sf = ts.createSourceFile(srcPath, text, ts.ScriptTarget.Latest, true);
-    const fn = findExportedFunctionInSourceFile(sf, functionName);
-    if (fn) {
-      return { sourceFile: sf, node: fn };
+  for (const symbolDecl of calleeSymbol.declarations ?? []) {
+    if (ts.isFunctionLike(symbolDecl)) {
+      const fn = symbolDecl as ts.FunctionLikeDeclaration;
+      if (fn.body) {
+        return { sourceFile: fn.getSourceFile(), node: fn };
+      }
     }
   }
 

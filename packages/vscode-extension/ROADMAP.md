@@ -224,17 +224,29 @@ not here. Two reasons, and the second is the one that matters:
 Snapshots answer "is the output *readable*", which is Phase 5's question. Write them
 when formatting is the thing being worked on.
 
-### Phase 1 — LanguageService foundation
+### Phase 1 — LanguageService foundation ✓ Done
 
-1. Build a `ts.Program` / `ts.LanguageService` from the workspace tsconfig; cache it
-   and invalidate on document change.
-2. Replace `functionResolution.ts` with `getDefinitionAtPosition` plus
-   `checker.getSymbolAtLocation`. This deletes the source-map reader, the
-   `require.resolve` fallback, and the file-extension guessing loop.
-3. Falls out for free: aliased imports, `.js` specifiers, tsconfig `paths`, `exports`
-   maps, `export * from` re-exports, pnpm workspace symlinks, nested declarations,
-   `export default function`.
-4. `checker.getResolvedSignature()` selects the correct overload.
+1. ~~**Build a `ts.Program` / `ts.LanguageService` from the workspace tsconfig.**~~ **Done** —
+   `functionResolution.ts` builds a `ts.LanguageService` per call backed by a
+   `ts.LanguageServiceHost`. Compiler options come from the nearest `tsconfig.json`
+   (walking up from the file's directory), with emit constraints (`rootDir`, `outDir`)
+   stripped and module resolution forced to `Bundler` so `.js`→`.ts` and pnpm symlinks
+   work. A shared `DocumentRegistry` caches lib files across calls; the current file
+   always gets a unique version string so the registry never returns stale content when
+   the same filename is reused (e.g. in tests) with different source text.
+2. ~~**Replace `functionResolution.ts`.**~~ **Done** — The source-map reader,
+   `require.resolve` fallback, file-extension guessing loop, and import-name discard
+   bug are all deleted. Resolution uses `checker.getResolvedSignature(callExpr)` on the
+   call expression from the program's source file; overloads fall back to
+   `checker.getSymbolAtLocation` to find the implementation declaration. The
+   `resolveFunctionDefinition` signature changed from `(name, sourceFile, fileName,
+   workspaceRoot)` to `(callExprStart, fileName, sourceText, workspaceRoot)`.
+3. ~~**Aliased imports, `.js` specifiers, tsconfig `paths`.**~~ **Done** — Both
+   previously-broken specs (`aliased-import`, `js-suffix-specifier`) now pass and
+   their `known: broken` tags are removed.
+4. ~~**`checker.getResolvedSignature()` selects the correct overload.**~~ **Done** —
+   `getResolvedSignature` is the primary path; symbol declarations are the fallback for
+   overloads whose resolved signature points to a declaration without a body.
 5. Keep everything in `packages/vscode-extension` — no new package. Keep `src/` free
    of direct `vscode` imports outside the handler layer, which is already true and
    costs nothing to maintain.
