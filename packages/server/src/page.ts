@@ -90,7 +90,7 @@ const callerFile = (): string => {
 const resolveAppEntry = (): string => {
   const file = callerFile();
   const source = fs.readFileSync(file, "utf-8");
-  const specifier = source.match(APP_FIELD_SPECIFIER)?.[1];
+  const specifier = APP_FIELD_SPECIFIER.exec(source)?.[1];
   if (!specifier) {
     throw new Error(
       `page(): could not find \`app: () => import("./Path")\` with a literal string ` +

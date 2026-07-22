@@ -36,7 +36,6 @@ export const narrowFn =
     ]: Parameters<Fn>[0][K];
   }) => ReturnType<Fn>) =>
   (narrowProps) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fn(narrowProps) as any;
 
 export const applyPartial =
@@ -52,7 +51,6 @@ export const applyPartial =
     ]: Parameters<Fn>[0][K];
   }) => ReturnType<Fn>) =>
   (narrowProps) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
     fn({ ...defaultVals, ...narrowProps }) as any;
 
 export function primitive<T extends HTMLElementType>(
@@ -91,11 +89,9 @@ export const component =
   > =>
   (props) =>
     React.createElement(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
       parent as any,
       props,
       ...children.map((child, i) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         React.createElement(child as any, { ...props, key: i })
       )
     );
@@ -107,7 +103,6 @@ export const name =
     // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
   ): FunctionComponent<{ [K in Name]: ComponentProps<Parent> }> =>
   (props) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
     React.createElement(parent as any, props[name]);
 
 export const array =
@@ -119,7 +114,6 @@ export const array =
       React.Fragment,
       null,
       ...propsList.map((props, i) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         React.createElement(parent as any, { ...props, key: i })
       )
     );
@@ -142,7 +136,6 @@ export const discriminatedUnion =
   > =>
   (props) =>
     React.createElement(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       options[(props as any)[discriminator]] as any,
       props
     );
@@ -152,10 +145,7 @@ export const optional =
     parent: Parent
   ): FunctionComponent<ComponentProps<Parent> | undefined> =>
   (props) =>
-    props === undefined
-      ? null
-      : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        React.createElement(parent as any, props);
+    props === undefined ? null : React.createElement(parent as any, props);
 
 export const c = component;
 export const n = name;

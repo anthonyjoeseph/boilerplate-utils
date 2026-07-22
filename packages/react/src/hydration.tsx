@@ -55,7 +55,5 @@ export const hydratePage = async <Props,>(
   }
 
   const data = readPageData<Props>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- `Props` may be `undefined`
-  // (pages with no loader), which `createElement`'s generic constraint rejects.
   hydrateRoot(root, React.createElement(App as ComponentType<any>, data));
 };

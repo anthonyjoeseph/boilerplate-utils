@@ -19,7 +19,7 @@ export const collectStaticAssets = async <
 
   for (const [routePath, handlers] of Object.entries(routes)) {
     for (const handler of Object.values(handlers)) {
-      if (!handler || handler.type !== "static-request") continue;
+      if (handler?.type !== "static-request") continue;
       assets[routePath] = {
         content: await handler.fn(dependencies),
         extension: handler.extension

@@ -83,7 +83,7 @@ export const generatePages = async <Routes extends AnyRoutes, Deps>(opts: {
 
   for (const [routeKey, handlers] of Object.entries(opts.routes)) {
     const handler = handlers.GET;
-    if (!handler || handler.type !== "static-request" || handler.extension !== "html") continue;
+    if (handler?.type !== "static-request" || handler.extension !== "html") continue;
 
     const outFile = path.join(outDir, routeKey, "index.html");
     const bundler = sourceAdapter(outFile);

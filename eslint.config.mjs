@@ -67,6 +67,21 @@ export default defineConfig(
     }
   },
 
+  // Packages: allow `any` in generic utility code, and `{}` for the standard
+  // optional-key detection idiom (`{} extends Pick<T, K>`)
+  {
+    files: ["packages/**/*.ts", "packages/**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-empty-object-type": "off"
+    }
+  },
+
   // React
   {
     ...reactPlugin.configs.flat.recommended,

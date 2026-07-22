@@ -32,7 +32,7 @@ export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, D
   >;
 
   return (req, res, next) => {
-    const parsed = parseFn(req.originalUrl ?? req.url);
+    const parsed = parseFn(req.originalUrl);
 
     if (parsed.path === "NotFound") {
       next();
@@ -47,7 +47,7 @@ export const requestHandlerForRoutes = <ParseFn extends (...args: any) => any, D
 
     const method = req.method.toUpperCase() as keyof MethodHandlers;
     const handler = handlers[method];
-    if (!handler || handler.type !== "dynamic-request") {
+    if (handler?.type !== "dynamic-request") {
       next();
       return;
     }
