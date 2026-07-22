@@ -6,14 +6,17 @@
 import * as ts from "typescript";
 import {
   getBooleanLiteralValue,
+  getTruthinessValue,
   isDeepConstExpr,
+  isSimpleLiteral,
   resolveConstExpression
 } from "./inliningConst";
 
 export function substituteAndSimplifyExpression(
   expr: ts.Expression,
   argMap: Map<string, ts.Expression>,
-  paramConstEnv: Map<string, ts.Expression>
+  paramConstEnv: Map<string, ts.Expression>,
+  conditionMode = false
 ): ts.Expression {
   const factory = ts.factory;
 
@@ -75,11 +78,12 @@ export function substituteAndSimplifyExpression(
       if (left === undefined || right === undefined) return undefined;
       switch (node.operatorToken.kind) {
         case ts.SyntaxKind.EqualsEqualsEqualsToken:
-        case ts.SyntaxKind.EqualsEqualsToken:
           return left === right;
         case ts.SyntaxKind.ExclamationEqualsEqualsToken:
-        case ts.SyntaxKind.ExclamationEqualsToken:
           return left !== right;
+        // EqualsEqualsToken (==) and ExclamationEqualsToken (!=) use loose
+        // equality semantics (e.g. "1" == 1 is true) which we cannot replicate
+        // with strict ===. Leave them unfolded.
         case ts.SyntaxKind.LessThanToken:
           return (left as number) < (right as number);
         case ts.SyntaxKind.LessThanEqualsToken:
@@ -132,21 +136,31 @@ export function substituteAndSimplifyExpression(
     startLexicalEnvironment: () => {}
   } as unknown as ts.TransformationContext;
 
-  function simplify(node: ts.Expression): ts.Expression {
-    // Substitute identifiers
+  function simplify(node: ts.Expression, inConditionContext = conditionMode): ts.Expression {
+    // Substitute identifiers.
+    // When in a condition context (ternary condition, if/else, switch discriminant),
+    // prefer the statically-known const value over the raw argument so conditions like
+    // `if (f)` can be evaluated when `f` was bound to a caller const. Outside condition
+    // contexts, use the raw argument expression to preserve variable names.
     if (ts.isIdentifier(node)) {
+      if (inConditionContext) {
+        const constVal = paramConstEnv.get(node.text);
+        if (constVal !== undefined && isSimpleLiteral(constVal)) {
+          return constVal;
+        }
+      }
       const arg = argMap.get(node.text);
       if (arg) {
-        return simplify(arg);
+        return simplify(arg, inConditionContext);
       }
       return node;
     }
 
     // Conditional (ternary) operator
     if (ts.isConditionalExpression(node)) {
-      const cond = simplify(node.condition);
-      const whenTrue = simplify(node.whenTrue);
-      const whenFalse = simplify(node.whenFalse);
+      const cond = simplify(node.condition, true);
+      const whenTrue = simplify(node.whenTrue, false);
+      const whenFalse = simplify(node.whenFalse, false);
       const condVal = evalLiteralExpression(cond);
       if (condVal === true) {
         return whenTrue;
@@ -200,6 +214,25 @@ export function substituteAndSimplifyExpression(
     if (ts.isBinaryExpression(node)) {
       const left = simplify(node.left);
       const right = simplify(node.right);
+
+      // Short-circuit logical operators before general constant folding.
+      const op = node.operatorToken.kind;
+      if (op === ts.SyntaxKind.AmpersandAmpersandToken) {
+        const lt = getTruthinessValue(left);
+        if (lt === false) return left;  // a && b  ≡  a  when a is falsy
+        if (lt === true) return right;   // a && b  ≡  b  when a is truthy
+      } else if (op === ts.SyntaxKind.BarBarToken) {
+        const lt = getTruthinessValue(left);
+        if (lt === true) return left;    // a || b  ≡  a  when a is truthy
+        if (lt === false) return right;  // a || b  ≡  b  when a is falsy
+      } else if (op === ts.SyntaxKind.QuestionQuestionToken) {
+        const isNullish =
+          left.kind === ts.SyntaxKind.NullKeyword ||
+          (ts.isIdentifier(left) && left.text === "undefined");
+        if (isNullish) return right;
+        if (isSimpleLiteral(left)) return left; // known non-nullish scalar
+      }
+
       const synthetic = factory.createBinaryExpression(
         left,
         node.operatorToken,

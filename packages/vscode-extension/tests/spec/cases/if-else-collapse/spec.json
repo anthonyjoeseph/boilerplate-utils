@@ -1,4 +1,1 @@
-{
-  "known": "broken",
-  "reason": "refused as 'too complex' - the condition is substituted to the caller's identifier before it is evaluated, so it never reduces to a literal and the whole expansion is abandoned"
-}
+{}

@@ -1,4 +1,1 @@
-{
-  "known": "broken",
-  "reason": "fall-through clauses (case with 0 statements) are not handled; the matching case has statements.length !== 1 so the switch collapse returns undefined"
-}
+{}

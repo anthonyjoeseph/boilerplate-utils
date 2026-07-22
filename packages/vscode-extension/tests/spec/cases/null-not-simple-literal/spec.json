@@ -1,4 +1,1 @@
-{
-  "known": "broken",
-  "reason": "null is not recognized as a simple literal; isSimpleLiteral returns false for NullKeyword, so the switch discriminant check fails and the expansion is refused"
-}
+{}
