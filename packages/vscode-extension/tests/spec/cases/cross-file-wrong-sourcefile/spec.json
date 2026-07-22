@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "printNode receives the callee's SourceFile but finalExpr contains caller-owned argument nodes, producing garbled output for non-literal arguments in cross-file inlining"
+}

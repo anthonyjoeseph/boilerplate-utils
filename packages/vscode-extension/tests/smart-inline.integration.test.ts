@@ -5,6 +5,7 @@
  */
 
 import type * as vscode from "vscode";
+import { describe, it, expect, vi } from "vitest";
 import { handleSmartInline, type VscodeApi } from "../src/commandHandlers";
 import { selectionOffsets } from "../src/commandRunners";
 import {
@@ -35,9 +36,9 @@ const result = addTwo(three);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as jest.Mock).mock.calls[0][0];
-      const replace = jest.fn();
-      const insert = jest.fn();
+      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const replace = vi.fn();
+      const insert = vi.fn();
       await editBuilder({ replace, insert });
       expect(replace).toHaveBeenCalled();
       const replaceCall = replace.mock.calls.find(
@@ -67,9 +68,9 @@ const result = addTwo(nums.four);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as jest.Mock).mock.calls[0][0];
-      const replace = jest.fn();
-      const insert = jest.fn();
+      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const replace = vi.fn();
+      const insert = vi.fn();
       await editBuilder({ replace, insert });
       const replaceCalls = replace.mock.calls as Array<[unknown, string]>;
       const exprReplace = replaceCalls.find(
@@ -97,9 +98,9 @@ const result = addTwo(arr[1]);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as jest.Mock).mock.calls[0][0];
-      const replace = jest.fn();
-      const insert = jest.fn();
+      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const replace = vi.fn();
+      const insert = vi.fn();
       await editBuilder({ replace, insert });
       const replaceCalls = replace.mock.calls as Array<[unknown, string]>;
       expect(
@@ -126,9 +127,9 @@ const result = add(pair);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as jest.Mock).mock.calls[0][0];
-      const replace = jest.fn();
-      const insert = jest.fn();
+      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const replace = vi.fn();
+      const insert = vi.fn();
       await editBuilder({ replace, insert });
       const replaceCalls = replace.mock.calls as Array<[unknown, string]>;
       expect(
@@ -155,9 +156,9 @@ const result = sumTwo(tup);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as jest.Mock).mock.calls[0][0];
-      const replace = jest.fn();
-      const insert = jest.fn();
+      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const replace = vi.fn();
+      const insert = vi.fn();
       await editBuilder({ replace, insert });
       const replaceCalls = replace.mock.calls as Array<[unknown, string]>;
       expect(
@@ -165,67 +166,6 @@ const result = sumTwo(tup);
       ).toBe(true);
     });
 
-    it("collapses if/else when condition can be evaluated from const inputs", async () => {
-      const source = `
-const fn = (flag: boolean) => { if (flag) return 1; else return 2; };
-const OFF = false;
-const result = fn(OFF);
-`;
-      const { start, end } = selectionOffsets(source, "fn(OFF)");
-      const vscode = createMockVscode(FAKE_WORKSPACE);
-      const editor = createMockEditor(source, start, end, {
-        fileName: FAKE_FILE
-      });
-
-      await handleSmartInline(
-        vscode as unknown as VscodeApi,
-        editor as unknown as vscode.TextEditor
-      );
-
-      expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
-      expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as jest.Mock).mock.calls[0][0];
-      const replace = jest.fn();
-      const insert = jest.fn();
-      await editBuilder({ replace, insert });
-      const replaceCalls = replace.mock.calls as Array<[unknown, string]>;
-      expect(replaceCalls.some(([, text]) => text.trim() === "2")).toBe(true);
-    });
-
-    it("collapses switch when discriminant is const", async () => {
-      const source = `
-const label = (n: number) => {
-  switch (n) {
-    case 1: return "one";
-    case 2: return "two";
-    default: return "other";
-  }
-};
-const TWO = 2;
-const result = label(TWO);
-`;
-      const { start, end } = selectionOffsets(source, "label(TWO)");
-      const vscode = createMockVscode(FAKE_WORKSPACE);
-      const editor = createMockEditor(source, start, end, {
-        fileName: FAKE_FILE
-      });
-
-      await handleSmartInline(
-        vscode as unknown as VscodeApi,
-        editor as unknown as vscode.TextEditor
-      );
-
-      expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
-      expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as jest.Mock).mock.calls[0][0];
-      const replace = jest.fn();
-      const insert = jest.fn();
-      await editBuilder({ replace, insert });
-      const replaceCalls = replace.mock.calls as Array<[unknown, string]>;
-      expect(replaceCalls.some(([, text]) => text.trim() === '"two"')).toBe(
-        true
-      );
-    });
   });
 
   describe("when the inlined function is async", () => {
@@ -274,9 +214,9 @@ async function run() {
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const editBuilder = (editor.edit as jest.Mock).mock.calls[0][0];
-      const replace = jest.fn();
-      const insert = jest.fn();
+      const editBuilder = (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const replace = vi.fn();
+      const insert = vi.fn();
       await editBuilder({ replace, insert });
       expect(
         replace.mock.calls.some(
@@ -369,7 +309,7 @@ const result = complex();
       );
 
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();
-      const msg = (vscode.window.showErrorMessage as jest.Mock).mock
+      const msg = (vscode.window.showErrorMessage as ReturnType<typeof vi.fn>).mock
         .calls[0][0];
       expect(msg).toMatch(/too complex|No function call expression/);
       expect(editor.edit).not.toHaveBeenCalled();

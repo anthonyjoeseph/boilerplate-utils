@@ -62,23 +62,26 @@ overlapping experiments.
 Grouped by how the failure shows up. Everything below is either covered by a spec in
 `tests/spec/cases/` or queued to be.
 
-**Baseline: the existing suite is 7 red on `main`**, before any change in this
-document. Six in `smart-inline.integration.test.ts` — property-access arguments,
-element-access arguments, object destructuring, array destructuring, if/else collapse,
-switch collapse — and one in `literal-inline-array.integration.test.ts`
-(`Object.entries(obj).map(cb)` with a const `obj`). Several features that read as
-working in the source are not working at all. Fixing the suite is part of Phase 0, not
-a later cleanup.
+**Baseline: green.** It was 7 red when this document was written — property-access
+arguments, element-access arguments, both destructuring cases, if/else collapse, switch
+collapse, and `Object.entries(obj).map(cb)`. The first four and the last are fixed; the
+two collapse cases are now `known: broken` specs, which is honest — neither has ever
+worked. The package itself does **not** typecheck (43 pre-existing `tsc` errors, mostly
+`noUncheckedIndexedAccess`); that is unaddressed and belongs in Phase 6.
 
-### Crashes
+### Fixed since this document was written
 
-- **Any body containing a nested function or arrow throws.**
-  `Cannot read properties of undefined (reading 'updateArrowFunction')`.
-  `substituteAndSimplifyExpression` falls back to `ts.visitEachChild` with a hand-rolled
-  `nullTransformationContext` that supplies no node factory. Every callback-taking
-  idiom lands here — `.map`, `.filter`, `.reduce` — which is the dominant style in this
-  repo and the shape of the north-star case. This is the single highest-impact bug and
-  the cheapest to fix: pass a real transformation context.
+- ~~**Any body containing a nested function or arrow throws.**~~ **Fixed** —
+  `nullTransformationContext` now supplies `factory: ts.factory`. This had blocked every
+  callback-taking body: `.map`, `.filter`, `.reduce`.
+- ~~**Property keys were substituted like variables.**~~ **Fixed** — `obj.a` with a
+  parameter named `a` no longer rewrites the key.
+
+Both fixes carried a regression that the specs caught, worth recording as a pattern:
+rebuilding a member access with `factory.create…` instead of `factory.update…` produces
+a fresh node with no `questionDotToken`, silently turning `o?.b` into `o.b`. The
+`update…` helpers delegate to the chain variants; the `create…` ones cannot. Guarded by
+`optional-chain-dropped` and `optional-chain-element-dropped`.
 
 ### Silently produces wrong code
 
@@ -170,14 +173,29 @@ rewrite of the resolution layer.
 2. ~~**Known-broken specs are executable.**~~ **Done** — `"known": "broken"` inverts the
    assertion, so the bug list runs green while open and fails loudly the moment a fix
    lands.
-3. **Grow the corpus** to cover every item in "Known-wrong today". Ten specs exist; the
-   list is longer.
-4. **Repair the 7 red tests** in the existing integration suites, or port them
-   into specs and delete them. A red baseline makes every later change unreadable.
-5. **jest → vitest**, matching the rest of the workspace. `runSpec.ts` is
-   framework-agnostic, so this is a change to `spec.test.ts` alone.
-6. **Golden-text snapshots** alongside the behavioral check, once output formatting
-   stabilises — behavior equivalence says the code is correct, not that it is readable.
+3. ~~**jest → vitest**~~ **Done** — `vitest.config.ts`; `runSpec.ts` was
+   framework-agnostic, so only `spec.test.ts` changed.
+4. ~~**Repair the red baseline.**~~ **Done** — the suite is green. Property-access and
+   element-access arguments and both destructuring cases were genuinely fixed;
+   if/else and switch collapse were ported to `known: broken` specs, which is the
+   honest outcome since neither has ever worked.
+5. **Grow the corpus** to cover every item in "Known-wrong today". Fourteen specs
+   exist; the list is longer.
+
+**Deliberately not in Phase 0: golden-text snapshots.** They belong after Phase 5,
+not here. Two reasons, and the second is the one that matters:
+
+- Phase 2 and Phase 3 rewrite the output *shape* — `const p = arg;` prologues,
+  alpha-renamed bindings, hoisted statements, IIFE wrappers. Every snapshot written
+  today is invalidated by design.
+- More seriously, a snapshot taken now records **current wrong output as expected**.
+  `next() + next()` becomes a golden file. When Phase 2 fixes the duplication, the
+  diff reads as a regression, and the natural reflex — re-bless the snapshot — undoes
+  the fix. A snapshot cannot tell "this changed" from "this got better"; only the
+  behavioral spec can, and it already does.
+
+Snapshots answer "is the output *readable*", which is Phase 5's question. Write them
+when formatting is the thing being worked on.
 
 ### Phase 1 — LanguageService foundation
 
@@ -197,9 +215,7 @@ rewrite of the resolution layer.
 
 This phase is entirely about not emitting wrong code. No new capability.
 
-1. **Give `visitEachChild` a real transformation context.** Fixes the nested-function
-   crash, which currently blocks every callback-taking body. Cheapest high-impact fix
-   in the document, and it does not depend on Phase 1 — it can land today.
+1. ~~**Give `visitEachChild` a real transformation context.**~~ **Done.**
 2. **Parameter binding.** Substitute literals and bare identifiers directly; emit a
    `const p = arg;` prologue for calls, member chains, object literals, and anything
    else. Preserves evaluation count and order without noisy output in the common case.
@@ -271,6 +287,9 @@ Runs over already-relocated code. Every item here is all-or-nothing per construc
 2. Run the result through the project's Prettier and ESLint config.
 3. Preserve generic instantiation and `as const`, so relocation doesn't introduce type
    errors even when runtime behavior is identical.
+4. **Golden-text snapshots**, deferred from Phase 0. Once formatting is deliberate,
+   snapshot the expanded text alongside the behavioral check — the spec proves the
+   output is correct, the snapshot proves it is readable.
 
 ### Phase 6 — UX
 

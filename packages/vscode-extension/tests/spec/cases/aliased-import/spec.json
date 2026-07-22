@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "findImportForIdentifier computes the real imported name then discards it, searching the target file for the alias instead of the original export"
+}

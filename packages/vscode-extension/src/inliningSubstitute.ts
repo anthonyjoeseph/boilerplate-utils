@@ -88,6 +88,7 @@ export function substituteAndSimplifyExpression(
   }
 
   const nullTransformationContext = {
+    factory: ts.factory,
     enableEmitNotification: () => {},
     enableSubstitution: () => {},
     endLexicalEnvironment: () => [],
@@ -107,6 +108,9 @@ export function substituteAndSimplifyExpression(
     readEmitHelpers: () => undefined,
     requestEmitHelper: () => {},
     resumeLexicalEnvironment: () => {},
+    suspendLexicalEnvironment: () => {},
+    getLexicalEnvironmentFlags: () => 0,
+    setLexicalEnvironmentFlags: () => {},
     startLexicalEnvironment: () => {}
   } as unknown as ts.TransformationContext;
 
@@ -340,12 +344,33 @@ export function substituteAndSimplifyExpression(
       );
     }
 
+    // Property access: only simplify the object, never the name — the name is
+    // a property key, not a variable reference, and must not be substituted.
+    // Must be `update`, not `create`: a fresh node has no questionDotToken, so
+    // `o?.b` would silently become `o.b`. The update helpers delegate to
+    // updatePropertyAccessChain when the node is an optional chain.
+    if (ts.isPropertyAccessExpression(node)) {
+      const obj = simplify(node.expression);
+      if (obj === node.expression) return node;
+      return factory.updatePropertyAccessExpression(node, obj, node.name);
+    }
+
+    // Element access: simplify both object and index expression. Same
+    // create-vs-update reasoning as above, for `a?.[i]`.
+    if (ts.isElementAccessExpression(node)) {
+      const obj = simplify(node.expression);
+      const idx = simplify(node.argumentExpression);
+      if (obj === node.expression && idx === node.argumentExpression) return node;
+      return factory.updateElementAccessExpression(node, obj, idx);
+    }
+
     // Call inside expression: still substitute args where possible
     if (ts.isCallExpression(node)) {
+      const callee = simplify(node.expression);
       const newArgs = node.arguments.map((arg) => simplify(arg));
       return ts.factory.updateCallExpression(
         node,
-        node.expression,
+        callee,
         node.typeArguments,
         newArgs
       );

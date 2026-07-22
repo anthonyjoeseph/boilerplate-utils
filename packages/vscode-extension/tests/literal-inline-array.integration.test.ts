@@ -9,6 +9,7 @@ import {
   type VscodeApi
 } from "../src/commandHandlers";
 import type * as vscode from "vscode";
+import { describe, it, expect, vi } from "vitest";
 import { selectionOffsets } from "../src/commandRunners";
 import { createMockEditor, createMockVscode, FAKE_FILE } from "./mockVscode";
 
@@ -35,9 +36,9 @@ const doubled = myArray.map((x) => x * 2);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const replace = jest.fn();
-      const insert = jest.fn();
-      await (editor.edit as jest.Mock).mock.calls[0][0]({ replace, insert });
+      const replace = vi.fn();
+      const insert = vi.fn();
+      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
       expect(replace).toHaveBeenCalledWith(expect.anything(), "[2, 4, 6]");
     });
 
@@ -62,9 +63,9 @@ const entries = Object.entries(obj).map(([k, v]) => v * 2);
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const replace = jest.fn();
-      const insert = jest.fn();
-      await (editor.edit as jest.Mock).mock.calls[0][0]({ replace, insert });
+      const replace = vi.fn();
+      const insert = vi.fn();
+      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
       expect(replace).toHaveBeenCalled();
       const text = replace.mock.calls[0][1];
       expect(text.trim()).toBe("[2, 4]");

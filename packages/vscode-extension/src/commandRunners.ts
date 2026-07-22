@@ -18,12 +18,12 @@ import {
   literalInlineArray,
   literalInlineObject
 } from "./inlining";
+import { literalInlineExpressionAtSelection } from "./literalInline";
 
 /** Result with replace range for array/object literal-inline (used by extension). */
 export type LiteralInlineWithRangeResult =
   | { ok: true; text: string; replaceStart: number; replaceEnd: number }
   | { ok: false; error: string };
-import { literalInlineExpressionAtSelection } from "./literalInline";
 
 export type ScriptKind = "ts" | "tsx";
 

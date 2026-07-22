@@ -192,6 +192,22 @@ export function literalInlineArray(
     if (paramNames[0]) {
       argMap.set(paramNames[0], element);
       if (isDeepConstExpr(element)) paramConstEnv.set(paramNames[0], element);
+    } else if (params[0] && ts.isArrayBindingPattern(params[0].name)) {
+      // Array destructuring in the first param: ([k, v]) => body
+      // Each element is expected to be an array literal (e.g. from Object.entries).
+      if (element && ts.isArrayLiteralExpression(element)) {
+        let bIdx = 0;
+        for (const bindEl of params[0].name.elements) {
+          if (ts.isOmittedExpression(bindEl)) { bIdx++; continue; }
+          if (!ts.isBindingElement(bindEl) || !ts.isIdentifier(bindEl.name)) { bIdx++; continue; }
+          const elExpr = element.elements[bIdx] as ts.Expression | undefined;
+          if (elExpr) {
+            argMap.set(bindEl.name.text, elExpr);
+            if (isDeepConstExpr(elExpr)) paramConstEnv.set(bindEl.name.text, elExpr);
+          }
+          bIdx++;
+        }
+      }
     }
     if (paramNames[1]) {
       const indexExpr = factory.createNumericLiteral(i);

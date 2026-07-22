@@ -2,6 +2,7 @@
  * Tests for test helpers (e.g. selectionOffsets) used across integration tests.
  */
 
+import { describe, it, expect } from "vitest";
 import { selectionOffsets } from "../src/commandRunners";
 
 describe("selectionOffsets helper", () => {

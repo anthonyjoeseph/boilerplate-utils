@@ -5,6 +5,8 @@
  */
 
 import * as path from "path";
+import { vi } from "vitest";
+import type { MockInstance } from "vitest";
 
 const FAKE_FILE = path.join(__dirname, "fake.ts");
 const FAKE_WORKSPACE = path.dirname(__dirname);
@@ -43,11 +45,11 @@ function offsetAtPosition(
 }
 
 export interface MockEditBuilder {
-  replace: jest.Mock<
-    void,
-    [range: { start: unknown; end: unknown }, text: string]
+  replace: MockInstance<
+    [range: { start: unknown; end: unknown }, text: string],
+    void
   >;
-  insert: jest.Mock<void, [position: unknown, text: string]>;
+  insert: MockInstance<[position: unknown, text: string], void>;
 }
 
 export interface MockEditor {
@@ -63,9 +65,9 @@ export interface MockEditor {
     start: { line: number; character: number };
     end: { line: number; character: number };
   };
-  edit: jest.Mock<
-    Promise<boolean>,
-    [(editBuilder: MockEditBuilder) => void | Promise<void>]
+  edit: MockInstance<
+    [(editBuilder: MockEditBuilder) => void | Promise<void>],
+    Promise<boolean>
   >;
 }
 
@@ -75,7 +77,7 @@ export interface MockVscode {
     end: { line: number; character: number }
   ) => { start: unknown; end: unknown };
   window: {
-    showErrorMessage: jest.Mock<void, [message: string]>;
+    showErrorMessage: MockInstance<[message: string], void>;
     activeTextEditor: MockEditor | undefined;
   };
   workspace: {
@@ -98,11 +100,11 @@ export function createMockEditor(
   const fileName = options.fileName ?? FAKE_FILE;
   const languageId = options.languageId ?? "typescript";
 
-  const replace = jest.fn<
+  const replace = vi.fn<
     void,
     [range: { start: unknown; end: unknown }, text: string]
   >();
-  const insert = jest.fn<void, [position: unknown, text: string]>();
+  const insert = vi.fn<void, [position: unknown, text: string]>();
 
   const document = {
     getText: () => sourceText,
@@ -117,7 +119,7 @@ export function createMockEditor(
     }
   };
 
-  const edit = jest.fn<
+  const edit = vi.fn<
     Promise<boolean>,
     [(editBuilder: MockEditBuilder) => void | Promise<void>]
   >(async (callback) => {
@@ -142,9 +144,9 @@ export function createMockEditor(
  * window.activeTextEditor is not set; tests pass the editor to the handler explicitly.
  */
 export function createMockVscode(workspaceRoot?: string): MockVscode {
-  const showErrorMessage = jest.fn<void, [message: string]>();
+  const showErrorMessage = vi.fn<void, [message: string]>();
 
-  const Range = jest.fn(
+  const Range = vi.fn(
     (
       start: { line: number; character: number },
       end: { line: number; character: number }

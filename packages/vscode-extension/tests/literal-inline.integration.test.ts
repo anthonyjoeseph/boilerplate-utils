@@ -5,6 +5,7 @@
  */
 
 import type * as vscode from "vscode";
+import { describe, it, expect, vi } from "vitest";
 import { handleLiteralInline, type VscodeApi } from "../src/commandHandlers";
 import { selectionOffsets } from "../src/commandRunners";
 import { createMockEditor, createMockVscode, FAKE_FILE } from "./mockVscode";
@@ -29,9 +30,9 @@ const sum = arg + 3;
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const replace = jest.fn();
-      const insert = jest.fn();
-      await (editor.edit as jest.Mock).mock.calls[0][0]({ replace, insert });
+      const replace = vi.fn();
+      const insert = vi.fn();
+      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
       expect(replace).toHaveBeenCalledWith(expect.anything(), "6");
     });
 
@@ -53,9 +54,9 @@ const myString = \`\${month} says hello!\`;
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const replace = jest.fn();
-      const insert = jest.fn();
-      await (editor.edit as jest.Mock).mock.calls[0][0]({ replace, insert });
+      const replace = vi.fn();
+      const insert = vi.fn();
+      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
       expect(replace).toHaveBeenCalled();
       expect(replace.mock.calls[0][1]).toMatch(/June says hello!/);
     });
@@ -78,9 +79,9 @@ const bigArray = [...arg, 4, 5];
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const replace = jest.fn();
-      const insert = jest.fn();
-      await (editor.edit as jest.Mock).mock.calls[0][0]({ replace, insert });
+      const replace = vi.fn();
+      const insert = vi.fn();
+      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
       expect(replace).toHaveBeenCalledWith(expect.anything(), "[7, 8, 4, 5]");
     });
 
@@ -102,9 +103,9 @@ const obj = { ...base, b: 2 };
 
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
       expect(editor.edit).toHaveBeenCalledTimes(1);
-      const replace = jest.fn();
-      const insert = jest.fn();
-      await (editor.edit as jest.Mock).mock.calls[0][0]({ replace, insert });
+      const replace = vi.fn();
+      const insert = vi.fn();
+      await (editor.edit as ReturnType<typeof vi.fn>).mock.calls[0][0]({ replace, insert });
       expect(replace).toHaveBeenCalled();
       const text = replace.mock.calls[0][1];
       expect(text).toMatch(/a.*1/);

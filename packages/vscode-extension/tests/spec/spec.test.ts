@@ -6,6 +6,7 @@
  * therefore a change to this file alone.
  */
 import * as path from "path";
+import { describe, it, expect } from "vitest";
 
 import { loadCorpus } from "./corpus";
 import { checkSpec, type SpecCase, type SpecOutcome } from "./runSpec";
