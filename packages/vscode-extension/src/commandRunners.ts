@@ -69,7 +69,13 @@ export async function runSmartInline(
   }
 
   const callee = callExpr.expression;
-  if (!ts.isIdentifier(callee)) {
+  // Unwrap a single layer of parentheses: (f)(args) is equivalent to f(args).
+  const calleeId = ts.isIdentifier(callee)
+    ? callee
+    : ts.isParenthesizedExpression(callee) && ts.isIdentifier(callee.expression)
+      ? callee.expression
+      : undefined;
+  if (!calleeId) {
     return {
       ok: false,
       error:
@@ -79,7 +85,7 @@ export async function runSmartInline(
 
   try {
     const functionInfo = await resolveFunctionDefinition(
-      callee.text,
+      calleeId.text,
       sourceFile,
       fileName,
       workspaceRoot

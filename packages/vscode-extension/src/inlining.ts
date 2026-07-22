@@ -24,6 +24,20 @@ export interface InlineResult {
   neededImports: ts.ImportDeclaration[];
 }
 
+/**
+ * Marks every node in the subtree as synthesized (pos = −1, end = −1).
+ * TypeScript's printer checks isNodeSynthesized() — true iff pos < 0 — to
+ * decide whether to read node text from sourceFile.text or from the node's
+ * stored .text/.escapedText. Setting pos/end to −1 forces it to use the
+ * stored values, which is correct when the expression tree mixes nodes from
+ * different source files (callee body + caller argument nodes).
+ */
+function synthesizeTree(node: ts.Node): void {
+  (node as unknown as { pos: number; end: number }).pos = -1;
+  (node as unknown as { pos: number; end: number }).end = -1;
+  node.forEachChild(synthesizeTree);
+}
+
 export function inlineCallExpression(
   callExpr: ts.CallExpression,
   fnDecl: ts.FunctionLikeDeclaration,
@@ -215,6 +229,14 @@ export function inlineCallExpression(
     })
     .filter((d): d is ts.ImportDeclaration => d !== undefined);
 
+  // Synthesize the entire expression tree (set pos/end = -1 on every node).
+  // TypeScript's printer reads node text from sourceFile.text[pos..end] for
+  // parsed nodes (pos >= 0) but uses the node's stored .text/.escapedText for
+  // synthesized nodes (pos < 0, i.e. isNodeSynthesized() is true). After
+  // substitution, finalExpr mixes callee nodes and caller argument nodes. Both
+  // must be synthesized so the printer uses stored text rather than reading
+  // from a source file that may not contain text at those positions.
+  synthesizeTree(finalExpr);
   const inlinedText = printer.printNode(
     ts.EmitHint.Expression,
     finalExpr,

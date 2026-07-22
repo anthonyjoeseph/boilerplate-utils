@@ -4,7 +4,7 @@
  */
 
 import * as ts from "typescript";
-import { getBooleanLiteralValue, isSimpleLiteral } from "./inliningConst";
+import { getBooleanLiteralValue, getTruthinessValue, isSimpleLiteral } from "./inliningConst";
 import { substituteAndSimplifyExpression } from "./inliningSubstitute";
 
 export interface IfBranch {
@@ -92,11 +92,12 @@ export function tryReduceIfElseChainToExpression(
     const simplifiedCond = substituteAndSimplifyExpression(
       branch.condition,
       argMap,
-      paramConstEnv
+      paramConstEnv,
+      true
     );
-    const boolVal = getBooleanLiteralValue(simplifiedCond);
+    const boolVal = getTruthinessValue(simplifiedCond);
     if (boolVal === undefined) {
-      // Condition is not statically true/false after substitution -> cannot safely reduce.
+      // Condition truthiness cannot be determined after substitution -> cannot safely reduce.
       return undefined;
     }
     condValues.push(boolVal);
@@ -136,6 +137,28 @@ function literalsEqual(a: ts.Expression, b: ts.Expression): boolean {
     return a.text === b.text;
   }
 
+  if (a.kind === ts.SyntaxKind.NullKeyword && b.kind === ts.SyntaxKind.NullKeyword) {
+    return true;
+  }
+
+  if (
+    ts.isIdentifier(a) && a.text === "undefined" &&
+    ts.isIdentifier(b) && b.text === "undefined"
+  ) {
+    return true;
+  }
+
+  if (
+    ts.isPrefixUnaryExpression(a) &&
+    a.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(a.operand) &&
+    ts.isPrefixUnaryExpression(b) &&
+    b.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(b.operand)
+  ) {
+    return Number(a.operand.text) === Number(b.operand.text);
+  }
+
   return false;
 }
 
@@ -157,7 +180,8 @@ export function tryReduceSwitchToExpression(
   const simplifiedDiscriminant = substituteAndSimplifyExpression(
     first.expression,
     argMap,
-    paramConstEnv
+    paramConstEnv,
+    true
   );
 
   if (!isSimpleLiteral(simplifiedDiscriminant)) {
@@ -165,57 +189,58 @@ export function tryReduceSwitchToExpression(
     return undefined;
   }
 
-  let defaultReturnExpr: ts.Expression | undefined;
+  const clauses = first.caseBlock.clauses;
 
-  for (const clause of first.caseBlock.clauses) {
-    // Each clause must be a simple "return ..." (possibly wrapped in a block).
+  // First pass: find the index of the matching case and the default clause.
+  let matchedIndex: number | undefined;
+  let defaultIndex: number | undefined;
+
+  for (let i = 0; i < clauses.length; i++) {
+    const clause = clauses[i];
+    if (!clause) continue;
     if (ts.isCaseClause(clause)) {
-      if (!clause.expression) continue;
-
+      if (matchedIndex !== undefined) continue; // already found a match
       const simplifiedCaseExpr = substituteAndSimplifyExpression(
         clause.expression,
         argMap,
         paramConstEnv
       );
-
-      if (!isSimpleLiteral(simplifiedCaseExpr)) {
-        return undefined;
+      if (!isSimpleLiteral(simplifiedCaseExpr)) return undefined;
+      if (literalsEqual(simplifiedDiscriminant, simplifiedCaseExpr)) {
+        matchedIndex = i;
       }
-
-      if (!literalsEqual(simplifiedDiscriminant, simplifiedCaseExpr)) {
-        continue;
-      }
-
-      const onlyStatement = clause.statements[0];
-      if (clause.statements.length !== 1 || !onlyStatement) {
-        return undefined;
-      }
-      const returnExpr = extractReturnExpressionFromStatement(onlyStatement);
-      if (!returnExpr) {
-        return undefined;
-      }
-      return substituteAndSimplifyExpression(returnExpr, argMap, paramConstEnv);
     } else {
-      // Default clause
-      const onlyStatement = clause.statements[0];
-      if (clause.statements.length !== 1 || !onlyStatement) {
-        return undefined;
-      }
-      const returnExpr = extractReturnExpressionFromStatement(onlyStatement);
-      if (!returnExpr) {
-        return undefined;
-      }
-      defaultReturnExpr = returnExpr;
+      defaultIndex = i;
     }
   }
 
-  if (!defaultReturnExpr) {
-    return undefined;
+  // Determine the start index: matching case takes priority over default.
+  const startIndex = matchedIndex ?? defaultIndex;
+  if (startIndex === undefined) return undefined;
+
+  // Second pass: follow fallthroughs from startIndex to find a clause with statements.
+  for (let i = startIndex; i < clauses.length; i++) {
+    const clause = clauses[i];
+    if (!clause) continue;
+    if (clause.statements.length === 0) continue; // fallthrough to next clause
+    if (clause.statements.length !== 1) return undefined;
+    const onlyStatement = clause.statements[0];
+    if (!onlyStatement) return undefined;
+    const returnExpr = extractReturnExpressionFromStatement(onlyStatement);
+    if (!returnExpr) return undefined;
+    return substituteAndSimplifyExpression(returnExpr, argMap, paramConstEnv);
   }
 
-  return substituteAndSimplifyExpression(
-    defaultReturnExpr,
-    argMap,
-    paramConstEnv
-  );
+  // If we fell through the match without finding statements, try the default.
+  if (matchedIndex !== undefined && defaultIndex !== undefined && defaultIndex > (matchedIndex ?? -1)) {
+    const defaultClause = clauses[defaultIndex];
+    if (!defaultClause || defaultClause.statements.length !== 1) return undefined;
+    const onlyStatement = defaultClause.statements[0];
+    if (!onlyStatement) return undefined;
+    const returnExpr = extractReturnExpressionFromStatement(onlyStatement);
+    if (!returnExpr) return undefined;
+    return substituteAndSimplifyExpression(returnExpr, argMap, paramConstEnv);
+  }
+
+  return undefined;
 }

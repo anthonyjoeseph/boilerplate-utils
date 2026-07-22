@@ -1,4 +1,1 @@
-{
-  "known": "broken",
-  "reason": "undefined is an Identifier, not a literal; isSimpleLiteral returns false, so using undefined as a switch discriminant or case value causes the switch collapse to be refused"
-}
+{}

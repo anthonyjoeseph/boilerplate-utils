@@ -74,8 +74,14 @@ export function classifyInlineTarget(
   }
 
   const call = findSelectedCallExpression(sourceFile, start, end);
-  if (call && ts.isIdentifier(call.expression)) {
-    return { kind: "smart-inline", call };
+  if (call) {
+    const callee = call.expression;
+    const isSimpleCallee =
+      ts.isIdentifier(callee) ||
+      (ts.isParenthesizedExpression(callee) && ts.isIdentifier(callee.expression));
+    if (isSimpleCallee) {
+      return { kind: "smart-inline", call };
+    }
   }
 
   if (ts.isExpression(anchor)) {

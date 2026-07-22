@@ -13,13 +13,40 @@ export function getBooleanLiteralValue(
   return undefined;
 }
 
+/**
+ * Evaluate the JS truthiness of a literal expression node. Returns undefined
+ * when the node is not a recognised literal (i.e. when we cannot be sure).
+ */
+export function getTruthinessValue(node: ts.Expression): boolean | undefined {
+  const boolVal = getBooleanLiteralValue(node);
+  if (boolVal !== undefined) return boolVal;
+  if (ts.isNumericLiteral(node)) return Number(node.text) !== 0;
+  if (ts.isStringLiteral(node)) return node.text.length > 0;
+  if (node.kind === ts.SyntaxKind.NullKeyword) return false;
+  if (ts.isIdentifier(node) && node.text === "undefined") return false;
+  if (
+    ts.isPrefixUnaryExpression(node) &&
+    node.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(node.operand)
+  ) {
+    return Number(node.operand.text) !== 0;
+  }
+  return undefined;
+}
+
 export function isSimpleLiteral(node: ts.Expression): boolean {
-  return (
-    ts.isNumericLiteral(node) ||
-    ts.isStringLiteral(node) ||
-    node.kind === ts.SyntaxKind.TrueKeyword ||
-    node.kind === ts.SyntaxKind.FalseKeyword
-  );
+  if (ts.isNumericLiteral(node)) return true;
+  if (ts.isStringLiteral(node)) return true;
+  if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return true;
+  if (node.kind === ts.SyntaxKind.NullKeyword) return true;
+  if (ts.isIdentifier(node) && node.text === "undefined") return true;
+  if (
+    ts.isPrefixUnaryExpression(node) &&
+    node.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(node.operand)
+  ) return true;
+  return false;
 }
 
 export function isDeepConstExpr(node: ts.Expression): boolean {

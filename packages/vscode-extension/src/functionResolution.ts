@@ -54,7 +54,7 @@ export async function resolveFunctionDefinition(
       ts.ScriptTarget.Latest,
       true
     );
-    const fn = findExportedFunctionInSourceFile(sf, name);
+    const fn = findExportedFunctionInSourceFile(sf, importInfo.importedName);
     if (fn) {
       return { sourceFile: sf, node: fn };
     }
@@ -252,7 +252,11 @@ function resolveRelativeModule(
   fromFile: string
 ): string | undefined {
   const base = path.dirname(fromFile);
-  const full = path.resolve(base, moduleSpecifier);
+  // Strip .js extension: ESM-style imports use .js to reference .ts sources.
+  const specifier = moduleSpecifier.endsWith(".js")
+    ? moduleSpecifier.slice(0, -3)
+    : moduleSpecifier;
+  const full = path.resolve(base, specifier);
 
   const candidates = [
     full,
