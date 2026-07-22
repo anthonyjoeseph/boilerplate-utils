@@ -20,8 +20,6 @@ export function collectImportedNames(
   for (const stmt of fnSourceFile.statements) {
     if (!ts.isImportDeclaration(stmt) || !stmt.importClause) continue;
     const moduleSpecifier = (stmt.moduleSpecifier as ts.StringLiteral).text;
-    // Only copy non-relative imports to avoid incorrect relative paths.
-    if (moduleSpecifier.startsWith(".")) continue;
 
     const list = byModule.get(moduleSpecifier) ?? [];
     list.push(stmt);
@@ -62,8 +60,9 @@ export function collectUsedImportedNames(
   function visit(node: ts.Node) {
     if (ts.isIdentifier(node)) {
       const parent = node.parent;
-      // Ignore identifiers that are merely property names (obj.prop)
-      if (ts.isPropertyAccessExpression(parent) && parent.name === node) {
+      // Ignore identifiers that are merely property names (obj.prop).
+      // Guard against undefined parent — synthesized nodes may lack parent pointers.
+      if (parent && ts.isPropertyAccessExpression(parent) && parent.name === node) {
         return;
       }
       const decl = importedNames.byName.get(node.text);

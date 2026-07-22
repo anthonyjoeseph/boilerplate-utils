@@ -120,7 +120,8 @@ export async function runSmartInline(
       callExpr,
       functionInfo.node,
       functionInfo.sourceFile,
-      callerConstEnv
+      callerConstEnv,
+      fileName
     );
     if (!inlineResult) {
       return {
