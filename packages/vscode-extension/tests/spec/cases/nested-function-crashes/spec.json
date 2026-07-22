@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "visitEachChild is given a transformation context with no node factory, so any nested function or arrow throws"
+}

@@ -1,0 +1,4 @@
+{
+  "expect": "refuse",
+  "errorIncludes": "Only simple function identifiers"
+}

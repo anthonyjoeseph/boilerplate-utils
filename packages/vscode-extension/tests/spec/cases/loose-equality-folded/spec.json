@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "== and != are folded with === and !== semantics"
+}

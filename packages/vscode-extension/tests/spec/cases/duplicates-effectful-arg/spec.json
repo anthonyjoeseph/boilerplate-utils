@@ -1,0 +1,4 @@
+{
+  "known": "broken",
+  "reason": "argument expression is duplicated instead of bound, so it evaluates twice"
+}
