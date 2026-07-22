@@ -1,4 +1,1 @@
-{
-  "known": "broken",
-  "reason": "any multi-statement body with a throw is refused as 'too complex', even when the throw is unreachable for the given argument"
-}
+{}

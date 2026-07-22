@@ -169,18 +169,13 @@ const bigArray = [...arg, 4, 5];
     });
 
     it("smart-inline: reports a too-complex body rather than folding the call", async () => {
-      // Arrow form so the substring "complex()" occurs only at the call site,
-      // not in the declaration — the selection must land on the call.
+      // A rest-parameter function can't be inlined — the engine requires
+      // fixed positional parameters to bind arguments.
       const source = `
-const complex = () => {
-  const a = 1;
-  const b = 2;
-  if (a) return b;
-  return a + b;
-};
-const result = complex();
+const sum = (...args: number[]) => args.reduce((a, b) => a + b, 0);
+const result = sum(1, 2, 3);
 `;
-      const { vscode, editor } = await run(source, "complex()", {
+      const { vscode, editor } = await run(source, "sum(1, 2, 3)", {
         workspace: FAKE_WORKSPACE
       });
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
