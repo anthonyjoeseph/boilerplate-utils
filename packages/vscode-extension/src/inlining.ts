@@ -352,14 +352,25 @@ export function inlineCallExpression(
       })
     : neededImports;
 
-  // Synthesize the entire expression tree (set pos/end = -1 on every node).
-  // TypeScript's printer reads node text from sourceFile.text[pos..end] for
-  // parsed nodes (pos >= 0) but uses the node's stored .text/.escapedText for
-  // synthesized nodes (pos < 0, i.e. isNodeSynthesized() is true). The
-  // expression may mix callee nodes and caller argument nodes from different
-  // source files — synthesizing everything forces the printer to use stored
-  // text rather than reading from positions that may not match fnSourceFile.
-  synthesizeTree(exprForPrint);
+  // Pre-synthesize caller-side inputs only. Callee-body nodes keep their
+  // original source positions so the printer can read their text and comments
+  // from fnSourceFile, producing output that preserves the original formatting
+  // and any doc-comments inside the inlined body.
+  //
+  // TypeScript's printer reads from sourceFile.text[pos..end] for parsed
+  // (pos >= 0) nodes and from stored .text/.escapedText for synthesized
+  // (pos < 0) nodes. Caller-side nodes have positions in the caller's file,
+  // not fnSourceFile — they must be synthesized so the printer uses stored
+  // text rather than reading from the wrong position.
+  for (const [, expr] of callerConstEnv) {
+    synthesizeTree(expr);
+  }
+  for (const [, expr] of argMap) {
+    synthesizeTree(expr);
+  }
+  for (const arg of callExpr.arguments) {
+    synthesizeTree(arg as ts.Expression);
+  }
   const inlinedText = printer.printNode(
     ts.EmitHint.Expression,
     exprForPrint,

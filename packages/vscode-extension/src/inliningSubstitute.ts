@@ -509,6 +509,16 @@ export function substituteAndSimplifyExpression(
             }
             properties.push(factory.createSpreadAssignment(resolved));
           }
+        } else if (ts.isShorthandPropertyAssignment(prop)) {
+          // `{ x }` is shorthand for `{ x: x }`. The key stays as-is;
+          // the value expression (the identifier) is eligible for substitution.
+          const substituted = simplify(prop.name);
+          if (substituted !== prop.name) {
+            changed = true;
+            properties.push(factory.createPropertyAssignment(prop.name, substituted));
+          } else {
+            properties.push(prop);
+          }
         } else if (ts.isPropertyAssignment(prop)) {
           const init = prop.initializer;
           if (ts.isExpression(init)) {
