@@ -1,4 +1,1 @@
-{
-  "known": "broken",
-  "reason": "any body containing try/catch is refused as 'too complex'"
-}
+{}

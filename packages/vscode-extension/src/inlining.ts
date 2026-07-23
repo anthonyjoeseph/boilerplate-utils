@@ -40,6 +40,59 @@ function synthesizeTree(node: ts.Node): void {
   node.forEachChild(synthesizeTree);
 }
 
+function isSimpleArg(expr: ts.Expression): boolean {
+  return (
+    ts.isLiteralExpression(expr) ||
+    ts.isIdentifier(expr) ||
+    expr.kind === ts.SyntaxKind.TrueKeyword ||
+    expr.kind === ts.SyntaxKind.FalseKeyword ||
+    expr.kind === ts.SyntaxKind.NullKeyword
+  );
+}
+
+function countParamUses(name: string, node: ts.Node): number {
+  let count = 0;
+  function walk(n: ts.Node): void {
+    if (ts.isIdentifier(n) && n.text === name) count++;
+    n.forEachChild(walk);
+  }
+  walk(node);
+  return count;
+}
+
+function wouldDuplicateEffectfulArg(
+  fnDecl: ts.FunctionLikeDeclaration,
+  argMap: Map<string, ts.Expression>
+): boolean {
+  if (!fnDecl.body) return false;
+  for (const [name, expr] of argMap) {
+    if (isSimpleArg(expr)) continue;
+    if (countParamUses(name, fnDecl.body) > 1) return true;
+  }
+  return false;
+}
+
+function buildIIFE(
+  fnDecl: ts.FunctionLikeDeclaration,
+  callExpr: ts.CallExpression
+): ts.Expression | undefined {
+  if (!fnDecl.body) return undefined;
+  const factory = ts.factory;
+  const arrowFn = factory.createArrowFunction(
+    undefined,
+    undefined,
+    fnDecl.parameters,
+    undefined,
+    factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+    fnDecl.body as ts.ConciseBody
+  );
+  return factory.createCallExpression(
+    factory.createParenthesizedExpression(arrowFn),
+    undefined,
+    Array.from(callExpr.arguments)
+  );
+}
+
 export function inlineCallExpression(
   callExpr: ts.CallExpression,
   fnDecl: ts.FunctionLikeDeclaration,
@@ -208,37 +261,53 @@ export function inlineCallExpression(
     }
   }
 
-  if (!finalExpr) {
-    return undefined; // function body too complex to inline safely
-  }
+  // Use an IIFE when either: (a) the body is too complex to reduce to a single
+  // expression, or (b) a non-simple argument would be duplicated by blind
+  // substitution (e.g. `dbl(next())` where `dbl = a => a + a` would evaluate
+  // `next()` twice). The IIFE `((params) => body)(args)` is always semantically
+  // correct and naturally binds each parameter once.
+  const useIIFE = !finalExpr || wouldDuplicateEffectfulArg(fnDecl, argMap);
 
-  // Preserve side effects of extra arguments (beyond declared parameters).
-  // Wrap in parentheses to avoid comma-operator precedence surprises in the
-  // caller (e.g. `() => extraArg, result` would be mis-parsed as an arrow
-  // returning `extraArg` followed by a standalone `result` expression).
-  const extraArgs = Array.from(callExpr.arguments).slice(fnDecl.parameters.length);
-  if (extraArgs.length > 0) {
-    let commaLeft: ts.Expression = extraArgs[0]!;
-    for (let i = 1; i < extraArgs.length; i++) {
-      commaLeft = ts.factory.createBinaryExpression(
-        commaLeft,
-        ts.SyntaxKind.CommaToken,
-        extraArgs[i]!
+  let exprForPrint: ts.Expression;
+  let nodeForImports: ts.Node;
+
+  if (useIIFE) {
+    if (!fnDecl.body) return undefined;
+    const iife = buildIIFE(fnDecl, callExpr);
+    if (!iife) return undefined;
+    exprForPrint = iife;
+    nodeForImports = fnDecl.body;
+  } else {
+    // Preserve side effects of extra arguments (beyond declared parameters).
+    // Wrap in parentheses to avoid comma-operator precedence surprises in the
+    // caller (e.g. `() => extraArg, result` would be mis-parsed as an arrow
+    // returning `extraArg` followed by a standalone `result` expression).
+    const extraArgs = Array.from(callExpr.arguments).slice(fnDecl.parameters.length);
+    if (extraArgs.length > 0) {
+      let commaLeft: ts.Expression = extraArgs[0]!;
+      for (let i = 1; i < extraArgs.length; i++) {
+        commaLeft = ts.factory.createBinaryExpression(
+          commaLeft,
+          ts.SyntaxKind.CommaToken,
+          extraArgs[i]!
+        );
+      }
+      finalExpr = ts.factory.createParenthesizedExpression(
+        ts.factory.createBinaryExpression(
+          commaLeft,
+          ts.SyntaxKind.CommaToken,
+          finalExpr!
+        )
       );
     }
-    finalExpr = ts.factory.createParenthesizedExpression(
-      ts.factory.createBinaryExpression(
-        commaLeft,
-        ts.SyntaxKind.CommaToken,
-        finalExpr
-      )
-    );
+    exprForPrint = finalExpr!;
+    nodeForImports = exprForPrint;
   }
 
   // Determine which imported symbols from the callee file are referenced
   // in the final inlined expression, so we can add missing imports in the caller.
   const importedNames = collectImportedNames(fnSourceFile);
-  const usedImportedNames = collectUsedImportedNames(finalExpr, importedNames);
+  const usedImportedNames = collectUsedImportedNames(nodeForImports, importedNames);
   const neededImports = Array.from(
     new Set(
       usedImportedNames.map(
@@ -286,14 +355,14 @@ export function inlineCallExpression(
   // Synthesize the entire expression tree (set pos/end = -1 on every node).
   // TypeScript's printer reads node text from sourceFile.text[pos..end] for
   // parsed nodes (pos >= 0) but uses the node's stored .text/.escapedText for
-  // synthesized nodes (pos < 0, i.e. isNodeSynthesized() is true). After
-  // substitution, finalExpr mixes callee nodes and caller argument nodes. Both
-  // must be synthesized so the printer uses stored text rather than reading
-  // from a source file that may not contain text at those positions.
-  synthesizeTree(finalExpr);
+  // synthesized nodes (pos < 0, i.e. isNodeSynthesized() is true). The
+  // expression may mix callee nodes and caller argument nodes from different
+  // source files — synthesizing everything forces the printer to use stored
+  // text rather than reading from positions that may not match fnSourceFile.
+  synthesizeTree(exprForPrint);
   const inlinedText = printer.printNode(
     ts.EmitHint.Expression,
-    finalExpr,
+    exprForPrint,
     fnSourceFile
   );
   return {

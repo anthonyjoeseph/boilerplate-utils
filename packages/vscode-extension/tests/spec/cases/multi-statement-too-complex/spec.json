@@ -1,4 +1,1 @@
-{
-  "known": "broken",
-  "reason": "any multi-statement body is refused as 'too complex' - local consts, early returns, loops, and try/catch are all rejected"
-}
+{}

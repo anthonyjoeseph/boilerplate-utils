@@ -52,27 +52,27 @@ export function collectImportedNames(
 }
 
 export function collectUsedImportedNames(
-  expr: ts.Expression,
+  node: ts.Node,
   importedNames: ImportedNameIndex
 ): ts.ImportDeclaration[] {
   const used = new Set<ts.ImportDeclaration>();
 
-  function visit(node: ts.Node) {
-    if (ts.isIdentifier(node)) {
-      const parent = node.parent;
+  function visit(n: ts.Node) {
+    if (ts.isIdentifier(n)) {
+      const parent = n.parent;
       // Ignore identifiers that are merely property names (obj.prop).
       // Guard against undefined parent — synthesized nodes may lack parent pointers.
-      if (parent && ts.isPropertyAccessExpression(parent) && parent.name === node) {
+      if (parent && ts.isPropertyAccessExpression(parent) && parent.name === n) {
         return;
       }
-      const decl = importedNames.byName.get(node.text);
+      const decl = importedNames.byName.get(n.text);
       if (decl) {
         used.add(decl);
       }
     }
-    node.forEachChild(visit);
+    n.forEachChild(visit);
   }
 
-  visit(expr);
+  visit(node);
   return Array.from(used);
 }
