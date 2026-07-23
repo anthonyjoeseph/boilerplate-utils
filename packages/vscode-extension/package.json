@@ -4,7 +4,7 @@
   "description": "Inline TypeScript function calls with smart beta-reduction and conditional simplification, across files and (where possible) npm modules with source maps.",
   "version": "0.0.1",
   "license": "MIT",
-  "publisher": "your-name-or-org",
+  "publisher": "anthonyjoeseph",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -19,6 +19,14 @@
         "command": "smartInlineFunction.inline",
         "title": "Smart Inline",
         "category": "Refactor"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "smartInlineFunction.inline",
+        "key": "ctrl+alt+n",
+        "mac": "cmd+alt+n",
+        "when": "editorTextFocus && (editorLangId == 'typescript' || editorLangId == 'typescriptreact')"
       }
     ]
   },

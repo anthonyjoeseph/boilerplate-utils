@@ -123,11 +123,8 @@ export async function runSmartInline(
       callerConstEnv,
       fileName
     );
-    if (!inlineResult) {
-      return {
-        ok: false,
-        error: "This function is too complex to inline safely."
-      };
+    if ("error" in inlineResult) {
+      return { ok: false, error: inlineResult.error };
     }
     const printer = ts.createPrinter({ removeComments: false });
     const neededImportTexts = inlineResult.neededImports.map(
