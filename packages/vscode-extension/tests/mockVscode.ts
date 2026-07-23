@@ -78,6 +78,7 @@ export interface MockVscode {
   ) => { start: unknown; end: unknown };
   window: {
     showErrorMessage: MockInstance<(message: string) => void>;
+    showInformationMessage: MockInstance<(message: string) => void>;
     activeTextEditor: MockEditor | undefined;
   };
   workspace: {
@@ -154,6 +155,7 @@ export function createMockVscode(workspaceRoot?: string): MockVscode {
     Range,
     window: {
       showErrorMessage,
+      showInformationMessage: vi.fn<(message: string) => void>(),
       activeTextEditor: undefined
     },
     workspace: {

@@ -15,6 +15,7 @@ export interface VscodeApi {
   Range: typeof vscode.Range;
   window: {
     showErrorMessage: (message: string) => void;
+    showInformationMessage: (message: string) => void;
     activeTextEditor: vscode.TextEditor | undefined;
   };
   workspace: {
@@ -82,6 +83,16 @@ async function doHandleSmartInline(
     return;
   }
 
+  // Detect no-ops: if the inlined expression is identical to the original
+  // source text, applying the edit would be a silent no-op. Report it instead.
+  const originalText = sourceText.slice(result.replaceStart, result.replaceEnd);
+  if (result.expression === originalText) {
+    vscodeApi.window.showInformationMessage(
+      "Smart Inline: nothing to simplify — the expression is already in its simplest form."
+    );
+    return;
+  }
+
   await editor.edit((editBuilder) => {
     const existingText = document.getText();
     const toAdd = result.neededImportTexts.filter(
@@ -110,4 +121,14 @@ async function doHandleSmartInline(
     );
     editBuilder.replace(range, result.expression);
   });
+
+  const behaviorLabels: Record<string, string> = {
+    "smart-inline": "Inlined function body",
+    "literal-inline": "Folded to literal value",
+    "literal-inline-array": "Evaluated .map() to array literal",
+    "literal-inline-object": "Evaluated Object.fromEntries() to object literal"
+  };
+  vscodeApi.window.showInformationMessage(
+    `Smart Inline: ${behaviorLabels[result.behavior] ?? result.behavior}`
+  );
 }

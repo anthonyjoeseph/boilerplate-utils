@@ -99,7 +99,7 @@ export function inlineCallExpression(
   fnSourceFile: ts.SourceFile,
   callerConstEnv: Map<string, ts.Expression>,
   callerFileName = ""
-): InlineResult | undefined {
+): InlineResult | { error: string } {
   const printer = ts.createPrinter({ removeComments: false });
 
   const argMap = new Map<string, ts.Expression>();
@@ -109,11 +109,12 @@ export function inlineCallExpression(
   for (let i = 0; i < fnDecl.parameters.length; i++) {
     const param = fnDecl.parameters[i];
     if (!param) {
-      return undefined;
+      return { error: "Internal error: missing parameter node." };
     }
 
     if (param.dotDotDotToken) {
-      return undefined; // rest params not supported
+      const pName = ts.isIdentifier(param.name) ? param.name.text : String(i + 1);
+      return { error: `Rest parameters (...${pName}) are not yet supported.` };
     }
 
     const hasDefault = !!param.initializer;
@@ -133,8 +134,10 @@ export function inlineCallExpression(
     }
 
     if (!effectiveArg) {
-      // No argument and no default value -> cannot safely inline.
-      return undefined;
+      const pName = ts.isIdentifier(param.name)
+        ? `'${param.name.text}'`
+        : `at position ${i + 1}`;
+      return { error: `Parameter ${pName} has no argument and no default value.` };
     }
 
     const name = param.name;
@@ -163,7 +166,10 @@ export function inlineCallExpression(
           element.initializer ||
           !ts.isIdentifier(element.name)
         ) {
-          return undefined; // rest, defaults, or nested patterns not yet supported
+          return {
+            error:
+              "Object destructuring parameters with rest elements, default values, or nested patterns are not yet supported."
+          };
         }
 
         const localId = element.name;
@@ -181,7 +187,10 @@ export function inlineCallExpression(
             prop
           );
         } else {
-          return undefined; // computed property names not supported
+          return {
+            error:
+              "Object destructuring parameters with computed property keys are not yet supported."
+          };
         }
 
         bindLocal(localId.text, accessExpr);
@@ -204,7 +213,10 @@ export function inlineCallExpression(
           element.initializer ||
           !ts.isIdentifier(element.name)
         ) {
-          return undefined; // rest, defaults, or nested patterns not yet supported
+          return {
+            error:
+              "Array destructuring parameters with rest elements, default values, or nested patterns are not yet supported."
+          };
         }
 
         const localId = element.name;
@@ -219,7 +231,7 @@ export function inlineCallExpression(
     }
 
     // Any other complex parameter pattern is not supported.
-    return undefined;
+    return { error: "Unsupported parameter binding pattern." };
   }
 
   let finalExpr: ts.Expression | undefined;
@@ -272,9 +284,9 @@ export function inlineCallExpression(
   let nodeForImports: ts.Node;
 
   if (useIIFE) {
-    if (!fnDecl.body) return undefined;
+    if (!fnDecl.body) return { error: "Function has no body." };
     const iife = buildIIFE(fnDecl, callExpr);
-    if (!iife) return undefined;
+    if (!iife) return { error: "Could not construct IIFE fallback for this function." };
     exprForPrint = iife;
     nodeForImports = fnDecl.body;
   } else {

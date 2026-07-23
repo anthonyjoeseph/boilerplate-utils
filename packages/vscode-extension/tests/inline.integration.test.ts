@@ -168,9 +168,9 @@ const bigArray = [...arg, 4, 5];
       expect(editor.edit).not.toHaveBeenCalled();
     });
 
-    it("smart-inline: reports a too-complex body rather than folding the call", async () => {
-      // A rest-parameter function can't be inlined — the engine requires
-      // fixed positional parameters to bind arguments.
+    it("smart-inline: reports the blocking parameter shape rather than a generic message", async () => {
+      // A rest-parameter function can't be inlined — the engine reports
+      // the specific reason (rest parameters) rather than a generic "too complex".
       const source = `
 const sum = (...args: number[]) => args.reduce((a, b) => a + b, 0);
 const result = sum(1, 2, 3);
@@ -179,7 +179,7 @@ const result = sum(1, 2, 3);
         workspace: FAKE_WORKSPACE
       });
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-        expect.stringMatching(/too complex/)
+        expect.stringMatching(/[Rr]est parameter/)
       );
       expect(editor.edit).not.toHaveBeenCalled();
     });
@@ -255,13 +255,17 @@ const obj = Object.fromEntries(entries);
       expect(texts).toContain("3");
     });
 
-    it("a const array outside any .map now folds instead of erroring", async () => {
+    it("a const array outside any .map routes to fold, which detects the no-op", async () => {
       // Previously: literal-inline-array said "Selection must be inside a .map(...)".
+      // Now: routes to literal-inline (fold). Since the array is already a literal,
+      // the fold result equals the input — no-op is detected and reported.
       const source = `const x = [1, 2, 3];`;
       const { vscode, editor } = await run(source, "[1, 2, 3]");
       expect(vscode.window.showErrorMessage).not.toHaveBeenCalled();
-      const texts = await replacedTexts(editor);
-      expect(texts.some((t) => t.trim() === "[1, 2, 3]")).toBe(true);
+      expect(editor.edit).not.toHaveBeenCalled();
+      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+        expect.stringMatching(/nothing to simplify/i)
+      );
     });
   });
 });
