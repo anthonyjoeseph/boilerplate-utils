@@ -94,6 +94,13 @@ export interface SpecConfig {
   readonly known?: "broken";
   /** Why it is broken - shown in the test name. */
   readonly reason?: string;
+  /**
+   * Expected text of the inlined expression. When present the runner checks
+   * the actual expression against this string after the behavioral comparison.
+   * Populate once the output is deliberate — it answers "is it readable"
+   * while the behavioral spec answers "is it correct".
+   */
+  readonly golden?: string;
 }
 
 export interface SpecCase {
@@ -243,5 +250,15 @@ export const checkSpec = async (kase: SpecCase): Promise<SpecOutcome> => {
   ]);
 
   const verdict = compare(before, after);
-  return verdict.ok ? { ok: true, expandedText } : verdict;
+  if (!verdict.ok) return verdict;
+
+  if (kase.config.golden !== undefined && result.expression !== kase.config.golden) {
+    return {
+      ok: false,
+      reason: "golden text mismatch",
+      detail: `expected:\n${kase.config.golden}\n\nactual:\n${result.expression}`
+    };
+  }
+
+  return { ok: true, expandedText };
 };

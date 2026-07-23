@@ -1,0 +1,3 @@
+{
+  "golden": "((a: number) => {\n    // double the value\n    const x = a * 2;\n    return x;\n})(5)"
+}
