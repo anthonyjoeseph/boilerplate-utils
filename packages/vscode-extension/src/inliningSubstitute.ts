@@ -60,14 +60,21 @@ export function substituteAndSimplifyExpression(
         case ts.SyntaxKind.ExclamationToken:
           return !v;
         case ts.SyntaxKind.PlusToken:
-          if (v == null) throw new Error("Cannot convert null to number");
-          return +v;
+          if (v == null) return undefined;
+          return +(v as number);
         case ts.SyntaxKind.MinusToken:
-          if (v == null) throw new Error("Cannot negate null");
-          return -v;
+          if (v == null) return undefined;
+          return -(v as number);
+        case ts.SyntaxKind.TildeToken:
+          return ~(v as number);
         default:
           return undefined;
       }
+    }
+    if (ts.isTypeOfExpression(node)) {
+      const v = evalLiteralExpression(node.expression);
+      if (v === undefined) return undefined;
+      return typeof v;
     }
     if (ts.isParenthesizedExpression(node)) {
       return evalLiteralExpression(node.expression);
@@ -93,15 +100,31 @@ export function substituteAndSimplifyExpression(
         case ts.SyntaxKind.GreaterThanEqualsToken:
           return (left as number) >= (right as number);
         case ts.SyntaxKind.PlusToken:
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          return (left as number) + (right as number);
+          if (typeof left === "string" && typeof right === "string") return left + right;
+          if (typeof left === "number" && typeof right === "number") return left + right;
+          return undefined;
         case ts.SyntaxKind.MinusToken:
           return (left as number) - (right as number);
         case ts.SyntaxKind.AsteriskToken:
           return (left as number) * (right as number);
         case ts.SyntaxKind.SlashToken:
           return (left as number) / (right as number);
+        case ts.SyntaxKind.PercentToken:
+          return (left as number) % (right as number);
+        case ts.SyntaxKind.AsteriskAsteriskToken:
+          return (left as number) ** (right as number);
+        case ts.SyntaxKind.AmpersandToken:
+          return (left as number) & (right as number);
+        case ts.SyntaxKind.BarToken:
+          return (left as number) | (right as number);
+        case ts.SyntaxKind.CaretToken:
+          return (left as number) ^ (right as number);
+        case ts.SyntaxKind.LessThanLessThanToken:
+          return (left as number) << (right as number);
+        case ts.SyntaxKind.GreaterThanGreaterThanToken:
+          return (left as number) >> (right as number);
+        case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
+          return (left as number) >>> (right as number);
         default:
           return undefined;
       }
@@ -184,6 +207,11 @@ export function substituteAndSimplifyExpression(
       const operand = renameInExpr(node.operand, oldName, newName);
       if (operand === node.operand) return node;
       return factory.createPrefixUnaryExpression(node.operator, operand);
+    }
+    if (ts.isTypeOfExpression(node)) {
+      const inner = renameInExpr(node.expression, oldName, newName);
+      if (inner === node.expression) return node;
+      return ts.factory.createTypeOfExpression(inner);
     }
     if (ts.isConditionalExpression(node)) {
       const cond = renameInExpr(node.condition, oldName, newName);
@@ -345,6 +373,7 @@ export function substituteAndSimplifyExpression(
           return val ? factory.createTrue() : factory.createFalse();
         }
         if (typeof val === "number") {
+          if (!Number.isFinite(val) || Object.is(val, -0)) return synthetic;
           return createNumberLiteral(val);
         }
         if (typeof val === "string") {
@@ -367,8 +396,20 @@ export function substituteAndSimplifyExpression(
           return val ? factory.createTrue() : factory.createFalse();
         }
         if (typeof val === "number") {
+          if (!Number.isFinite(val) || Object.is(val, -0)) return synthetic;
           return createNumberLiteral(val);
         }
+      }
+      return synthetic;
+    }
+
+    // typeof
+    if (ts.isTypeOfExpression(node)) {
+      const inner = simplify(node.expression);
+      const synthetic = ts.factory.createTypeOfExpression(inner);
+      const val = evalLiteralExpression(synthetic);
+      if (typeof val === "string") {
+        return factory.createStringLiteral(val);
       }
       return synthetic;
     }
