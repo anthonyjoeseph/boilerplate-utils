@@ -6,10 +6,10 @@
   "configurations": [
     {
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/vscode-extension"
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension"
       ],
       "name": "Launch Extension",
-      "outFiles": ["${workspaceFolder}/vscode-extension/out/**/*.js"],
+      "outFiles": ["${workspaceFolder}/packages/vscode-extension/out/**/*.js"],
       "request": "launch",
       "type": "extensionHost"
     }

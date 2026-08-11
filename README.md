@@ -31,14 +31,32 @@ The engineering reason is - there's no reason to introduce any structural bounda
 
 The practical reason (as far as this repo is concerned) is - it's easy to expand a template function in the `shared` package and immediately have access to it within all of your apps
 
+# Ideas
+
+- 'call graph'
+  - search for a particular function
+    - all of its invocations
+    - all of the functions it calls
+  - 'entrypoint'
+    - 'distance from entrypoint'
+  - paired with 'code finder', that downloads available code from github when able
+  - helps with debugging - a 'pincer' move between functions along a path, figuring out where exactly the unexpected transformation/IO takes place
+- 'build function'
+  - return type is inferred from cursor location
+  - parameters are inferred from available local context
+  - optionally does it as one big object w/ keys
+- 'prune function params'
+  - removes all unused function params, including from call sites
+  - optionally includes keys on param objects, esp when there's only one param
+- 'pincer history'
+  - goes thru git history and finds which functions were historically between a function path, and what has changed over time
+
 # Implementation Status & Info
 
 ## Roadmap
 
 Items listed are all unfinished. The top item is currently being worked on. It will be deleted from the top of the list once it's done.
 
-1. set up eslint and prettier w/ flat config at roots.
-1. research vscode-extensions - does it make sense to have a separate package for the lsp and for the vscode-specific plugin? It looks like eslint does it all in one...
 1. set up CI w/ vitest smoke tests for all packages (maybe write a custom github action, with package-name as the input?)
 1. set up push-to-npm on merge to main for each package (again - maybe a configurable custom action?)
 1. research yeoman - is it a good fit for us? Can we store code in this repo that gets pushed to the yeoman repo? Can we do it in GHA? How difficult is it to update?
