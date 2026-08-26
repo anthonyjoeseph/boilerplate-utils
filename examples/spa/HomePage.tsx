@@ -1,7 +1,6 @@
-import type { PushRouteProps } from "@boilerplate-utils/react";
-import type { Route } from "./routes";
+import type { PushRouteProps } from "./routes";
 
-export const HomePage = ({ pushRoute }: PushRouteProps<Route>) => (
+export const HomePage = ({ pushRoute }: PushRouteProps) => (
   <div>
     <h1>Home</h1>
     <button onClick={() => pushRoute({ path: "about" })}>About</button>

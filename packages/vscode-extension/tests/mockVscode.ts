@@ -78,6 +78,7 @@ export interface MockVscode {
   ) => { start: unknown; end: unknown };
   window: {
     showErrorMessage: MockInstance<(message: string) => void>;
+    showWarningMessage: MockInstance<(message: string) => void>;
     showInformationMessage: MockInstance<(message: string) => void>;
     activeTextEditor: MockEditor | undefined;
   };
@@ -143,6 +144,7 @@ export function createMockEditor(
  */
 export function createMockVscode(workspaceRoot?: string): MockVscode {
   const showErrorMessage = vi.fn<(message: string) => void>();
+  const showWarningMessage = vi.fn<(message: string) => void>();
 
   const Range = vi.fn(
     (
@@ -155,6 +157,7 @@ export function createMockVscode(workspaceRoot?: string): MockVscode {
     Range,
     window: {
       showErrorMessage,
+      showWarningMessage,
       showInformationMessage: vi.fn<(message: string) => void>(),
       activeTextEditor: undefined
     },

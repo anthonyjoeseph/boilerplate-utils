@@ -115,6 +115,64 @@ function getServiceEntry(workspaceRoot: string): ServiceEntry {
 // Public API
 // --------------------------------------------------------------------------
 
+const RESOLUTION_ROOT_MARKERS = ["tsconfig.json", "package.json"];
+
+/**
+ * The directory whose tsconfig and node_modules govern `filePath`.
+ *
+ * The VS Code workspace folder is the repo root, which in a monorepo has
+ * neither the package's tsconfig (so the LanguageService falls back to
+ * default compiler options and resolves nothing) nor its node_modules (fatal
+ * under pnpm, where dependencies are only linked into the owning package).
+ * Walk up from the file instead; fall back to the workspace root.
+ */
+function findResolutionRoot(filePath: string, workspaceRoot: string): string {
+  let dir = path.dirname(path.resolve(filePath));
+  for (;;) {
+    if (RESOLUTION_ROOT_MARKERS.some((m) => fs.existsSync(path.join(dir, m)))) {
+      return dir;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) return workspaceRoot;
+    dir = parent;
+  }
+}
+
+/**
+ * Resolves a module specifier the way the caller's own toolchain will, honoring
+ * its tsconfig (`paths`, `moduleResolution`) and the target package's `exports`
+ * map and `typesVersions`. Returns the file the specifier lands on.
+ */
+export type ModuleResolver = (
+  specifier: string,
+  containingFile: string
+) => string | undefined;
+
+export function createModuleResolver(
+  currentFileName: string,
+  workspaceRoot: string
+): ModuleResolver {
+  const { host } = getServiceEntry(findResolutionRoot(currentFileName, workspaceRoot));
+  const options = host.getCompilationSettings();
+  const cache = new Map<string, string | undefined>();
+
+  return (specifier, containingFile) => {
+    const key = `${containingFile}\u0000${specifier}`;
+    const cached = cache.get(key);
+    if (cached !== undefined || cache.has(key)) return cached;
+
+    let resolved: string | undefined;
+    try {
+      resolved = ts.resolveModuleName(specifier, containingFile, options, ts.sys)
+        .resolvedModule?.resolvedFileName;
+    } catch {
+      resolved = undefined;
+    }
+    cache.set(key, resolved);
+    return resolved;
+  };
+}
+
 /**
  * Resolve the function declaration for `calleeId` using three strategies:
  *   1. Same-file lookup (no I/O, always tried first).
@@ -122,6 +180,11 @@ function getServiceEntry(workspaceRoot: string): ServiceEntry {
  *      imports, tsconfig `paths`, re-exports, and workspace symlinks.
  *   3. Manual import-walking fallback — handles `.js`-suffix ESM specifiers,
  *      npm source maps, and sibling `.ts` heuristics.
+ *
+ * Strategies 2 and 3 both land on emitted artifacts for npm dependencies (a
+ * `.d.ts` with no bodies, or a bundled `.js`), so both finish by walking
+ * declaration maps, source maps, and `export … from` re-export chains back to
+ * the original `.ts` source.
  */
 export async function resolveFunctionDefinition(
   calleeId: ts.Identifier,
@@ -135,17 +198,25 @@ export async function resolveFunctionDefinition(
   const local = findFunctionInSourceFile(currentSourceFile, name);
   if (local) return { sourceFile: currentSourceFile, node: local };
 
+  const resolutionRoot = findResolutionRoot(currentFileName, workspaceRoot);
+
   // Strategy 2: LanguageService (aliases, paths, re-exports).
   const lsResult = await tryResolveViaLanguageService(
     calleeId,
     currentSourceFile,
     currentFileName,
-    workspaceRoot
+    resolutionRoot
   );
   if (lsResult) return lsResult;
 
   // Strategy 3: manual import walk (fallback for edge cases LS can't handle).
-  return tryResolveViaManualWalk(name, currentSourceFile, currentFileName, workspaceRoot);
+  return tryResolveViaManualWalk(
+    name,
+    currentSourceFile,
+    currentFileName,
+    resolutionRoot,
+    workspaceRoot
+  );
 }
 
 // --------------------------------------------------------------------------
@@ -156,10 +227,10 @@ async function tryResolveViaLanguageService(
   calleeId: ts.Identifier,
   currentSourceFile: ts.SourceFile,
   currentFileName: string,
-  workspaceRoot: string
+  resolutionRoot: string
 ): Promise<FunctionInfo | undefined> {
   try {
-    const { service, host } = getServiceEntry(workspaceRoot);
+    const { service, host } = getServiceEntry(resolutionRoot);
     // Inject the live buffer so the LS sees unsaved edits.
     host.setFileContent(currentFileName, currentSourceFile.text);
 
@@ -184,6 +255,11 @@ async function tryResolveViaLanguageService(
       // Position-based fallback for anonymous defaults or unusual patterns.
       const byPos = findFunctionAtPosition(defSf, def.textSpan.start);
       if (byPos) return { sourceFile: defSf, node: byPos };
+
+      // For an npm dependency the definition is an ambient `.d.ts` overload with
+      // no body; follow its declaration map (and any re-exports) to the source.
+      const deep = await resolveExportedFunctionDeep(def.fileName, def.name, newDeepContext());
+      if (deep) return deep;
     }
   } catch {
     // LanguageService errors are non-fatal; fall through to manual walk.
@@ -210,6 +286,7 @@ async function tryResolveViaManualWalk(
   name: string,
   currentSourceFile: ts.SourceFile,
   currentFileName: string,
+  resolutionRoot: string,
   workspaceRoot: string
 ): Promise<FunctionInfo | undefined> {
   const importInfo = findImportForIdentifier(currentSourceFile, name);
@@ -218,28 +295,19 @@ async function tryResolveViaManualWalk(
   if (importInfo.isRelative) {
     const resolved = resolveRelativeModule(importInfo.moduleSpecifier, currentFileName);
     if (!resolved) return undefined;
-    const text = await tryReadFile(resolved);
-    if (!text) return undefined;
-    const sf = ts.createSourceFile(resolved, text, ts.ScriptTarget.Latest, true);
-    const fn = findExportedFunctionInSourceFile(sf, importInfo.importedName);
-    return fn ? { sourceFile: sf, node: fn } : undefined;
+    return resolveFirstMatchingName(resolved, exportNamesToTry(importInfo, name));
   }
 
-  // NPM module: try sibling .ts first, then source maps.
-  const resolvedPath = tryResolveNodeModule(importInfo.moduleSpecifier, workspaceRoot);
+  // NPM module: resolve from the importing file outward, so pnpm's per-package
+  // node_modules are on the search path.
+  const resolvedPath = tryResolveNodeModule(importInfo.moduleSpecifier, [
+    path.dirname(currentFileName),
+    resolutionRoot,
+    workspaceRoot
+  ]);
   if (!resolvedPath) return undefined;
 
-  const siblingTs = resolvedPath.replace(/\.js(x?)$/, ".ts$1");
-  if (fs.existsSync(siblingTs)) {
-    const text = await tryReadFile(siblingTs);
-    if (text) {
-      const sf = ts.createSourceFile(siblingTs, text, ts.ScriptTarget.Latest, true);
-      const fn = findExportedFunctionInSourceFile(sf, name);
-      if (fn) return { sourceFile: sf, node: fn };
-    }
-  }
-
-  return tryResolveFromSourceMap(resolvedPath, name);
+  return resolveFirstMatchingName(resolvedPath, exportNamesToTry(importInfo, name));
 }
 
 // --------------------------------------------------------------------------
@@ -427,6 +495,28 @@ function findImportForIdentifier(
   return undefined;
 }
 
+// --------------------------------------------------------------------------
+// Module + artifact resolution
+// --------------------------------------------------------------------------
+
+const SOURCE_EXTENSIONS = [".ts", ".tsx", ".mts", ".cts"];
+const DECLARATION_EXTENSIONS = [".d.ts", ".d.tsx", ".d.mts", ".d.cts"];
+
+function isDeclarationFile(filePath: string): boolean {
+  return DECLARATION_EXTENSIONS.some((ext) => filePath.endsWith(ext));
+}
+
+/** A `.ts`/`.tsx` we can read bodies out of (a `.d.ts` has none). */
+function isSourceFilePath(filePath: string): boolean {
+  return (
+    SOURCE_EXTENSIONS.some((ext) => filePath.endsWith(ext)) && !isDeclarationFile(filePath)
+  );
+}
+
+function existsAsFile(candidate: string): boolean {
+  return fs.existsSync(candidate) && fs.statSync(candidate).isFile();
+}
+
 function resolveRelativeModule(
   moduleSpecifier: string,
   fromFile: string
@@ -439,31 +529,39 @@ function resolveRelativeModule(
   const full = path.resolve(base, specifier);
 
   const candidates = [
+    ...SOURCE_EXTENSIONS.map((ext) => full + ext),
+    ...DECLARATION_EXTENSIONS.map((ext) => full + ext),
+    ...SOURCE_EXTENSIONS.map((ext) => path.join(full, "index" + ext)),
+    ...DECLARATION_EXTENSIONS.map((ext) => path.join(full, "index" + ext)),
     full,
-    full + ".ts",
-    full + ".tsx",
-    path.join(full, "index.ts"),
-    path.join(full, "index.tsx")
+    full + ".js",
+    path.join(full, "index.js")
   ];
 
   for (const c of candidates) {
-    if (fs.existsSync(c) && fs.statSync(c).isFile()) {
-      return c;
-    }
+    if (existsAsFile(c)) return c;
   }
 
   return undefined;
 }
 
+/** Resolve a re-export target, which may be relative or a bare package name. */
+function resolveModuleFromFile(
+  moduleSpecifier: string,
+  fromFile: string
+): string | undefined {
+  if (moduleSpecifier.startsWith(".")) {
+    return resolveRelativeModule(moduleSpecifier, fromFile);
+  }
+  return tryResolveNodeModule(moduleSpecifier, [path.dirname(fromFile)]);
+}
+
 function tryResolveNodeModule(
   moduleSpecifier: string,
-  workspaceRoot: string
+  paths: string[]
 ): string | undefined {
   try {
-    const resolved = require.resolve(moduleSpecifier, {
-      paths: [workspaceRoot]
-    });
-    return resolved;
+    return require.resolve(moduleSpecifier, { paths });
   } catch {
     return undefined;
   }
@@ -477,55 +575,241 @@ async function tryReadFile(filePath: string): Promise<string | undefined> {
   }
 }
 
-async function tryResolveFromSourceMap(
-  jsFilePath: string,
-  functionName: string
+// --------------------------------------------------------------------------
+// Deep resolution: declaration maps, source maps, re-export chains
+// --------------------------------------------------------------------------
+
+const MAX_HOP_DEPTH = 8;
+
+/** Visited set + depth budget shared across one resolution attempt. */
+interface DeepContext {
+  seen: Set<string>;
+  depth: number;
+}
+
+function newDeepContext(): DeepContext {
+  return { seen: new Set<string>(), depth: 0 };
+}
+
+function descend(ctx: DeepContext): DeepContext {
+  return { seen: ctx.seen, depth: ctx.depth + 1 };
+}
+
+function exportNamesToTry(importInfo: ImportInfo, localName: string): string[] {
+  // A default import has no exported name to search for; the declaration is
+  // usually still named after the local binding.
+  return importInfo.importedName === "default" && localName !== "default"
+    ? ["default", localName]
+    : [importInfo.importedName];
+}
+
+async function resolveFirstMatchingName(
+  filePath: string,
+  names: string[]
 ): Promise<FunctionInfo | undefined> {
-  const dir = path.dirname(jsFilePath);
-  let mapPath = jsFilePath + ".map";
+  for (const name of names) {
+    const found = await resolveExportedFunctionDeep(filePath, name, newDeepContext());
+    if (found) return found;
+  }
+  return undefined;
+}
 
-  if (!fs.existsSync(mapPath)) {
-    let jsText: string;
-    try {
-      jsText = await fs.promises.readFile(jsFilePath, "utf8");
-    } catch {
-      return undefined;
+/**
+ * Find the implementation of the function exported as `name` from `filePath`,
+ * following whatever indirection stands between them:
+ *
+ *   - `filePath` is a `.d.ts` or emitted `.js`: hop to the original `.ts` via
+ *     its declaration map / source map (or a sibling `.ts`).
+ *   - `filePath` only re-exports the name (`export { of } from './of'`,
+ *     `export * from './of'`): hop to the target module and keep looking.
+ *
+ * Package entry points need both: `require.resolve("rxjs")` lands on
+ * `dist/cjs/index.js`, whose map leads to `src/index.ts`, which only re-exports
+ * `of` from `./internal/observable/of`.
+ */
+async function resolveExportedFunctionDeep(
+  filePath: string,
+  name: string,
+  ctx: DeepContext
+): Promise<FunctionInfo | undefined> {
+  if (ctx.depth > MAX_HOP_DEPTH) return undefined;
+  const key = `${filePath} ${name}`;
+  if (ctx.seen.has(key)) return undefined;
+  ctx.seen.add(key);
+
+  const text = await tryReadFile(filePath);
+  if (text === undefined) return undefined;
+  const sf = ts.createSourceFile(filePath, text, ts.ScriptTarget.Latest, true);
+
+  if (isSourceFilePath(filePath)) {
+    const local =
+      findExportedFunctionInSourceFile(sf, name) ?? findFunctionInSourceFile(sf, name);
+    if (local) return { sourceFile: sf, node: local };
+  } else {
+    // An artifact: bodies live in the mapped-from source, if any.
+    for (const mapped of await mappedSourcePaths(filePath, text)) {
+      const found = await resolveExportedFunctionDeep(mapped, name, descend(ctx));
+      if (found) return found;
     }
-
-    const match = jsText.match(/\/\/# sourceMappingURL=(.+)$/m);
-    if (!match) return undefined;
-    const sourceMappingUrl = match[1];
-    if (!sourceMappingUrl) return undefined;
-    mapPath = path.resolve(dir, sourceMappingUrl);
-    if (!fs.existsSync(mapPath)) return undefined;
+    const sibling = siblingSourcePath(filePath);
+    if (sibling && existsAsFile(sibling)) {
+      const found = await resolveExportedFunctionDeep(sibling, name, descend(ctx));
+      if (found) return found;
+    }
+    // An emitted `.js` with no source map: its `.d.ts` may still carry a
+    // declaration map, and it keeps the re-export chain the `.js` erased.
+    for (const dts of declarationCounterparts(filePath)) {
+      const found = await resolveExportedFunctionDeep(dts, name, descend(ctx));
+      if (found) return found;
+    }
   }
 
-  let raw: string;
-  try {
-    raw = await fs.promises.readFile(mapPath, "utf8");
-  } catch {
-    return undefined;
-  }
-
-  let json: unknown;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    return undefined;
-  }
-
-  const sources: string[] | undefined = (json as { sources?: string[] }).sources;
-  if (!Array.isArray(sources)) return undefined;
-
-  for (const srcRel of sources) {
-    const srcPath = path.resolve(path.dirname(mapPath), srcRel);
-    if (!srcPath.endsWith(".ts") && !srcPath.endsWith(".tsx")) continue;
-    const text = await tryReadFile(srcPath);
-    if (!text) continue;
-    const sf = ts.createSourceFile(srcPath, text, ts.ScriptTarget.Latest, true);
-    const fn = findExportedFunctionInSourceFile(sf, functionName);
-    if (fn) return { sourceFile: sf, node: fn };
+  // Re-export chains, in both sources and artifacts (`.d.ts` barrels keep them).
+  for (const hop of findReExportTargets(sf, name)) {
+    const target = resolveModuleFromFile(hop.moduleSpecifier, filePath);
+    if (!target) continue;
+    const found = await resolveExportedFunctionDeep(target, hop.exportedName, descend(ctx));
+    if (found) return found;
   }
 
   return undefined;
+}
+
+/**
+ * Declaration files that describe an emitted `.js`: the one emitted beside it,
+ * and the `types` entry of the package it belongs to (which is where a bundled
+ * or bare entry point points).
+ */
+function declarationCounterparts(filePath: string): string[] {
+  if (isDeclarationFile(filePath)) return [];
+  const candidates: string[] = [];
+
+  const jsMatch = /\.(js|jsx|mjs|cjs)$/.exec(filePath);
+  if (jsMatch) {
+    const stem = filePath.slice(0, -jsMatch[0].length);
+    candidates.push(stem + ".d.ts", stem + ".d.mts", stem + ".d.cts");
+  }
+
+  const typesEntry = packageTypesEntry(filePath);
+  if (typesEntry) candidates.push(typesEntry);
+
+  return candidates.filter((c) => c !== filePath && existsAsFile(c));
+}
+
+/** The `types`/`typings` entry of the nearest enclosing package.json. */
+function packageTypesEntry(filePath: string): string | undefined {
+  let dir = path.dirname(filePath);
+  for (;;) {
+    const pkgPath = path.join(dir, "package.json");
+    if (fs.existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as {
+          types?: unknown;
+          typings?: unknown;
+        };
+        const entry = typeof pkg.types === "string" ? pkg.types : pkg.typings;
+        if (typeof entry === "string") return path.resolve(dir, entry);
+      } catch {
+        // Unreadable/!JSON package.json: nothing to learn from it.
+      }
+      return undefined;
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) return undefined;
+    dir = parent;
+  }
+}
+
+/** `foo.d.ts` to `foo.ts`, `foo.js` to `foo.ts`. */
+function siblingSourcePath(filePath: string): string | undefined {
+  for (const ext of DECLARATION_EXTENSIONS) {
+    if (filePath.endsWith(ext)) return filePath.slice(0, -ext.length) + ".ts";
+  }
+  const jsMatch = /\.(js|jsx|mjs|cjs)$/.exec(filePath);
+  if (jsMatch) {
+    return filePath.slice(0, -jsMatch[0].length) + (jsMatch[1] === "jsx" ? ".tsx" : ".ts");
+  }
+  return undefined;
+}
+
+/**
+ * The `.ts` sources an emitted file was generated from, via its adjacent map
+ * (`foo.js.map`, `foo.d.ts.map`) or a `sourceMappingURL` comment.
+ * `sourceMap` and `declarationMap` are independent tsconfig flags, so a package
+ * may ship one, both, or neither.
+ */
+async function mappedSourcePaths(
+  filePath: string,
+  fileText: string
+): Promise<string[]> {
+  let mapPath = filePath + ".map";
+  if (!fs.existsSync(mapPath)) {
+    const match = /sourceMappingURL=(.+)$/m.exec(fileText);
+    const url = match?.[1]?.trim();
+    if (!url || url.startsWith("data:")) return [];
+    mapPath = path.resolve(path.dirname(filePath), url);
+    if (!fs.existsSync(mapPath)) return [];
+  }
+
+  const raw = await tryReadFile(mapPath);
+  if (raw === undefined) return [];
+
+  let json: { sources?: unknown; sourceRoot?: unknown };
+  try {
+    json = JSON.parse(raw) as { sources?: unknown; sourceRoot?: unknown };
+  } catch {
+    return [];
+  }
+
+  const sources = json.sources;
+  if (!Array.isArray(sources)) return [];
+  const sourceRoot = typeof json.sourceRoot === "string" ? json.sourceRoot : "";
+
+  const resolved: string[] = [];
+  for (const src of sources) {
+    if (typeof src !== "string") continue;
+    const full = path.resolve(path.dirname(mapPath), sourceRoot, src);
+    if (!isSourceFilePath(full)) continue;
+    if (!existsAsFile(full)) continue;
+    resolved.push(full);
+  }
+  return resolved;
+}
+
+interface ReExportTarget {
+  moduleSpecifier: string;
+  /** The name to look for in the target module (`export { a as b }` gives `a`). */
+  exportedName: string;
+}
+
+/**
+ * `export { name } from "./m"`, `export { orig as name } from "./m"`, and
+ * `export * from "./m"` (which may or may not supply `name`, so follow it and
+ * find out). `export * as ns from "./m"` is namespaced, so it is not a hop.
+ */
+function findReExportTargets(
+  sourceFile: ts.SourceFile,
+  name: string
+): ReExportTarget[] {
+  const targets: ReExportTarget[] = [];
+  for (const stmt of sourceFile.statements) {
+    if (!ts.isExportDeclaration(stmt) || !stmt.moduleSpecifier) continue;
+    if (!ts.isStringLiteral(stmt.moduleSpecifier)) continue;
+    const moduleSpecifier = stmt.moduleSpecifier.text;
+
+    if (!stmt.exportClause) {
+      targets.push({ moduleSpecifier, exportedName: name });
+      continue;
+    }
+    if (!ts.isNamedExports(stmt.exportClause)) continue;
+    for (const spec of stmt.exportClause.elements) {
+      if (spec.name.text === name) {
+        targets.push({
+          moduleSpecifier,
+          exportedName: (spec.propertyName ?? spec.name).text
+        });
+      }
+    }
+  }
+  return targets;
 }

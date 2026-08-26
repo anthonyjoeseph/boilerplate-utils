@@ -15,9 +15,11 @@
     "@boilerplate-utils/react": "workspace:*",
     "@boilerplate-utils/shared": "workspace:*",
     "@boilerplate-utils/template-fns": "workspace:*",
-    "zod": "^4.4.3",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "rxjs": "catalog:",
+    "ts-pattern": "^5.9.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/react": "catalog:",

@@ -1,12 +1,11 @@
-import type { PushRouteProps } from "@boilerplate-utils/react";
-import type { Route } from "./routes";
+import type { PushRouteProps } from "./routes";
 
 export const UserPage = ({
-  params,
+  userId,
   pushRoute
-}: { params: { userId: string } } & PushRouteProps<Route>) => (
+}: { userId: string } & PushRouteProps) => (
   <div>
-    <h1>User {params.userId}</h1>
+    <h1>User {userId}</h1>
     <button onClick={() => pushRoute({ path: "home" })}>Home</button>
   </div>
 );

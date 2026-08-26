@@ -1,10 +1,9 @@
-import type { PushRouteProps } from "@boilerplate-utils/react";
 import {
   zodForm,
   defaultFieldComponents
 } from "@boilerplate-utils/template-fns";
 import { z } from "zod";
-import type { Route } from "./routes";
+import type { PushRouteProps } from "./routes";
 
 const signupSchema = z.object({
   name: z.string().min(1).meta({ title: "Full name" }),
@@ -42,7 +41,7 @@ const SignupForm = zodForm(signupSchema, {
   initialValues: { plan: "free", allergies: [{ label: "", severity: "mild" }] }
 });
 
-export const SignupPage = ({ pushRoute }: PushRouteProps<Route>) => (
+export const SignupPage = ({ pushRoute }: PushRouteProps) => (
   <div>
     <h1>Sign up</h1>
     <SignupForm

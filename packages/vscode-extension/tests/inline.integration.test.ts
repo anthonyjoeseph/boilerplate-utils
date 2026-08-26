@@ -31,11 +31,14 @@ import {
 async function run(
   source: string,
   selection: string,
-  opts: { workspace?: string } = {}
+  opts: { workspace?: string; tsx?: boolean } = {}
 ) {
   const { start, end } = selectionOffsets(source, selection);
   const vscode = createMockVscode(opts.workspace);
-  const editor = createMockEditor(source, start, end, { fileName: FAKE_FILE });
+  const editor = createMockEditor(source, start, end, {
+    fileName: opts.tsx ? FAKE_FILE.replace(/\.ts$/, ".tsx") : FAKE_FILE,
+    languageId: opts.tsx ? "typescriptreact" : "typescript"
+  });
   await handleSmartInline(
     vscode as unknown as VscodeApi,
     editor as unknown as vscode.TextEditor
@@ -169,17 +172,17 @@ const bigArray = [...arg, 4, 5];
     });
 
     it("smart-inline: reports the blocking parameter shape rather than a generic message", async () => {
-      // A rest-parameter function can't be inlined — the engine reports
-      // the specific reason (rest parameters) rather than a generic "too complex".
+      // A nested binding pattern can't be inlined — the engine reports the
+      // specific reason (the pattern) rather than a generic "too complex".
       const source = `
-const sum = (...args: number[]) => args.reduce((a, b) => a + b, 0);
-const result = sum(1, 2, 3);
+const fn = ({ a: { b } }: { a: { b: number } }) => b + 1;
+const result = fn({ a: { b: 5 } });
 `;
-      const { vscode, editor } = await run(source, "sum(1, 2, 3)", {
+      const { vscode, editor } = await run(source, "fn({ a: { b: 5 } })", {
         workspace: FAKE_WORKSPACE
       });
       expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-        expect.stringMatching(/[Rr]est parameter/)
+        expect.stringMatching(/destructuring/i)
       );
       expect(editor.edit).not.toHaveBeenCalled();
     });
@@ -266,6 +269,101 @@ const obj = Object.fromEntries(entries);
       expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
         expect.stringMatching(/nothing to simplify/i)
       );
+    });
+  });
+
+  describe("generic callees", () => {
+    const source = `
+function pick<T>(xs: T[], i: number): T {
+  const v = xs[i];
+  return v as T;
+}
+const result = pick([1, 2], 0);
+`;
+
+    it("carries the callee's type parameters onto the IIFE", async () => {
+      const { editor } = await run(source, "pick([1, 2], 0)", {
+        workspace: FAKE_WORKSPACE
+      });
+      const texts = await replacedTexts(editor);
+      expect(texts[0]).toContain("<T>(xs: T[], i: number)");
+    });
+
+    it("constrains an unconstrained type parameter in a .tsx caller", async () => {
+      // A bare `<T>` parses as a JSX element there, and the printer will not
+      // emit the `<T,>` disambiguator.
+      const { editor } = await run(source, "pick([1, 2], 0)", {
+        workspace: FAKE_WORKSPACE,
+        tsx: true
+      });
+      const texts = await replacedTexts(editor);
+      expect(texts[0]).toContain("<T extends unknown>(xs: T[], i: number)");
+      expect(texts[0]).not.toMatch(/\(<T>/);
+    });
+
+    it("resolves a type parameter that has nothing to infer from", async () => {
+      // `T` appears in no parameter annotation, so TypeScript infers `unknown`
+      // for it — and substitution can say so outright.
+      const source = `
+const cast = <T,>(x: unknown) => x as T;
+const result = cast(1);
+`;
+      const { editor } = await run(source, "cast(1)", { workspace: FAKE_WORKSPACE });
+      const texts = await replacedTexts(editor);
+      expect(texts[0]).toBe("1 as unknown");
+    });
+
+    it("resolves a type parameter to its explicit type argument", async () => {
+      const source = `
+const cast = <T,>(x: unknown) => x as T;
+const result = cast<string>(1);
+`;
+      const { editor } = await run(source, "cast<string>(1)", {
+        workspace: FAKE_WORKSPACE
+      });
+      const texts = await replacedTexts(editor);
+      expect(texts[0]).toBe("1 as string");
+    });
+
+    it("resolves a type parameter to its default, then its constraint", async () => {
+      const withDefault = `
+const cast = <T = number>(x: unknown) => x as T;
+const result = cast(1);
+`;
+      const first = await run(withDefault, "cast(1)", { workspace: FAKE_WORKSPACE });
+      expect((await replacedTexts(first.editor))[0]).toBe("1 as number");
+
+      const withConstraint = `
+const cast = <T extends string>(x: unknown) => x as T;
+const result = cast(1);
+`;
+      const second = await run(withConstraint, "cast(1)", {
+        workspace: FAKE_WORKSPACE
+      });
+      expect((await replacedTexts(second.editor))[0]).toBe("1 as string");
+    });
+
+    it("keeps the arrow when the type parameter is inferred from the arguments", async () => {
+      // Resolving `T` here needs a checker, so the IIFE keeps the arrow that
+      // declares it rather than guessing or refusing.
+      const source = `
+const first = <T,>(xs: T[]) => xs[0] as T;
+const result = first([1, 2]);
+`;
+      const { editor } = await run(source, "first([1, 2])", {
+        workspace: FAKE_WORKSPACE
+      });
+      const texts = await replacedTexts(editor);
+      expect(texts[0]).toBe("(<T,>(xs: T[]) => xs[0] as T)([1, 2])");
+    });
+
+    it("keeps explicit type arguments from the call site", async () => {
+      const explicit = source.replace("pick([1, 2], 0)", "pick<number>([1, 2], 0)");
+      const { editor } = await run(explicit, "pick<number>([1, 2], 0)", {
+        workspace: FAKE_WORKSPACE
+      });
+      const texts = await replacedTexts(editor);
+      expect(texts[0]).toContain("})<number>([1, 2], 0)");
     });
   });
 });

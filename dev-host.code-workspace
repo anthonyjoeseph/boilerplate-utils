@@ -1,0 +1,18 @@
+// Used for debugging with .vscode/launch.json
+//
+// Two reasons it exists rather than just pointing the host at the repo root:
+//   1. VS Code won't open a folder that's already a window root, and the repo
+//      root is your main window. A .code-workspace has its own identity, so it
+//      opens fine while still exposing the folders below.
+//   2. Listing `packages` alongside `examples` means you can edit package
+//      source from inside the dev host, at its real path rather than through
+//      the pnpm symlink under examples/*/node_modules.
+{
+  "folders": [
+    { "path": "examples", "name": "examples" },
+    { "path": "packages", "name": "packages" }
+  ],
+  "settings": {
+    "typescript.tsdk": "node_modules/typescript/lib"
+  }
+}

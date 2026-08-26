@@ -1,0 +1,4 @@
+{
+  "expect": "refuse",
+  "errorIncludes": "Spread arguments"
+}

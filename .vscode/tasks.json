@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  // Build tasks for the VS Code extension. Both compile
+  // packages/vscode-extension via tsc; see .vscode/launch.json, which runs
+  // "compile-extension" as its preLaunchTask.
+  "tasks": [
+    {
+      // One-shot build. Runs to completion before the dev host launches.
+      "label": "compile-extension",
+      "type": "shell",
+      "command": "pnpm --filter smart-inline-function compile",
+      "group": "build",
+      "problemMatcher": ["$tsc"],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    },
+    {
+      // Incremental alternative: leave it running, edit, then hit Cmd+R in the
+      // dev host to pick up the rebuild. isBackground + $tsc-watch tell VS Code
+      // this task never exits and when a compile round has settled — without
+      // them, using it as a preLaunchTask would hang the launch forever.
+      "label": "watch-extension",
+      "type": "shell",
+      "command": "pnpm --filter smart-inline-function watch",
+      "isBackground": true,
+      "group": "build",
+      "problemMatcher": ["$tsc-watch"],
+      "presentation": { "reveal": "silent", "panel": "dedicated" }
+    }
+  ]
+}

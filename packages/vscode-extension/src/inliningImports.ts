@@ -76,3 +76,63 @@ export function collectUsedImportedNames(
   visit(node);
   return Array.from(used);
 }
+
+/** Every identifier referenced in `node`, ignoring property names (`obj.prop`). */
+export function collectReferencedNames(node: ts.Node): Set<string> {
+  const names = new Set<string>();
+  function visit(n: ts.Node): void {
+    if (ts.isIdentifier(n)) {
+      const parent = n.parent;
+      if (!(parent && ts.isPropertyAccessExpression(parent) && parent.name === n)) {
+        names.add(n.text);
+      }
+    }
+    n.forEachChild(visit);
+  }
+  visit(node);
+  return names;
+}
+
+/**
+ * The same import declaration with only the bindings `used` actually mentions,
+ * or undefined if it mentions none. A declaration is pulled in because one of
+ * its names is needed; copying it whole would add the rest as unused imports.
+ */
+export function narrowImportToUsedNames(
+  decl: ts.ImportDeclaration,
+  used: Set<string>
+): ts.ImportDeclaration | undefined {
+  const clause = decl.importClause;
+  if (!clause) return decl;
+
+  const defaultName = clause.name && used.has(clause.name.text) ? clause.name : undefined;
+
+  let namedBindings: ts.NamedImportBindings | undefined;
+  if (clause.namedBindings) {
+    if (ts.isNamespaceImport(clause.namedBindings)) {
+      if (used.has(clause.namedBindings.name.text)) {
+        namedBindings = clause.namedBindings;
+      }
+    } else {
+      const elements = clause.namedBindings.elements.filter((el) =>
+        used.has(el.name.text)
+      );
+      if (elements.length === clause.namedBindings.elements.length) {
+        namedBindings = clause.namedBindings;
+      } else if (elements.length > 0) {
+        namedBindings = ts.factory.updateNamedImports(clause.namedBindings, elements);
+      }
+    }
+  }
+
+  if (!defaultName && !namedBindings) return undefined;
+  if (defaultName === clause.name && namedBindings === clause.namedBindings) return decl;
+
+  return ts.factory.updateImportDeclaration(
+    decl,
+    decl.modifiers,
+    ts.factory.updateImportClause(clause, clause.isTypeOnly, defaultName, namedBindings),
+    decl.moduleSpecifier,
+    decl.attributes
+  );
+}

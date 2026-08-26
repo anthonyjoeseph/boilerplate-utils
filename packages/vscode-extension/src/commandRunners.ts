@@ -10,13 +10,17 @@ import {
   findSelectedCallExpression,
   findSelectedExpression
 } from "./callSelection";
-import { resolveFunctionDefinition } from "./functionResolution";
+import {
+  createModuleResolver,
+  resolveFunctionDefinition
+} from "./functionResolution";
 import { classifyInlineTarget } from "./inlineDispatch";
 import {
   collectLiteralConstsVisibleAtCall,
   inlineCallExpression,
   literalInlineArray,
-  literalInlineObject
+  literalInlineObject,
+  type UnresolvedImport
 } from "./inlining";
 import { literalInlineExpressionAtSelection } from "./literalInline";
 
@@ -42,6 +46,8 @@ export type SmartInlineResult =
       expression: string;
       /** Printed import lines (with newline) to add to caller if not already present. */
       neededImportTexts: string[];
+      /** Imports that were added anyway but will not resolve as written. */
+      unresolvedImports: UnresolvedImport[];
       replaceStart: number;
       replaceEnd: number;
     }
@@ -121,7 +127,8 @@ export async function runSmartInline(
       functionInfo.node,
       functionInfo.sourceFile,
       callerConstEnv,
-      fileName
+      fileName,
+      createModuleResolver(fileName, workspaceRoot)
     );
     if ("error" in inlineResult) {
       return { ok: false, error: inlineResult.error };
@@ -139,6 +146,7 @@ export async function runSmartInline(
       ok: true,
       expression: inlineResult.expression,
       neededImportTexts,
+      unresolvedImports: inlineResult.unresolvedImports,
       replaceStart: callExpr.getStart(sourceFile),
       replaceEnd: callExpr.getEnd()
     };
@@ -167,6 +175,8 @@ export type RunInlineResult =
       expression: string;
       /** Printed import lines (with newline) to add; always [] except smart-inline. */
       neededImportTexts: string[];
+      /** Added imports that will not resolve as written; always [] except smart-inline. */
+      unresolvedImports?: UnresolvedImport[];
       replaceStart: number;
       replaceEnd: number;
     }
@@ -204,6 +214,7 @@ export async function runInline(
             behavior: "smart-inline",
             expression: r.expression,
             neededImportTexts: r.neededImportTexts,
+            unresolvedImports: r.unresolvedImports,
             replaceStart: r.replaceStart,
             replaceEnd: r.replaceEnd
           }

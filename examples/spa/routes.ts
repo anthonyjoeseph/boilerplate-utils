@@ -8,3 +8,7 @@ export const { parse, format } = pathCodec(
 );
 
 export type Route = Parameters<typeof format>[0];
+
+export interface PushRouteProps {
+  pushRoute: (next: Route) => void;
+}

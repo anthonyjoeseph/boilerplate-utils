@@ -32,9 +32,28 @@ fully simplified, it is left exactly as written.
 
 ## Limitations
 
-- Rest parameters (`...args`) and some destructuring shapes are not yet supported.
+- Some destructuring shapes (nested patterns, defaults, rest elements) are not
+  yet supported. Rest parameters are: they bind to an array literal of the
+  arguments they swallow.
+- A spread argument (`f(...xs)`) is only supported where it lands in a rest
+  parameter; against positional parameters it hides how many values it carries.
 - Multi-statement bodies that can't reduce to a single expression use an IIFE
   (`((params) => body)(args)`), which preserves exact semantics.
+- A generic callee's type parameters are resolved the way TypeScript resolves
+  them: to the explicit type argument, or - when the parameter appears in no
+  parameter annotation and so has nothing to infer from - to its default,
+  constraint, or `unknown`. One that IS inferred from the arguments needs a
+  checker to pin down, so the expansion keeps the arrow that declares it
+  (`(<T>(xs: T[]) => xs[0] as T)(xs)`).
+- Imports the body needs are pointed at the best specifier available from the
+  caller. A relative import inside an npm package is translated to the form that
+  package publishes - `../util/args` inside rxjs becomes
+  `rxjs/internal/util/args` - and checked against the caller's own module
+  resolution, which honors its tsconfig and the package's `exports` map.
+- An import that does not resolve (a package you have not installed, a module
+  its package does not publish) is still added, in the form worth having rather
+  than a reach-around like `./node_modules/<pkg>/src/...`, and reported in a
+  warning. Installing a dependency is your call, not the extension's.
 - Method calls (`obj.f()`), constructor calls (`new F()`), and namespace calls
   (`ns.f()`) are not yet relocated — they route to the fold pass instead.
 

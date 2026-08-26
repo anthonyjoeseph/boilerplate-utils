@@ -113,8 +113,8 @@ What doesn't work yet. Each should get a behavioral spec in `tests/spec/` when f
 **Relocation refuses too much:**
 - Any multi-statement body is "too complex" — as are early returns, `throw`, loops,
   `try` / `catch`, and local `const`s.
-- Unsupported parameter shapes: rest params, nested destructuring, defaults inside
-  patterns, computed names, `this`.
+- Unsupported parameter shapes: nested destructuring, defaults inside patterns,
+  computed names, `this`. (Rest params are supported.)
 - Explicit `undefined` skips a parameter default (`f(undefined)` with `(a = 5)` yields
   `undefined`).
 

@@ -9,12 +9,14 @@ import * as ts from "typescript";
 import type * as vscode from "vscode";
 
 import { runInline } from "./commandRunners";
+import type { UnresolvedImport } from "./inlining";
 
 /** Minimal vscode API needed by handlers; tests pass a mock that satisfies this. */
 export interface VscodeApi {
   Range: typeof vscode.Range;
   window: {
     showErrorMessage: (message: string) => void;
+    showWarningMessage: (message: string) => void;
     showInformationMessage: (message: string) => void;
     activeTextEditor: vscode.TextEditor | undefined;
   };
@@ -31,6 +33,26 @@ function getWorkspaceRoot(
 ): string {
   const folder = vscodeApi.workspace?.getWorkspaceFolder?.(document.uri);
   return folder ? folder.uri.fsPath : path.dirname(document.fileName);
+}
+
+/**
+ * What to say about imports that were added but will not resolve as written.
+ * They are still worth adding — installing a package or reaching a module the
+ * caller does not have yet is the caller's call — but not silently.
+ */
+function describeUnresolvedImports(
+  unresolved: readonly UnresolvedImport[]
+): string | undefined {
+  if (unresolved.length === 0) return undefined;
+  const parts = unresolved.map((u) => {
+    const names = u.names.length > 0 ? ` (${u.names.join(", ")})` : "";
+    const why =
+      u.reason === "not-installed"
+        ? "is not installed here"
+        : "is not published by its package";
+    return `"${u.specifier}"${names} ${why}`;
+  });
+  return `Smart Inline: added imports that do not resolve yet — ${parts.join("; ")}.`;
 }
 
 function scriptKind(languageId: string): "ts" | "tsx" {
@@ -121,6 +143,11 @@ async function doHandleSmartInline(
     );
     editBuilder.replace(range, result.expression);
   });
+
+  const unresolvedWarning = describeUnresolvedImports(result.unresolvedImports ?? []);
+  if (unresolvedWarning) {
+    vscodeApi.window.showWarningMessage(unresolvedWarning);
+  }
 
   const behaviorLabels: Record<string, string> = {
     "smart-inline": "Inlined function body",

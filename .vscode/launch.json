@@ -1,17 +1,29 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
     {
+      // Runs the extension from source in a second VS Code window (the
+      // Extension Development Host), opened onto the examples in this repo.
+      "name": "Launch Extension (examples)",
+      "type": "extensionHost",
+      "request": "launch",
       "args": [
+        // First positional arg = what the dev host opens. Passing it here
+        // skips the folder picker — which is also the only way to reach this
+        // repo's code, since VS Code hides folders already open as a window
+        // root (i.e. the repo root, in your main window). See the header of
+        // dev-host.code-workspace for the full story.
+        "${workspaceFolder}/dev-host.code-workspace",
+        // Loads the extension from source instead of from the marketplace.
         "--extensionDevelopmentPath=${workspaceFolder}/packages/vscode-extension"
       ],
-      "name": "Launch Extension",
+      // Where the debugger looks for compiled JS to map breakpoints back to
+      // the TypeScript sources. Must match "outDir" in the extension's tsconfig.
       "outFiles": ["${workspaceFolder}/packages/vscode-extension/out/**/*.js"],
-      "request": "launch",
-      "type": "extensionHost"
+      // Builds before launching, so the host never runs a stale out/.
+      // Swap to "watch-extension" for incremental builds — then reload the dev
+      // host with Cmd+R after an edit instead of relaunching. See tasks.json.
+      "preLaunchTask": "compile-extension"
     }
   ]
 }

@@ -445,6 +445,7 @@ function matchesOverride(pattern: string, name: string): boolean {
     .replace(/\\\*/g, "*")
     .replace(/\*\*/g, "\x00")
     .replace(/\*/g, "[^.]+")
+    // eslint-disable-next-line no-control-regex
     .replace(/\x00/g, ".+");
   return new RegExp(`^${escaped}$`).test(name);
 }
@@ -566,7 +567,7 @@ const NumberField: React.FC<FieldProps<number, z.ZodNumber>> = (props) => {
       <input
         ref={el}
         type="number"
-        value={props.value === undefined ? "" : props.value}
+        value={props.value ?? ""}
         onChange={(e) =>
           props.onChange(
             e.target.value === "" ? undefined : Number(e.target.value)
@@ -577,11 +578,7 @@ const NumberField: React.FC<FieldProps<number, z.ZodNumber>> = (props) => {
     );
   }
   return (
-    <input
-      ref={el}
-      type="number"
-      defaultValue={props.defaultValue === undefined ? "" : props.defaultValue}
-    />
+    <input ref={el} type="number" defaultValue={props.defaultValue ?? ""} />
   );
 };
 
@@ -709,7 +706,7 @@ const EnumField: React.FC<FieldProps<string | number, z.ZodEnum>> = (props) => {
   useFieldHandle(
     el,
     props.ref,
-    () => el.current?.value || undefined,
+    () => el.current?.value ?? undefined,
     (v) => {
       if (el.current) el.current.value = v === undefined ? "" : String(v);
     }
@@ -1374,7 +1371,6 @@ export const zodForm = <Schema extends z.ZodType>(
           );
         }
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       [hasSubmitted, props.onChange]
     );
 
@@ -1430,7 +1426,6 @@ export const zodForm = <Schema extends z.ZodType>(
           scrollAndFocus(errMap);
         }
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       [props.onSubmit, props.onInvalid, scrollAndFocus]
     );
 
